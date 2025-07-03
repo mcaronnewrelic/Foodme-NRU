@@ -1,5 +1,5 @@
 -- Auto-generated SQL file for importing restaurant data (UUID version)
--- Generated on: 2025-07-03T11:01:26.954Z
+-- Generated on: 2025-07-03T11:10:06.673Z
 -- Source: server/data/restaurants.json
 
 -- Clear existing data (in dependency order)
@@ -33,7 +33,7 @@ VALUES (
     'Bockwurst Würstchen',
     NULL,
     4.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -43,7 +43,7 @@ VALUES (
     'Bratwurst mit Brötchen und Sauerkraut',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -53,7 +53,7 @@ VALUES (
     'Currywurst mit Brötchen',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -63,7 +63,7 @@ VALUES (
     'Das Hausmannskost',
     NULL,
     11.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -73,7 +73,7 @@ VALUES (
     'Fleishkas mit Kartoffelsalat',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -83,7 +83,7 @@ VALUES (
     'Frankfurter Würstchen',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -93,7 +93,7 @@ VALUES (
     'Französische Zwiebelsuppe mit Käse',
     NULL,
     10.45,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -103,7 +103,7 @@ VALUES (
     'Frikadelle mit Brötchen',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -113,7 +113,7 @@ VALUES (
     'Gebackener Camenbert',
     NULL,
     7.55,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -123,7 +123,7 @@ VALUES (
     'Gemischter Salat',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -133,7 +133,7 @@ VALUES (
     'Haus Salatteller',
     NULL,
     11.45,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -143,7 +143,7 @@ VALUES (
     'Jaegerschnitzel',
     NULL,
     9.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -153,7 +153,7 @@ VALUES (
     'Kaesepaetzle',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -163,7 +163,7 @@ VALUES (
     'Kartoffel Reibekuchen mit Apfelmus',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -173,7 +173,7 @@ VALUES (
     'Maultaschen mit Käse',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -183,7 +183,7 @@ VALUES (
     'Sauerbraten',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -193,7 +193,7 @@ VALUES (
     'Ungarische Gulaschsuppe mit Brötchen',
     NULL,
     3.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -203,7 +203,7 @@ VALUES (
     'Wienerschnitzel',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -213,7 +213,7 @@ VALUES (
     'Wurstsalad mit Bauernbrot',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -239,7 +239,7 @@ VALUES (
     'California roll',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -249,7 +249,7 @@ VALUES (
     'Chicken teriyaki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -259,7 +259,7 @@ VALUES (
     'Edamame',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -269,7 +269,7 @@ VALUES (
     'Green tea ice cream',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -279,7 +279,7 @@ VALUES (
     'Kitsune Udon',
     NULL,
     9.5,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -289,7 +289,7 @@ VALUES (
     'Miso soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -299,7 +299,7 @@ VALUES (
     'Pork Katsu',
     NULL,
     5.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -309,7 +309,7 @@ VALUES (
     'Salmon teriyaki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -319,7 +319,7 @@ VALUES (
     'Sashimi combo',
     NULL,
     6.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -329,7 +329,7 @@ VALUES (
     'Spicy Yellowtail roll',
     NULL,
     7.55,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -339,7 +339,7 @@ VALUES (
     'Sushi combo',
     NULL,
     4.55,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -349,7 +349,7 @@ VALUES (
     'Teppa Maki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -359,7 +359,7 @@ VALUES (
     'Unagi Don',
     NULL,
     7.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -369,7 +369,7 @@ VALUES (
     'Vegetable tempura',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -379,7 +379,7 @@ VALUES (
     'Vegetarian sushi plate',
     NULL,
     6.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -389,7 +389,7 @@ VALUES (
     'Wakame salad',
     NULL,
     4.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -415,7 +415,7 @@ VALUES (
     'bean and cheese burrito',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -425,7 +425,7 @@ VALUES (
     'cheese tortellini in tomato sauce',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -435,7 +435,7 @@ VALUES (
     'coffee',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -445,7 +445,7 @@ VALUES (
     'falafel wrap with tabbouleh',
     NULL,
     4.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -455,7 +455,7 @@ VALUES (
     'flourless chocolate cake',
     NULL,
     8.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -465,7 +465,7 @@ VALUES (
     'garden fresh salad',
     NULL,
     6.5,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -475,7 +475,7 @@ VALUES (
     'happy buddha stir fry',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -485,7 +485,7 @@ VALUES (
     'hummus appetizer plate',
     NULL,
     8,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -495,7 +495,7 @@ VALUES (
     'lentil burger',
     NULL,
     6,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -505,7 +505,7 @@ VALUES (
     'lentil soup',
     NULL,
     4.5,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -515,7 +515,7 @@ VALUES (
     'pasta with olives and marinated lemon',
     NULL,
     6.95,
-    'Main',
+    'Pasta',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -525,7 +525,7 @@ VALUES (
     'spinach and cheese wrap',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -535,7 +535,7 @@ VALUES (
     'tea',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -545,7 +545,7 @@ VALUES (
     'toasted sandwich with grilled eggplant',
     NULL,
     8.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -555,7 +555,7 @@ VALUES (
     'tofu chicken wrap',
     NULL,
     9.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -565,7 +565,7 @@ VALUES (
     'tomato and cheese sandwich',
     NULL,
     11.45,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -575,7 +575,7 @@ VALUES (
     'vegetable stew',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -601,7 +601,7 @@ VALUES (
     'bavette dans son jus',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -611,7 +611,7 @@ VALUES (
     'bœuf bourguignon ',
     NULL,
     18,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -621,7 +621,7 @@ VALUES (
     'bouillabaisse',
     NULL,
     17.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -631,7 +631,7 @@ VALUES (
     'coq au vin',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -641,7 +641,7 @@ VALUES (
     'moules et frites',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -651,7 +651,7 @@ VALUES (
     'poulet au riesling',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -661,7 +661,7 @@ VALUES (
     'quiche lorraine',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -671,7 +671,7 @@ VALUES (
     'salade de chèvre chaud',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -681,7 +681,7 @@ VALUES (
     'salade du midi',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -691,7 +691,7 @@ VALUES (
     'salade niçoise',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -701,7 +701,7 @@ VALUES (
     'sandwich croque-madame',
     NULL,
     3.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -711,7 +711,7 @@ VALUES (
     'sandwich croque-monsieur',
     NULL,
     4.55,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -721,7 +721,7 @@ VALUES (
     'soupe à l''oignon',
     NULL,
     9.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -731,7 +731,7 @@ VALUES (
     'steak frites',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -741,7 +741,7 @@ VALUES (
     'tarte pissaladière ',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -751,7 +751,7 @@ VALUES (
     'tarte tatin',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -777,7 +777,7 @@ VALUES (
     'Dibi Lamb',
     NULL,
     8.25,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -787,7 +787,7 @@ VALUES (
     'Doro Wat',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -797,7 +797,7 @@ VALUES (
     'Grilled Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -807,7 +807,7 @@ VALUES (
     'Grilled Fish',
     NULL,
     6.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -817,7 +817,7 @@ VALUES (
     'Grilled Plantains in Spicy Peanut Sauce',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -827,7 +827,7 @@ VALUES (
     'Lamb Mafe (Peanut Butter Stew)',
     NULL,
     8.75,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -837,7 +837,7 @@ VALUES (
     'Meat Pie',
     NULL,
     6,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -847,7 +847,7 @@ VALUES (
     'Mechoui with Plantains',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -857,7 +857,7 @@ VALUES (
     'Pepper Soup',
     NULL,
     9.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -867,7 +867,7 @@ VALUES (
     'Piri-Piri Shrimp',
     NULL,
     11.45,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -877,7 +877,7 @@ VALUES (
     'Suppa Kandja',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -887,7 +887,7 @@ VALUES (
     'Thiou Boulette',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -897,7 +897,7 @@ VALUES (
     'Thiou Curry with Chicken',
     NULL,
     7.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -907,7 +907,7 @@ VALUES (
     'Thu Okra',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -917,7 +917,7 @@ VALUES (
     'Yassa Chicken',
     NULL,
     8.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -927,7 +927,7 @@ VALUES (
     'Yassa Lamb',
     NULL,
     8.25,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -953,7 +953,7 @@ VALUES (
     'Buffalo wings',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -963,7 +963,7 @@ VALUES (
     'California-style baked Tilapia with rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -973,7 +973,7 @@ VALUES (
     'Cheeseburger and fries',
     NULL,
     4.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -983,7 +983,7 @@ VALUES (
     'Cherry pie a la mode',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -993,7 +993,7 @@ VALUES (
     'Chocolate milkshake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1003,7 +1003,7 @@ VALUES (
     'Cobb salad',
     NULL,
     4.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1013,7 +1013,7 @@ VALUES (
     'Famous BLT on a kaiser roll with fries',
     NULL,
     4.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1023,7 +1023,7 @@ VALUES (
     'Firehouse chili',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1033,7 +1033,7 @@ VALUES (
     'Goat cheese and eggplant wrap (vegetarian)',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1043,7 +1043,7 @@ VALUES (
     'Greek salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1053,7 +1053,7 @@ VALUES (
     'Grilled chicken sandwich',
     NULL,
     4.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1063,7 +1063,7 @@ VALUES (
     'Grilled sausage on a bun',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1073,7 +1073,7 @@ VALUES (
     'Housemade pot roast with seasonal vegetable',
     NULL,
     16.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1083,7 +1083,7 @@ VALUES (
     'Roast beef dip',
     NULL,
     11.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1093,7 +1093,7 @@ VALUES (
     'Roast chicken and mashed potatoes',
     NULL,
     7.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1103,7 +1103,7 @@ VALUES (
     'Soup of the day',
     NULL,
     8.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1113,7 +1113,7 @@ VALUES (
     'Spaghetti and meatballs',
     NULL,
     11.45,
-    'Main',
+    'Pasta',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -1139,7 +1139,7 @@ VALUES (
     'BBQ chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1149,7 +1149,7 @@ VALUES (
     'Beef ribs (full)',
     NULL,
     9.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1159,7 +1159,7 @@ VALUES (
     'Beef ribs (delux)',
     NULL,
     10.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1169,7 +1169,7 @@ VALUES (
     'Beef ribs (half)',
     NULL,
     6.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1179,7 +1179,7 @@ VALUES (
     'Beer',
     NULL,
     7.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1189,7 +1189,7 @@ VALUES (
     'Coleslaw',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1199,7 +1199,7 @@ VALUES (
     'Collards',
     NULL,
     9.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1209,7 +1209,7 @@ VALUES (
     'Cornbread',
     NULL,
     11.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1219,7 +1219,7 @@ VALUES (
     'Devilled eggs',
     NULL,
     4,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1229,7 +1229,7 @@ VALUES (
     'German chocolate cake',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1239,7 +1239,7 @@ VALUES (
     'Housemade chips',
     NULL,
     4,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1249,7 +1249,7 @@ VALUES (
     'Hushpuppies',
     NULL,
     3.25,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1259,7 +1259,7 @@ VALUES (
     'Mac and cheese',
     NULL,
     6,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1269,7 +1269,7 @@ VALUES (
     'Pork ribs (half)',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1279,7 +1279,7 @@ VALUES (
     'Potato salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1289,7 +1289,7 @@ VALUES (
     'Pulled pork sandwich on a soft roll',
     NULL,
     4.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1299,7 +1299,7 @@ VALUES (
     'Riblets',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -1325,7 +1325,7 @@ VALUES (
     'Apple strudel',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1335,7 +1335,7 @@ VALUES (
     'Apricot dumpling with yogurt topping ',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1345,7 +1345,7 @@ VALUES (
     'Balkánský Salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1355,7 +1355,7 @@ VALUES (
     'Beef goulash',
     NULL,
     8.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1365,7 +1365,7 @@ VALUES (
     'Chicken breast fillet schnitzel ',
     NULL,
     10.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1375,7 +1375,7 @@ VALUES (
     'Cucumber Salad',
     NULL,
     7.55,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1385,7 +1385,7 @@ VALUES (
     'Dumplings',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1395,7 +1395,7 @@ VALUES (
     'Fried goose liver with onion and bread',
     NULL,
     7.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1405,7 +1405,7 @@ VALUES (
     'Halusky with sauerkraut and belly bacon ',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1415,7 +1415,7 @@ VALUES (
     'Lentil soup',
     NULL,
     4.5,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1425,7 +1425,7 @@ VALUES (
     'Pickles with cabbage and cheddar',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1435,7 +1435,7 @@ VALUES (
     'Pork schnitzel',
     NULL,
     3.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1445,7 +1445,7 @@ VALUES (
     'Potato pancake with bacon',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1455,7 +1455,7 @@ VALUES (
     'Potato Salad',
     NULL,
     4.55,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1465,7 +1465,7 @@ VALUES (
     'Segedínský gulash and dumplings',
     NULL,
     6.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1475,7 +1475,7 @@ VALUES (
     'Sour cabbage soup',
     NULL,
     10.45,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -1501,7 +1501,7 @@ VALUES (
     'Bockwurst Würstchen',
     NULL,
     4.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1511,7 +1511,7 @@ VALUES (
     'Bratwurst mit Brötchen und Sauerkraut',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1521,7 +1521,7 @@ VALUES (
     'Currywurst mit Brötchen',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1531,7 +1531,7 @@ VALUES (
     'Das Hausmannskost',
     NULL,
     11.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1541,7 +1541,7 @@ VALUES (
     'Fleishkas mit Kartoffelsalat',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1551,7 +1551,7 @@ VALUES (
     'Frankfurter Würstchen',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1561,7 +1561,7 @@ VALUES (
     'Französische Zwiebelsuppe mit Käse',
     NULL,
     10.45,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1571,7 +1571,7 @@ VALUES (
     'Frikadelle mit Brötchen',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1581,7 +1581,7 @@ VALUES (
     'Gebackener Camenbert',
     NULL,
     7.55,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1591,7 +1591,7 @@ VALUES (
     'Gemischter Salat',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1601,7 +1601,7 @@ VALUES (
     'Haus Salatteller',
     NULL,
     11.45,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1611,7 +1611,7 @@ VALUES (
     'Jaegerschnitzel',
     NULL,
     9.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1621,7 +1621,7 @@ VALUES (
     'Kaesepaetzle',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1631,7 +1631,7 @@ VALUES (
     'Kartoffel Reibekuchen mit Apfelmus',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1641,7 +1641,7 @@ VALUES (
     'Maultaschen mit Käse',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1651,7 +1651,7 @@ VALUES (
     'Sauerbraten',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1661,7 +1661,7 @@ VALUES (
     'Ungarische Gulaschsuppe mit Brötchen',
     NULL,
     3.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1671,7 +1671,7 @@ VALUES (
     'Wienerschnitzel',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1681,7 +1681,7 @@ VALUES (
     'Wurstsalad mit Bauernbrot',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -1707,7 +1707,7 @@ VALUES (
     'Almond cookie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1717,7 +1717,7 @@ VALUES (
     'Chicken and broccoli',
     NULL,
     9.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1727,7 +1727,7 @@ VALUES (
     'Chow mein',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1737,7 +1737,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1747,7 +1747,7 @@ VALUES (
     'General Tao''s chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1757,7 +1757,7 @@ VALUES (
     'Hot and Sour Soup',
     NULL,
     7.55,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1767,7 +1767,7 @@ VALUES (
     'Hunan dumplings',
     NULL,
     6.5,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1777,7 +1777,7 @@ VALUES (
     'Mongolian beef',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1787,7 +1787,7 @@ VALUES (
     'Pan-fried beef noodle',
     NULL,
     7.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1797,7 +1797,7 @@ VALUES (
     'Pea shoots with garlic',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1807,7 +1807,7 @@ VALUES (
     'Potstickers (6)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1817,7 +1817,7 @@ VALUES (
     'Seafood hotpot',
     NULL,
     4.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1827,7 +1827,7 @@ VALUES (
     'Steamed rice',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1837,7 +1837,7 @@ VALUES (
     'Sweet and sour pork',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1847,7 +1847,7 @@ VALUES (
     'Walnut prawns',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1857,7 +1857,7 @@ VALUES (
     'Wonton Soup',
     NULL,
     6.25,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1867,7 +1867,7 @@ VALUES (
     'Young Chow fried rice',
     NULL,
     6.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -1893,7 +1893,7 @@ VALUES (
     'Basil duck with rice',
     NULL,
     4.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1903,7 +1903,7 @@ VALUES (
     'Curry salmon',
     NULL,
     12.45,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1913,7 +1913,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1923,7 +1923,7 @@ VALUES (
     'Fried banana and ice cream',
     NULL,
     11.45,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1933,7 +1933,7 @@ VALUES (
     'Green curry with chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1943,7 +1943,7 @@ VALUES (
     'Green curry with pork',
     NULL,
     4.55,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1953,7 +1953,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1963,7 +1963,7 @@ VALUES (
     'Onion pancake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1973,7 +1973,7 @@ VALUES (
     'Pad See Ew',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1983,7 +1983,7 @@ VALUES (
     'Pad Thai',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -1993,7 +1993,7 @@ VALUES (
     'Pumpkin curry',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2003,7 +2003,7 @@ VALUES (
     'Red curry with chicken',
     NULL,
     8.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2013,7 +2013,7 @@ VALUES (
     'Red curry with pork',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2023,7 +2023,7 @@ VALUES (
     'Sticky rice with mango',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2033,7 +2033,7 @@ VALUES (
     'Thai iced coffee',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2043,7 +2043,7 @@ VALUES (
     'Thai iced tea',
     NULL,
     3.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2053,7 +2053,7 @@ VALUES (
     'Tofu salad rolls',
     NULL,
     10.45,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -2079,7 +2079,7 @@ VALUES (
     'Beans and rice',
     NULL,
     7.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2089,7 +2089,7 @@ VALUES (
     'Beef burrito',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2099,7 +2099,7 @@ VALUES (
     'Birria',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2109,7 +2109,7 @@ VALUES (
     'Chicken burrito',
     NULL,
     11.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2119,7 +2119,7 @@ VALUES (
     'Chicken mole platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2129,7 +2129,7 @@ VALUES (
     'Chile relleno (meat)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2139,7 +2139,7 @@ VALUES (
     'Chile relleno (vegetarian)',
     NULL,
     3.95,
-    'Main',
+    'Vegetarian',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2149,7 +2149,7 @@ VALUES (
     'Chips and guacamole',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2159,7 +2159,7 @@ VALUES (
     'Enchiladas',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2169,7 +2169,7 @@ VALUES (
     'Flan',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2179,7 +2179,7 @@ VALUES (
     'Jamaica Aqua Fresca',
     NULL,
     2.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2189,7 +2189,7 @@ VALUES (
     'Pork al pastor platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2199,7 +2199,7 @@ VALUES (
     'Sopa de albondigas',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2209,7 +2209,7 @@ VALUES (
     'Sopa de pollo',
     NULL,
     6.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2219,7 +2219,7 @@ VALUES (
     'Strawberry Aqua Fresca',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2229,7 +2229,7 @@ VALUES (
     'Super nachos with carne asada',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2239,7 +2239,7 @@ VALUES (
     'Tacos de la casa (3)',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2249,7 +2249,7 @@ VALUES (
     'Vegetarian platter',
     NULL,
     4.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -2275,7 +2275,7 @@ VALUES (
     'Aloo Gobi',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2285,7 +2285,7 @@ VALUES (
     'Basmati rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2295,7 +2295,7 @@ VALUES (
     'Butter Chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2305,7 +2305,7 @@ VALUES (
     'Chicken Korma',
     NULL,
     7.55,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2315,7 +2315,7 @@ VALUES (
     'Chicken Tikka Masala',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2325,7 +2325,7 @@ VALUES (
     'Gulab Jamun',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2335,7 +2335,7 @@ VALUES (
     'Kheer',
     NULL,
     4.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2345,7 +2345,7 @@ VALUES (
     'Lamb Asparagus',
     NULL,
     9.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2355,7 +2355,7 @@ VALUES (
     'Lamb Vindaloo',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2365,7 +2365,7 @@ VALUES (
     'Mix Grill Bombay',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2375,7 +2375,7 @@ VALUES (
     'Mulligatawny soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2385,7 +2385,7 @@ VALUES (
     'Murgh Chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2395,7 +2395,7 @@ VALUES (
     'Naan stuffed with spinach and lamb',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2405,7 +2405,7 @@ VALUES (
     'Plain naan',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2415,7 +2415,7 @@ VALUES (
     'Rogan Josh',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2425,7 +2425,7 @@ VALUES (
     'Saag Paneer',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2435,7 +2435,7 @@ VALUES (
     'Tandoori Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -2461,7 +2461,7 @@ VALUES (
     'Dibi Lamb',
     NULL,
     8.25,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2471,7 +2471,7 @@ VALUES (
     'Doro Wat',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2481,7 +2481,7 @@ VALUES (
     'Grilled Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2491,7 +2491,7 @@ VALUES (
     'Grilled Fish',
     NULL,
     6.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2501,7 +2501,7 @@ VALUES (
     'Grilled Plantains in Spicy Peanut Sauce',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2511,7 +2511,7 @@ VALUES (
     'Lamb Mafe (Peanut Butter Stew)',
     NULL,
     8.75,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2521,7 +2521,7 @@ VALUES (
     'Meat Pie',
     NULL,
     6,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2531,7 +2531,7 @@ VALUES (
     'Mechoui with Plantains',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2541,7 +2541,7 @@ VALUES (
     'Pepper Soup',
     NULL,
     9.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2551,7 +2551,7 @@ VALUES (
     'Piri-Piri Shrimp',
     NULL,
     11.45,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2561,7 +2561,7 @@ VALUES (
     'Suppa Kandja',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2571,7 +2571,7 @@ VALUES (
     'Thiou Boulette',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2581,7 +2581,7 @@ VALUES (
     'Thiou Curry with Chicken',
     NULL,
     7.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2591,7 +2591,7 @@ VALUES (
     'Thu Okra',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2601,7 +2601,7 @@ VALUES (
     'Yassa Chicken',
     NULL,
     8.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2611,7 +2611,7 @@ VALUES (
     'Yassa Lamb',
     NULL,
     8.25,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -2637,7 +2637,7 @@ VALUES (
     'Buffalo wings',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2647,7 +2647,7 @@ VALUES (
     'California-style baked Tilapia with rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2657,7 +2657,7 @@ VALUES (
     'Cheeseburger and fries',
     NULL,
     4.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2667,7 +2667,7 @@ VALUES (
     'Cherry pie a la mode',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2677,7 +2677,7 @@ VALUES (
     'Chocolate milkshake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2687,7 +2687,7 @@ VALUES (
     'Cobb salad',
     NULL,
     4.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2697,7 +2697,7 @@ VALUES (
     'Famous BLT on a kaiser roll with fries',
     NULL,
     4.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2707,7 +2707,7 @@ VALUES (
     'Firehouse chili',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2717,7 +2717,7 @@ VALUES (
     'Goat cheese and eggplant wrap (vegetarian)',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2727,7 +2727,7 @@ VALUES (
     'Greek salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2737,7 +2737,7 @@ VALUES (
     'Grilled chicken sandwich',
     NULL,
     4.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2747,7 +2747,7 @@ VALUES (
     'Grilled sausage on a bun',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2757,7 +2757,7 @@ VALUES (
     'Housemade pot roast with seasonal vegetable',
     NULL,
     16.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2767,7 +2767,7 @@ VALUES (
     'Roast beef dip',
     NULL,
     11.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2777,7 +2777,7 @@ VALUES (
     'Roast chicken and mashed potatoes',
     NULL,
     7.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2787,7 +2787,7 @@ VALUES (
     'Soup of the day',
     NULL,
     8.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2797,7 +2797,7 @@ VALUES (
     'Spaghetti and meatballs',
     NULL,
     11.45,
-    'Main',
+    'Pasta',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -2823,7 +2823,7 @@ VALUES (
     'BBQ chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2833,7 +2833,7 @@ VALUES (
     'Beef ribs (full)',
     NULL,
     9.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2843,7 +2843,7 @@ VALUES (
     'Beef ribs (delux)',
     NULL,
     10.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2853,7 +2853,7 @@ VALUES (
     'Beef ribs (half)',
     NULL,
     6.45,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2863,7 +2863,7 @@ VALUES (
     'Beer',
     NULL,
     7.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2873,7 +2873,7 @@ VALUES (
     'Coleslaw',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2883,7 +2883,7 @@ VALUES (
     'Collards',
     NULL,
     9.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2893,7 +2893,7 @@ VALUES (
     'Cornbread',
     NULL,
     11.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2903,7 +2903,7 @@ VALUES (
     'Devilled eggs',
     NULL,
     4,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2913,7 +2913,7 @@ VALUES (
     'German chocolate cake',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2923,7 +2923,7 @@ VALUES (
     'Housemade chips',
     NULL,
     4,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2933,7 +2933,7 @@ VALUES (
     'Hushpuppies',
     NULL,
     3.25,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2943,7 +2943,7 @@ VALUES (
     'Mac and cheese',
     NULL,
     6,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2953,7 +2953,7 @@ VALUES (
     'Pork ribs (half)',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2963,7 +2963,7 @@ VALUES (
     'Potato salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2973,7 +2973,7 @@ VALUES (
     'Pulled pork sandwich on a soft roll',
     NULL,
     4.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -2983,7 +2983,7 @@ VALUES (
     'Riblets',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3009,7 +3009,7 @@ VALUES (
     'Apple strudel',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3019,7 +3019,7 @@ VALUES (
     'Apricot dumpling with yogurt topping ',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3029,7 +3029,7 @@ VALUES (
     'Balkánský Salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3039,7 +3039,7 @@ VALUES (
     'Beef goulash',
     NULL,
     8.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3049,7 +3049,7 @@ VALUES (
     'Chicken breast fillet schnitzel ',
     NULL,
     10.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3059,7 +3059,7 @@ VALUES (
     'Cucumber Salad',
     NULL,
     7.55,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3069,7 +3069,7 @@ VALUES (
     'Dumplings',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3079,7 +3079,7 @@ VALUES (
     'Fried goose liver with onion and bread',
     NULL,
     7.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3089,7 +3089,7 @@ VALUES (
     'Halusky with sauerkraut and belly bacon ',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3099,7 +3099,7 @@ VALUES (
     'Lentil soup',
     NULL,
     4.5,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3109,7 +3109,7 @@ VALUES (
     'Pickles with cabbage and cheddar',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3119,7 +3119,7 @@ VALUES (
     'Pork schnitzel',
     NULL,
     3.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3129,7 +3129,7 @@ VALUES (
     'Potato pancake with bacon',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3139,7 +3139,7 @@ VALUES (
     'Potato Salad',
     NULL,
     4.55,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3149,7 +3149,7 @@ VALUES (
     'Segedínský gulash and dumplings',
     NULL,
     6.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3159,7 +3159,7 @@ VALUES (
     'Sour cabbage soup',
     NULL,
     10.45,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3185,7 +3185,7 @@ VALUES (
     'Bockwurst Würstchen',
     NULL,
     4.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3195,7 +3195,7 @@ VALUES (
     'Bratwurst mit Brötchen und Sauerkraut',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3205,7 +3205,7 @@ VALUES (
     'Currywurst mit Brötchen',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3215,7 +3215,7 @@ VALUES (
     'Das Hausmannskost',
     NULL,
     11.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3225,7 +3225,7 @@ VALUES (
     'Fleishkas mit Kartoffelsalat',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3235,7 +3235,7 @@ VALUES (
     'Frankfurter Würstchen',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3245,7 +3245,7 @@ VALUES (
     'Französische Zwiebelsuppe mit Käse',
     NULL,
     10.45,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3255,7 +3255,7 @@ VALUES (
     'Frikadelle mit Brötchen',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3265,7 +3265,7 @@ VALUES (
     'Gebackener Camenbert',
     NULL,
     7.55,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3275,7 +3275,7 @@ VALUES (
     'Gemischter Salat',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3285,7 +3285,7 @@ VALUES (
     'Haus Salatteller',
     NULL,
     11.45,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3295,7 +3295,7 @@ VALUES (
     'Jaegerschnitzel',
     NULL,
     9.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3305,7 +3305,7 @@ VALUES (
     'Kaesepaetzle',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3315,7 +3315,7 @@ VALUES (
     'Kartoffel Reibekuchen mit Apfelmus',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3325,7 +3325,7 @@ VALUES (
     'Maultaschen mit Käse',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3335,7 +3335,7 @@ VALUES (
     'Sauerbraten',
     NULL,
     10.45,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3345,7 +3345,7 @@ VALUES (
     'Ungarische Gulaschsuppe mit Brötchen',
     NULL,
     3.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3355,7 +3355,7 @@ VALUES (
     'Wienerschnitzel',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3365,7 +3365,7 @@ VALUES (
     'Wurstsalad mit Bauernbrot',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3391,7 +3391,7 @@ VALUES (
     'Almond cookie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3401,7 +3401,7 @@ VALUES (
     'Chicken and broccoli',
     NULL,
     9.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3411,7 +3411,7 @@ VALUES (
     'Chow mein',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3421,7 +3421,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3431,7 +3431,7 @@ VALUES (
     'General Tao''s chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3441,7 +3441,7 @@ VALUES (
     'Hot and Sour Soup',
     NULL,
     7.55,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3451,7 +3451,7 @@ VALUES (
     'Hunan dumplings',
     NULL,
     6.5,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3461,7 +3461,7 @@ VALUES (
     'Mongolian beef',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3471,7 +3471,7 @@ VALUES (
     'Pan-fried beef noodle',
     NULL,
     7.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3481,7 +3481,7 @@ VALUES (
     'Pea shoots with garlic',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3491,7 +3491,7 @@ VALUES (
     'Potstickers (6)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3501,7 +3501,7 @@ VALUES (
     'Seafood hotpot',
     NULL,
     4.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3511,7 +3511,7 @@ VALUES (
     'Steamed rice',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3521,7 +3521,7 @@ VALUES (
     'Sweet and sour pork',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3531,7 +3531,7 @@ VALUES (
     'Walnut prawns',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3541,7 +3541,7 @@ VALUES (
     'Wonton Soup',
     NULL,
     6.25,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3551,7 +3551,7 @@ VALUES (
     'Young Chow fried rice',
     NULL,
     6.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3577,7 +3577,7 @@ VALUES (
     'Basil duck with rice',
     NULL,
     4.55,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3587,7 +3587,7 @@ VALUES (
     'Curry salmon',
     NULL,
     12.45,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3597,7 +3597,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3607,7 +3607,7 @@ VALUES (
     'Fried banana and ice cream',
     NULL,
     11.45,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3617,7 +3617,7 @@ VALUES (
     'Green curry with chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3627,7 +3627,7 @@ VALUES (
     'Green curry with pork',
     NULL,
     4.55,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3637,7 +3637,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3647,7 +3647,7 @@ VALUES (
     'Onion pancake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3657,7 +3657,7 @@ VALUES (
     'Pad See Ew',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3667,7 +3667,7 @@ VALUES (
     'Pad Thai',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3677,7 +3677,7 @@ VALUES (
     'Pumpkin curry',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3687,7 +3687,7 @@ VALUES (
     'Red curry with chicken',
     NULL,
     8.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3697,7 +3697,7 @@ VALUES (
     'Red curry with pork',
     NULL,
     9.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3707,7 +3707,7 @@ VALUES (
     'Sticky rice with mango',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3717,7 +3717,7 @@ VALUES (
     'Thai iced coffee',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3727,7 +3727,7 @@ VALUES (
     'Thai iced tea',
     NULL,
     3.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3737,7 +3737,7 @@ VALUES (
     'Tofu salad rolls',
     NULL,
     10.45,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3763,7 +3763,7 @@ VALUES (
     'Beans and rice',
     NULL,
     7.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3773,7 +3773,7 @@ VALUES (
     'Beef burrito',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3783,7 +3783,7 @@ VALUES (
     'Birria',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3793,7 +3793,7 @@ VALUES (
     'Chicken burrito',
     NULL,
     11.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3803,7 +3803,7 @@ VALUES (
     'Chicken mole platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3813,7 +3813,7 @@ VALUES (
     'Chile relleno (meat)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3823,7 +3823,7 @@ VALUES (
     'Chile relleno (vegetarian)',
     NULL,
     3.95,
-    'Main',
+    'Vegetarian',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3833,7 +3833,7 @@ VALUES (
     'Chips and guacamole',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3843,7 +3843,7 @@ VALUES (
     'Enchiladas',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3853,7 +3853,7 @@ VALUES (
     'Flan',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3863,7 +3863,7 @@ VALUES (
     'Jamaica Aqua Fresca',
     NULL,
     2.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3873,7 +3873,7 @@ VALUES (
     'Pork al pastor platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3883,7 +3883,7 @@ VALUES (
     'Sopa de albondigas',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3893,7 +3893,7 @@ VALUES (
     'Sopa de pollo',
     NULL,
     6.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3903,7 +3903,7 @@ VALUES (
     'Strawberry Aqua Fresca',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3913,7 +3913,7 @@ VALUES (
     'Super nachos with carne asada',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3923,7 +3923,7 @@ VALUES (
     'Tacos de la casa (3)',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3933,7 +3933,7 @@ VALUES (
     'Vegetarian platter',
     NULL,
     4.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -3959,7 +3959,7 @@ VALUES (
     'Aloo Gobi',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3969,7 +3969,7 @@ VALUES (
     'Basmati rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3979,7 +3979,7 @@ VALUES (
     'Butter Chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3989,7 +3989,7 @@ VALUES (
     'Chicken Korma',
     NULL,
     7.55,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -3999,7 +3999,7 @@ VALUES (
     'Chicken Tikka Masala',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4009,7 +4009,7 @@ VALUES (
     'Gulab Jamun',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4019,7 +4019,7 @@ VALUES (
     'Kheer',
     NULL,
     4.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4029,7 +4029,7 @@ VALUES (
     'Lamb Asparagus',
     NULL,
     9.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4039,7 +4039,7 @@ VALUES (
     'Lamb Vindaloo',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4049,7 +4049,7 @@ VALUES (
     'Mix Grill Bombay',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4059,7 +4059,7 @@ VALUES (
     'Mulligatawny soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4069,7 +4069,7 @@ VALUES (
     'Murgh Chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4079,7 +4079,7 @@ VALUES (
     'Naan stuffed with spinach and lamb',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4089,7 +4089,7 @@ VALUES (
     'Plain naan',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4099,7 +4099,7 @@ VALUES (
     'Rogan Josh',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4109,7 +4109,7 @@ VALUES (
     'Saag Paneer',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4119,7 +4119,7 @@ VALUES (
     'Tandoori Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -4145,7 +4145,7 @@ VALUES (
     'Beans and rice',
     NULL,
     7.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4155,7 +4155,7 @@ VALUES (
     'Beef burrito',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4165,7 +4165,7 @@ VALUES (
     'Birria',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4175,7 +4175,7 @@ VALUES (
     'Chicken burrito',
     NULL,
     11.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4185,7 +4185,7 @@ VALUES (
     'Chicken mole platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4195,7 +4195,7 @@ VALUES (
     'Chile relleno (meat)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4205,7 +4205,7 @@ VALUES (
     'Chile relleno (vegetarian)',
     NULL,
     3.95,
-    'Main',
+    'Vegetarian',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4215,7 +4215,7 @@ VALUES (
     'Chips and guacamole',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4225,7 +4225,7 @@ VALUES (
     'Enchiladas',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4235,7 +4235,7 @@ VALUES (
     'Flan',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4245,7 +4245,7 @@ VALUES (
     'Jamaica Aqua Fresca',
     NULL,
     2.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4255,7 +4255,7 @@ VALUES (
     'Pork al pastor platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4265,7 +4265,7 @@ VALUES (
     'Sopa de albondigas',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4275,7 +4275,7 @@ VALUES (
     'Sopa de pollo',
     NULL,
     6.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4285,7 +4285,7 @@ VALUES (
     'Strawberry Aqua Fresca',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4295,7 +4295,7 @@ VALUES (
     'Super nachos with carne asada',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4305,7 +4305,7 @@ VALUES (
     'Tacos de la casa (3)',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4315,7 +4315,7 @@ VALUES (
     'Vegetarian platter',
     NULL,
     4.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -4341,7 +4341,7 @@ VALUES (
     'Beans and rice',
     NULL,
     7.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4351,7 +4351,7 @@ VALUES (
     'Beef burrito',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4361,7 +4361,7 @@ VALUES (
     'Birria',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4371,7 +4371,7 @@ VALUES (
     'Chicken burrito',
     NULL,
     11.45,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4381,7 +4381,7 @@ VALUES (
     'Chicken mole platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4391,7 +4391,7 @@ VALUES (
     'Chile relleno (meat)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4401,7 +4401,7 @@ VALUES (
     'Chile relleno (vegetarian)',
     NULL,
     3.95,
-    'Main',
+    'Vegetarian',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4411,7 +4411,7 @@ VALUES (
     'Chips and guacamole',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4421,7 +4421,7 @@ VALUES (
     'Enchiladas',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4431,7 +4431,7 @@ VALUES (
     'Flan',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4441,7 +4441,7 @@ VALUES (
     'Jamaica Aqua Fresca',
     NULL,
     2.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4451,7 +4451,7 @@ VALUES (
     'Pork al pastor platter',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4461,7 +4461,7 @@ VALUES (
     'Sopa de albondigas',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4471,7 +4471,7 @@ VALUES (
     'Sopa de pollo',
     NULL,
     6.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4481,7 +4481,7 @@ VALUES (
     'Strawberry Aqua Fresca',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4491,7 +4491,7 @@ VALUES (
     'Super nachos with carne asada',
     NULL,
     5.95,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4501,7 +4501,7 @@ VALUES (
     'Tacos de la casa (3)',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4511,7 +4511,7 @@ VALUES (
     'Vegetarian platter',
     NULL,
     4.55,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -4537,7 +4537,7 @@ VALUES (
     'Almond cookie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4547,7 +4547,7 @@ VALUES (
     'Chicken and broccoli',
     NULL,
     9.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4557,7 +4557,7 @@ VALUES (
     'Chow mein',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4567,7 +4567,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4577,7 +4577,7 @@ VALUES (
     'General Tao''s chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4587,7 +4587,7 @@ VALUES (
     'Hot and Sour Soup',
     NULL,
     7.55,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4597,7 +4597,7 @@ VALUES (
     'Hunan dumplings',
     NULL,
     6.5,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4607,7 +4607,7 @@ VALUES (
     'Mongolian beef',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4617,7 +4617,7 @@ VALUES (
     'Pan-fried beef noodle',
     NULL,
     7.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4627,7 +4627,7 @@ VALUES (
     'Pea shoots with garlic',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4637,7 +4637,7 @@ VALUES (
     'Potstickers (6)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4647,7 +4647,7 @@ VALUES (
     'Seafood hotpot',
     NULL,
     4.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4657,7 +4657,7 @@ VALUES (
     'Steamed rice',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4667,7 +4667,7 @@ VALUES (
     'Sweet and sour pork',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4677,7 +4677,7 @@ VALUES (
     'Walnut prawns',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4687,7 +4687,7 @@ VALUES (
     'Wonton Soup',
     NULL,
     6.25,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4697,7 +4697,7 @@ VALUES (
     'Young Chow fried rice',
     NULL,
     6.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -4723,7 +4723,7 @@ VALUES (
     'Aloo Gobi',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4733,7 +4733,7 @@ VALUES (
     'Basmati rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4743,7 +4743,7 @@ VALUES (
     'Butter Chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4753,7 +4753,7 @@ VALUES (
     'Chicken Korma',
     NULL,
     7.55,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4763,7 +4763,7 @@ VALUES (
     'Chicken Tikka Masala',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4773,7 +4773,7 @@ VALUES (
     'Gulab Jamun',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4783,7 +4783,7 @@ VALUES (
     'Kheer',
     NULL,
     4.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4793,7 +4793,7 @@ VALUES (
     'Lamb Asparagus',
     NULL,
     9.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4803,7 +4803,7 @@ VALUES (
     'Lamb Vindaloo',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4813,7 +4813,7 @@ VALUES (
     'Mix Grill Bombay',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4823,7 +4823,7 @@ VALUES (
     'Mulligatawny soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4833,7 +4833,7 @@ VALUES (
     'Murgh Chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4843,7 +4843,7 @@ VALUES (
     'Naan stuffed with spinach and lamb',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4853,7 +4853,7 @@ VALUES (
     'Plain naan',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4863,7 +4863,7 @@ VALUES (
     'Rogan Josh',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4873,7 +4873,7 @@ VALUES (
     'Saag Paneer',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4883,7 +4883,7 @@ VALUES (
     'Tandoori Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -4909,7 +4909,7 @@ VALUES (
     'California roll',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4919,7 +4919,7 @@ VALUES (
     'Chicken teriyaki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4929,7 +4929,7 @@ VALUES (
     'Edamame',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4939,7 +4939,7 @@ VALUES (
     'Green tea ice cream',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4949,7 +4949,7 @@ VALUES (
     'Kitsune Udon',
     NULL,
     9.5,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4959,7 +4959,7 @@ VALUES (
     'Miso soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4969,7 +4969,7 @@ VALUES (
     'Pork Katsu',
     NULL,
     5.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4979,7 +4979,7 @@ VALUES (
     'Salmon teriyaki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4989,7 +4989,7 @@ VALUES (
     'Sashimi combo',
     NULL,
     6.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -4999,7 +4999,7 @@ VALUES (
     'Spicy Yellowtail roll',
     NULL,
     7.55,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5009,7 +5009,7 @@ VALUES (
     'Sushi combo',
     NULL,
     4.55,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5019,7 +5019,7 @@ VALUES (
     'Teppa Maki',
     NULL,
     5.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5029,7 +5029,7 @@ VALUES (
     'Unagi Don',
     NULL,
     7.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5039,7 +5039,7 @@ VALUES (
     'Vegetable tempura',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5049,7 +5049,7 @@ VALUES (
     'Vegetarian sushi plate',
     NULL,
     6.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5059,7 +5059,7 @@ VALUES (
     'Wakame salad',
     NULL,
     4.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -5085,7 +5085,7 @@ VALUES (
     'Almond cookie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5095,7 +5095,7 @@ VALUES (
     'Chicken and broccoli',
     NULL,
     9.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5105,7 +5105,7 @@ VALUES (
     'Chow mein',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5115,7 +5115,7 @@ VALUES (
     'Egg rolls (4)',
     NULL,
     3.95,
-    'Main',
+    'Sushi & Japanese',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5125,7 +5125,7 @@ VALUES (
     'General Tao''s chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5135,7 +5135,7 @@ VALUES (
     'Hot and Sour Soup',
     NULL,
     7.55,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5145,7 +5145,7 @@ VALUES (
     'Hunan dumplings',
     NULL,
     6.5,
-    'Main',
+    'Appetizers',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5155,7 +5155,7 @@ VALUES (
     'Mongolian beef',
     NULL,
     6.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5165,7 +5165,7 @@ VALUES (
     'Pan-fried beef noodle',
     NULL,
     7.95,
-    'Main',
+    'Beef',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5175,7 +5175,7 @@ VALUES (
     'Pea shoots with garlic',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5185,7 +5185,7 @@ VALUES (
     'Potstickers (6)',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5195,7 +5195,7 @@ VALUES (
     'Seafood hotpot',
     NULL,
     4.95,
-    'Main',
+    'Seafood',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5205,7 +5205,7 @@ VALUES (
     'Steamed rice',
     NULL,
     5.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5215,7 +5215,7 @@ VALUES (
     'Sweet and sour pork',
     NULL,
     6.95,
-    'Main',
+    'Pork',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5225,7 +5225,7 @@ VALUES (
     'Walnut prawns',
     NULL,
     4.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5235,7 +5235,7 @@ VALUES (
     'Wonton Soup',
     NULL,
     6.25,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5245,7 +5245,7 @@ VALUES (
     'Young Chow fried rice',
     NULL,
     6.45,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -5271,7 +5271,7 @@ VALUES (
     'Aloo Gobi',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5281,7 +5281,7 @@ VALUES (
     'Basmati rice',
     NULL,
     6.95,
-    'Main',
+    'Sides',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5291,7 +5291,7 @@ VALUES (
     'Butter Chicken',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5301,7 +5301,7 @@ VALUES (
     'Chicken Korma',
     NULL,
     7.55,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5311,7 +5311,7 @@ VALUES (
     'Chicken Tikka Masala',
     NULL,
     5.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5321,7 +5321,7 @@ VALUES (
     'Gulab Jamun',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5331,7 +5331,7 @@ VALUES (
     'Kheer',
     NULL,
     4.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5341,7 +5341,7 @@ VALUES (
     'Lamb Asparagus',
     NULL,
     9.5,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5351,7 +5351,7 @@ VALUES (
     'Lamb Vindaloo',
     NULL,
     7.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5361,7 +5361,7 @@ VALUES (
     'Mix Grill Bombay',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5371,7 +5371,7 @@ VALUES (
     'Mulligatawny soup',
     NULL,
     5.95,
-    'Main',
+    'Soups',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5381,7 +5381,7 @@ VALUES (
     'Murgh Chicken',
     NULL,
     3.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5391,7 +5391,7 @@ VALUES (
     'Naan stuffed with spinach and lamb',
     NULL,
     4.55,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5401,7 +5401,7 @@ VALUES (
     'Plain naan',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5411,7 +5411,7 @@ VALUES (
     'Rogan Josh',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5421,7 +5421,7 @@ VALUES (
     'Saag Paneer',
     NULL,
     5.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5431,7 +5431,7 @@ VALUES (
     'Tandoori Chicken',
     NULL,
     4.95,
-    'Main',
+    'Chicken',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -5457,7 +5457,7 @@ VALUES (
     'Apple pie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5467,7 +5467,7 @@ VALUES (
     'B.L.T. and Avocado Sandwich',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5477,7 +5477,7 @@ VALUES (
     'Caesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5487,7 +5487,7 @@ VALUES (
     'Cappucino',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5497,7 +5497,7 @@ VALUES (
     'Cherry cheesecake',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5507,7 +5507,7 @@ VALUES (
     'Chocolate chip cookie',
     NULL,
     4.55,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5517,7 +5517,7 @@ VALUES (
     'Cobb salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5527,7 +5527,7 @@ VALUES (
     'Drip coffee',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5537,7 +5537,7 @@ VALUES (
     'Eggsalad Sandwich',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5547,7 +5547,7 @@ VALUES (
     'Espresso',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5557,7 +5557,7 @@ VALUES (
     'Greek salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5567,7 +5567,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5577,7 +5577,7 @@ VALUES (
     'Iced tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5587,7 +5587,7 @@ VALUES (
     'Latte',
     NULL,
     4,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5597,7 +5597,7 @@ VALUES (
     'Mango and banana smoothie',
     NULL,
     3,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5607,7 +5607,7 @@ VALUES (
     'Orange juice',
     NULL,
     4.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5617,7 +5617,7 @@ VALUES (
     'Quiche of the day',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5627,7 +5627,7 @@ VALUES (
     'Turkey Sandwich',
     NULL,
     7.55,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -5653,7 +5653,7 @@ VALUES (
     'Apple pie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5663,7 +5663,7 @@ VALUES (
     'B.L.T. and Avocado Sandwich',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5673,7 +5673,7 @@ VALUES (
     'Caesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5683,7 +5683,7 @@ VALUES (
     'Cappucino',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5693,7 +5693,7 @@ VALUES (
     'Cherry cheesecake',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5703,7 +5703,7 @@ VALUES (
     'Chocolate chip cookie',
     NULL,
     4.55,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5713,7 +5713,7 @@ VALUES (
     'Cobb salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5723,7 +5723,7 @@ VALUES (
     'Drip coffee',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5733,7 +5733,7 @@ VALUES (
     'Eggsalad Sandwich',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5743,7 +5743,7 @@ VALUES (
     'Espresso',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5753,7 +5753,7 @@ VALUES (
     'Greek salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5763,7 +5763,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5773,7 +5773,7 @@ VALUES (
     'Iced tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5783,7 +5783,7 @@ VALUES (
     'Latte',
     NULL,
     4,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5793,7 +5793,7 @@ VALUES (
     'Mango and banana smoothie',
     NULL,
     3,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5803,7 +5803,7 @@ VALUES (
     'Orange juice',
     NULL,
     4.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5813,7 +5813,7 @@ VALUES (
     'Quiche of the day',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5823,7 +5823,7 @@ VALUES (
     'Turkey Sandwich',
     NULL,
     7.55,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -5849,7 +5849,7 @@ VALUES (
     'Apple pie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5859,7 +5859,7 @@ VALUES (
     'B.L.T. and Avocado Sandwich',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5869,7 +5869,7 @@ VALUES (
     'Caesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5879,7 +5879,7 @@ VALUES (
     'Cappucino',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5889,7 +5889,7 @@ VALUES (
     'Cherry cheesecake',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5899,7 +5899,7 @@ VALUES (
     'Chocolate chip cookie',
     NULL,
     4.55,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5909,7 +5909,7 @@ VALUES (
     'Cobb salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5919,7 +5919,7 @@ VALUES (
     'Drip coffee',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5929,7 +5929,7 @@ VALUES (
     'Eggsalad Sandwich',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5939,7 +5939,7 @@ VALUES (
     'Espresso',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5949,7 +5949,7 @@ VALUES (
     'Greek salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5959,7 +5959,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5969,7 +5969,7 @@ VALUES (
     'Iced tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5979,7 +5979,7 @@ VALUES (
     'Latte',
     NULL,
     4,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5989,7 +5989,7 @@ VALUES (
     'Mango and banana smoothie',
     NULL,
     3,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -5999,7 +5999,7 @@ VALUES (
     'Orange juice',
     NULL,
     4.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6009,7 +6009,7 @@ VALUES (
     'Quiche of the day',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6019,7 +6019,7 @@ VALUES (
     'Turkey Sandwich',
     NULL,
     7.55,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6045,7 +6045,7 @@ VALUES (
     'Apple pie',
     NULL,
     5.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6055,7 +6055,7 @@ VALUES (
     'B.L.T. and Avocado Sandwich',
     NULL,
     5.95,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6065,7 +6065,7 @@ VALUES (
     'Caesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6075,7 +6075,7 @@ VALUES (
     'Cappucino',
     NULL,
     3.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6085,7 +6085,7 @@ VALUES (
     'Cherry cheesecake',
     NULL,
     4.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6095,7 +6095,7 @@ VALUES (
     'Chocolate chip cookie',
     NULL,
     4.55,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6105,7 +6105,7 @@ VALUES (
     'Cobb salad',
     NULL,
     6.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6115,7 +6115,7 @@ VALUES (
     'Drip coffee',
     NULL,
     5.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6125,7 +6125,7 @@ VALUES (
     'Eggsalad Sandwich',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6135,7 +6135,7 @@ VALUES (
     'Espresso',
     NULL,
     6.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6145,7 +6145,7 @@ VALUES (
     'Greek salad',
     NULL,
     3.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6155,7 +6155,7 @@ VALUES (
     'Hot tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6165,7 +6165,7 @@ VALUES (
     'Iced tea',
     NULL,
     2.5,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6175,7 +6175,7 @@ VALUES (
     'Latte',
     NULL,
     4,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6185,7 +6185,7 @@ VALUES (
     'Mango and banana smoothie',
     NULL,
     3,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6195,7 +6195,7 @@ VALUES (
     'Orange juice',
     NULL,
     4.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6205,7 +6205,7 @@ VALUES (
     'Quiche of the day',
     NULL,
     6.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6215,7 +6215,7 @@ VALUES (
     'Turkey Sandwich',
     NULL,
     7.55,
-    'Main',
+    'Burgers & Sandwiches',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6241,7 +6241,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6251,7 +6251,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6261,7 +6261,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6271,7 +6271,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6281,7 +6281,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6291,7 +6291,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6301,7 +6301,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6311,7 +6311,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6321,7 +6321,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6331,7 +6331,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6341,7 +6341,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6351,7 +6351,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6361,7 +6361,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6371,7 +6371,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6381,7 +6381,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6391,7 +6391,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6417,7 +6417,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6427,7 +6427,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6437,7 +6437,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6447,7 +6447,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6457,7 +6457,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6467,7 +6467,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6477,7 +6477,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6487,7 +6487,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6497,7 +6497,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6507,7 +6507,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6517,7 +6517,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6527,7 +6527,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6537,7 +6537,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6547,7 +6547,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6557,7 +6557,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6567,7 +6567,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6593,7 +6593,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6603,7 +6603,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6613,7 +6613,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6623,7 +6623,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6633,7 +6633,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6643,7 +6643,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6653,7 +6653,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6663,7 +6663,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6673,7 +6673,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6683,7 +6683,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6693,7 +6693,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6703,7 +6703,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6713,7 +6713,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6723,7 +6723,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6733,7 +6733,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6743,7 +6743,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6769,7 +6769,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6779,7 +6779,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6789,7 +6789,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6799,7 +6799,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6809,7 +6809,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6819,7 +6819,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6829,7 +6829,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6839,7 +6839,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6849,7 +6849,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6859,7 +6859,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6869,7 +6869,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6879,7 +6879,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6889,7 +6889,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6899,7 +6899,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6909,7 +6909,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6919,7 +6919,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -6945,7 +6945,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6955,7 +6955,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6965,7 +6965,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6975,7 +6975,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6985,7 +6985,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -6995,7 +6995,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7005,7 +7005,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7015,7 +7015,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7025,7 +7025,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7035,7 +7035,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7045,7 +7045,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7055,7 +7055,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7065,7 +7065,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7075,7 +7075,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7085,7 +7085,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7095,7 +7095,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
@@ -7121,7 +7121,7 @@ VALUES (
     'Cesar salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7131,7 +7131,7 @@ VALUES (
     'Cheesecake',
     NULL,
     6.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7141,7 +7141,7 @@ VALUES (
     'Chicago-style deep dish chicken and spinach',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7151,7 +7151,7 @@ VALUES (
     'Chicago-style deep dish pepperoni and cheese',
     NULL,
     7.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7161,7 +7161,7 @@ VALUES (
     'Chicago-style deep dish vegetarian',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7171,7 +7171,7 @@ VALUES (
     'Chicago-style meat lover''s',
     NULL,
     8.95,
-    'Main',
+    'Main Course',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7181,7 +7181,7 @@ VALUES (
     'Chocolate cake',
     NULL,
     3.95,
-    'Main',
+    'Desserts',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7191,7 +7191,7 @@ VALUES (
     'Coffee',
     NULL,
     7.95,
-    'Main',
+    'Beverages',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7201,7 +7201,7 @@ VALUES (
     'Greek salad',
     NULL,
     5.95,
-    'Main',
+    'Salads',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7211,7 +7211,7 @@ VALUES (
     'Pizza of the day (slice)',
     NULL,
     7.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7221,7 +7221,7 @@ VALUES (
     'Thin crust anchovy and garlic and chili pepper',
     NULL,
     5.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7231,7 +7231,7 @@ VALUES (
     'Thin crust broccoli, chicken, and mozarella',
     NULL,
     3.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7241,7 +7241,7 @@ VALUES (
     'Thin crust margherita',
     NULL,
     4.55,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7251,7 +7251,7 @@ VALUES (
     'Thin crust pepperoni',
     NULL,
     6.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7261,7 +7261,7 @@ VALUES (
     'Thin crust quattro stagione',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)
@@ -7271,7 +7271,7 @@ VALUES (
     'Thin crust sausage and guanciale bacon',
     NULL,
     4.95,
-    'Main',
+    'Pizza',
     true
 ) ON CONFLICT (id) DO NOTHING;
 
