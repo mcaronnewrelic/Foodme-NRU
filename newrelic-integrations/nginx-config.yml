@@ -1,0 +1,26 @@
+integrations:
+  - name: nri-nginx
+    env:
+      # Nginx status endpoint
+      STATUS_URL: http://nginx:80/nginx_status
+      STATUS_MODULE: discover
+      # Remote monitoring configuration
+      REMOTE_MONITORING: true
+      # Nginx metrics configuration
+      METRICS: true
+      # Nginx inventory configuration
+      INVENTORY: true
+      # Connection timeout
+      CONNECTION_TIMEOUT: 5
+      # HTTP timeout
+      HTTP_TIMEOUT: 30
+      # Validate SSL certificates
+      VALIDATE_CERTS: false
+      # Custom attributes for easier filtering
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"docker-compose","application":"foodme"}'
+    interval: 30s
+    labels:
+      env: docker-compose
+      role: reverse-proxy
+      service: nginx
+    inventory_source: config/nginx

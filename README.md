@@ -71,6 +71,9 @@ npm run dev
 npm run docker:run
 ```
 
+> 📚 **For detailed setup instructions**, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)  
+> 🗄️ **For database setup**, see [DATABASE_GUIDE.md](./DATABASE_GUIDE.md)
+
 ## 🏗️ Architecture
 
 ### Frontend (Angular 20)
@@ -104,10 +107,14 @@ npm run docker:run
 ### 🚀 Deployment & Operations  
 | Document | Description |
 |----------|-------------|
+| **[Setup Guide](./SETUP_GUIDE.md)** | Complete project setup, dependencies, and development environment configuration |
+| **[Database Guide](./DATABASE_GUIDE.md)** | PostgreSQL setup, initialization, and restaurant data management |
 | **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** | Complete deployment workflows and environment management |
 | **[Load Testing](./LOAD_TESTING.md)** | Performance testing with Locust, metrics, and analysis |
 
 ### 💡 Quick Reference
+- **Setup Guide**: Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for complete project setup
+- **Database Setup**: Use [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for PostgreSQL initialization  
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow

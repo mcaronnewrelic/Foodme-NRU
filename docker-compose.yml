@@ -30,8 +30,8 @@ services:
     volumes:
       - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces
       - type: bind
-        source: .setup/nginx/foodme.local.conf
-        target: /etc/nginx/conf.d/foodme.conf
+        source: nginx-config/foodme.conf
+        target: /etc/nginx/conf.d/default.conf
         read_only: true
       - type: bind
         source: .setup/certs/foodme.local.crt
@@ -105,6 +105,7 @@ services:
     volumes:
       - "/:/host:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
     environment:
       - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NRIA_DISPLAY_NAME=FoodMe-Infrastructure
@@ -114,6 +115,36 @@ services:
       - NRIA_DOCKER_LABELS=true
       # Custom attributes for easier filtering in New Relic
       - NRIA_CUSTOM_ATTRIBUTES='{"environment":"docker-compose","application":"foodme"}'
+
+  # New Relic Nginx Integration
+  newrelic-nginx:
+    image: newrelic/nri-nginx:latest
+    container_name: newrelic-nginx
+    restart: unless-stopped
+    environment:
+      - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+    volumes:
+      - "./newrelic-integrations/nginx-config.yml:/etc/newrelic-infra/integrations.d/nginx-config.yml:ro"
+    networks:
+      - foodme_network
+    depends_on:
+      - nginx
+
+  # New Relic PostgreSQL Integration
+  newrelic-postgres:
+    image: newrelic/nri-postgresql:latest
+    container_name: newrelic-postgres
+    restart: unless-stopped
+    environment:
+      - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+    volumes:
+      - "./newrelic-integrations/postgres-config.yml:/etc/newrelic-infra/integrations.d/postgres-config.yml:ro"
+    secrets:
+      - db-password
+    networks:
+      - foodme_network
+    depends_on:
+      - db
 
   # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
   # foodme-with-secrets:

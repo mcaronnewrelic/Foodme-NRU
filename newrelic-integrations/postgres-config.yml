@@ -1,0 +1,51 @@
+integrations:
+  - name: nri-postgresql
+    env:
+      # PostgreSQL connection details
+      HOSTNAME: db
+      PORT: 5432
+      USERNAME: foodme_user
+      DATABASE: foodme
+      # Read password from file mounted in container
+      PASSWORD_FILE: /run/secrets/db-password
+      # SSL configuration
+      SSL_MODE: disable
+      # Connection timeout
+      CONNECTION_TIMEOUT: 5
+      # Enable metrics collection
+      METRICS: true
+      # Enable inventory collection
+      INVENTORY: true
+      # Collect extended metrics
+      COLLECT_DB_LOCK_METRICS: true
+      COLLECT_BLOAT_METRICS: true
+      # Custom attributes for easier filtering
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"docker-compose","application":"foodme","database":"foodme"}'
+      # Enable custom queries for FoodMe-specific metrics
+      CUSTOM_METRICS_QUERY: |
+        SELECT 
+          'restaurants' as table_name,
+          COUNT(*) as row_count
+        FROM restaurants
+        UNION ALL
+        SELECT 
+          'menu_items' as table_name,
+          COUNT(*) as row_count
+        FROM menu_items
+        UNION ALL
+        SELECT
+          'orders' as table_name,
+          COUNT(*) as row_count
+        FROM orders
+        UNION ALL
+        SELECT
+          'customers' as table_name,
+          COUNT(*) as row_count
+        FROM customers;
+    interval: 30s
+    labels:
+      env: docker-compose
+      role: database
+      service: postgresql
+      application: foodme
+    inventory_source: config/postgresql

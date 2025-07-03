@@ -12,6 +12,16 @@ The FoodMe application uses PostgreSQL as its primary database with the followin
 - **orders** - Order history
 - **order_items** - Individual items within orders
 
+## 🔧 Recent Updates (July 2025)
+
+**Database Initialization Improvements:**
+- ✅ Removed legacy SQL files that caused UUID compatibility issues
+- ✅ Streamlined initialization to use only 2 scripts (schema + data)
+- ✅ Fixed deterministic UUID generation for consistent restaurant IDs
+- ✅ Eliminated duplicate import scripts and manual data entries
+- ✅ Improved error handling and logging during initialization
+
+
 ## 🚀 Quick Start
 
 ### 1. Start the Database
@@ -47,13 +57,23 @@ sleep 10
 npm run db:generate-import-uuid
 
 # Import restaurant data manually
-docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/02-import-restaurants-uuid.sql
 ```
 
 **Initialization Scripts (run alphabetically):**
 1. **`01-init-schema.sql`** - Creates tables, indexes, and basic structure
-2. **`02-load-restaurant-data.sql`** - Loads sample restaurant data (manual entries)
-3. **`04-import-restaurants-uuid.sql`** - Imports all restaurants with UUID compatibility (auto-generated)
+2. **`02-import-restaurants-uuid.sql`** - Imports all restaurants with UUID compatibility (auto-generated)
+
+**✨ Simplified Workflow:**
+The database now initializes completely automatically with just:
+```bash
+docker compose up -d db
+```
+This will:
+- Create the database schema
+- Import all 39 restaurants with proper UUIDs
+- Set up menu items and relationships
+- Complete in under 30 seconds
 
 ### 3. Verify the Setup
 
@@ -74,7 +94,7 @@ npm run db:connect
 npm run db:generate-import-uuid
 
 # Import restaurant data into running database
-docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/02-import-restaurants-uuid.sql
 
 # Test database connection and show statistics
 npm run db:test
@@ -153,8 +173,7 @@ db/
 │   └── test-database.js          # Tests connection and shows data
 └── init/                          # Initialization scripts (run alphabetically)
     ├── 01-init-schema.sql         # Database schema and tables
-    ├── 02-load-restaurant-data.sql # Sample restaurant data
-    └── 04-import-restaurants-uuid.sql # UUID-compatible import (auto-generated)
+    └── 02-import-restaurants-uuid.sql # UUID-compatible import (auto-generated)
 
 server/data/
 └── restaurants.json               # Source restaurant data
@@ -192,7 +211,7 @@ If you already have a running database:
 npm run db:generate-import-uuid
 
 # 2. Clear existing data and import fresh
-docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/02-import-restaurants-uuid.sql
 
 # 3. Verify the import
 docker compose exec db psql -U foodme_user -d foodme -c "SELECT name, cuisine_type FROM restaurants LIMIT 5;"
@@ -243,7 +262,7 @@ The `import-restaurants-uuid.js` script:
 2. **Generates deterministic UUIDs** from restaurant string IDs
 3. **Processes** restaurant and menu item data with proper UUID format
 4. **Creates** PostgreSQL-compatible INSERT statements
-5. **Generates** `04-import-restaurants-uuid.sql`
+5. **Generates** `02-import-restaurants-uuid.sql`
 
 ### Menu Item Categories
 
@@ -341,10 +360,10 @@ docker compose exec db psql -U foodme_user -d foodme -c "SELECT version();"
 npm run db:generate-import-uuid
 
 # Check import file syntax
-head -50 db/init/04-import-restaurants-uuid.sql
+head -50 db/init/02-import-restaurants-uuid.sql
 
 # Manual import with UUID support
-docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/02-import-restaurants-uuid.sql
 
 # If you get UUID errors, make sure you're using the UUID-compatible script
 # Common error: "invalid input syntax for type uuid"
