@@ -70,11 +70,8 @@ npm run db:connect
 ### Data Management
 
 ```bash
-# Generate UUID-compatible import SQL (RECOMMENDED)
+# Generate UUID-compatible import SQL
 npm run db:generate-import-uuid
-
-# Generate legacy import SQL (may have schema issues)
-npm run db:generate-import
 
 # Import restaurant data into running database
 docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
@@ -152,13 +149,11 @@ DB_SSL=false
 db/
 ├── password.txt                    # Database password (gitignored)
 ├── scripts/                       # Database utility scripts
-│   ├── import-restaurants.js      # Legacy import script (schema issues)
-│   ├── import-restaurants-uuid.js # UUID-compatible import script (recommended)
+│   ├── import-restaurants-uuid.js # UUID-compatible import script
 │   └── test-database.js          # Tests connection and shows data
 └── init/                          # Initialization scripts (run alphabetically)
     ├── 01-init-schema.sql         # Database schema and tables
     ├── 02-load-restaurant-data.sql # Sample restaurant data
-    ├── 03-import-all-restaurants.sql # Legacy import (has UUID issues)
     └── 04-import-restaurants-uuid.sql # UUID-compatible import (auto-generated)
 
 server/data/
@@ -222,9 +217,6 @@ ERROR: invalid input syntax for type uuid: "esthers"
 ```bash
 # Use this (UUID-compatible)
 npm run db:generate-import-uuid
-
-# NOT this (has schema issues)
-npm run db:generate-import
 ```
 
 **Expected Results:**
@@ -245,7 +237,6 @@ The restaurant data comes from `server/data/restaurants.json` which contains:
 
 ### Data Processing
 
-**UUID-Compatible Import (Recommended):**
 The `import-restaurants-uuid.js` script:
 
 1. **Reads** `restaurants.json`
@@ -253,9 +244,6 @@ The `import-restaurants-uuid.js` script:
 3. **Processes** restaurant and menu item data with proper UUID format
 4. **Creates** PostgreSQL-compatible INSERT statements
 5. **Generates** `04-import-restaurants-uuid.sql`
-
-**Legacy Import (Has Issues):**
-The `import-restaurants.js` script has schema compatibility issues with UUID columns and should not be used with the current database schema.
 
 ### Menu Item Categories
 
@@ -360,7 +348,7 @@ docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-rest
 
 # If you get UUID errors, make sure you're using the UUID-compatible script
 # Common error: "invalid input syntax for type uuid"
-# Solution: Use npm run db:generate-import-uuid instead of npm run db:generate-import
+# Solution: Use npm run db:generate-import-uuid
 ```
 
 ### Reset Database
