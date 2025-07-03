@@ -1,0 +1,63 @@
+{
+    // Node.js debugging settings
+    "debug.node.autoAttach": "on",
+    "debug.terminal.clearBeforeReusing": true,
+    "debug.console.fontSize": 14,
+    "debug.console.lineHeight": 1.5,
+    
+    // File watching and exclusions for better performance
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.git/**": true,
+        "**/dist/**": true,
+        "**/.venv/**": true,
+        "**/__pycache__/**": true
+    },
+    
+    // Search exclusions
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.venv": true,
+        "**/__pycache__": true,
+        "**/newrelic_agent.log": true
+    },
+    
+    // JavaScript/TypeScript settings
+    "javascript.preferences.quoteStyle": "single",
+    "typescript.preferences.quoteStyle": "single",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    
+    // File associations
+    "files.associations": {
+        "*.env*": "properties",
+        "dockerfile*": "dockerfile",
+        "docker-compose*.yml": "dockercompose",
+        "docker-compose*.yaml": "dockercompose"
+    },
+    
+    // Terminal settings
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    
+    // Python settings (for your Python components)
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    
+    // Formatter settings
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit"
+    },
+    
+    // Git settings
+    "git.ignoreLimitWarning": true,
+    
+    // Docker settings
+    "docker.containers.groupBy": "None",
+    "docker.containers.sortBy": "CreatedTime",
+    
+    // Extensions recommendations
+    "extensions.ignoreRecommendations": false
+}

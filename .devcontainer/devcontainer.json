@@ -9,6 +9,12 @@
 		"ghcr.io/devcontainers/features/python:1": {
 			"version": "3.11",
 			"installTools": true
+		},
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"installZsh": "true",
+			"configureZshAsDefaultShell": "true",
+			"installOhMyZsh": "true",
+			"upgradePackages": "true"
 		}
 	},
 
@@ -16,7 +22,7 @@
 	"forwardPorts": [3000, 8089],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && npm install && cd angular-app && npm install",
+	"postCreateCommand": "python3 -m venv .venv && .venv/bin/python -m pip install --upgrade pip && .venv/bin/python -m pip install -r requirements.txt && npm install && cd angular-app && npm install",
 
 	// Configure tool-specific properties.
 	"customizations": {

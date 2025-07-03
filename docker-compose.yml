@@ -20,26 +20,16 @@ services:
 
   # Nginx reverse proxy with HTTPS support
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
     container_name: nginx-foodme
     restart: unless-stopped
     ports:
       - "80:80"
-      - "443:443"
-    volumes:
-      - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces
-      - type: bind
-        source: .setup/nginx/foodme.local.conf
-        target: /etc/nginx/conf.d/default.conf
-        read_only: true
-      - type: bind
-        source: .setup/certs/foodme.local.crt
-        target: /etc/nginx/certs/foodme.crt
-        read_only: true
-      - type: bind
-        source: .setup/certs/foodme.local.key
-        target: /etc/nginx/certs/foodme.key
-        read_only: true
+      # HTTPS disabled for dev container
+      # - "443:443"
+    # No volume mounts needed - config is baked into the image
     networks:
       - foodme_network
     depends_on:
@@ -56,15 +46,14 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     user: postgres
-    secrets:
-      - db-password
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      # Init scripts temporarily disabled for dev container
+      # - ./db/init:/docker-entrypoint-initdb.d:ro
     environment:
       - POSTGRES_DB=foodme
       - POSTGRES_USER=foodme_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+      - POSTGRES_PASSWORD=foodme_secure_password_2025!
     expose:
       - "5432"
     networks:
@@ -91,29 +80,29 @@ services:
     networks:
       - foodme_network
 
-  # New Relic Infrastructure Agent for container monitoring
-  newrelic-infra:
-    image: newrelic/infrastructure:latest
-    container_name: newrelic-infra
-    restart: unless-stopped
-    cap_add:
-      - SYS_PTRACE
-    network_mode: host
-    pid: host
-    privileged: true
-    volumes:
-      - "/:/host:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
-    environment:
-      - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
-      - NRIA_DISPLAY_NAME=FoodMe-Infrastructure
-      - NRIA_VERBOSE=1
-      # Enable Docker integration
-      - NRIA_ENABLE_PROCESS_METRICS=true
-      - NRIA_DOCKER_LABELS=true
-      # Custom attributes for easier filtering in New Relic
-      - NRIA_CUSTOM_ATTRIBUTES={"environment":"docker-compose","application":"foodme"}
+  # New Relic Infrastructure Agent for container monitoring - DISABLED for dev container
+  # newrelic-infra:
+  #   image: newrelic/infrastructure:latest
+  #   container_name: newrelic-infra
+  #   restart: unless-stopped
+  #   cap_add:
+  #     - SYS_PTRACE
+  #   network_mode: host
+  #   pid: host
+  #   privileged: true
+  #   volumes:
+  #     - "/:/host:ro"
+  #     - "/var/run/docker.sock:/var/run/docker.sock"
+  #     - "./newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
+  #   environment:
+  #     - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+  #     - NRIA_DISPLAY_NAME=FoodMe-Infrastructure
+  #     - NRIA_VERBOSE=1
+  #     # Enable Docker integration
+  #     - NRIA_ENABLE_PROCESS_METRICS=true
+  #     - NRIA_DOCKER_LABELS=true
+  #     # Custom attributes for easier filtering in New Relic
+  #     - NRIA_CUSTOM_ATTRIBUTES={"environment":"docker-compose","application":"foodme"}
 
   # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
   # foodme-with-secrets:
@@ -141,12 +130,3 @@ volumes:
 networks:
   foodme_network:
     driver: bridge
-
-# Define secrets for Docker Swarm and database
-secrets:
-  # new_relic_license_key:
-  #   external: true
-  # new_relic_api_key:
-  #   external: true
-  db-password:
-    file: db/password.txt

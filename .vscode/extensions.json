@@ -1,0 +1,53 @@
+{
+    "recommendations": [
+        // Node.js and JavaScript/TypeScript
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.vscode-json",
+        "ms-vscode.js-debug",
+        
+        // Angular development
+        "angular.ng-template",
+        "johnpapa.angular2",
+        
+        // Code formatting and linting
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        
+        // Python development
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.pylint",
+        
+        // Docker and containers
+        "ms-vscode.docker",
+        "ms-vscode-remote.remote-containers",
+        
+        // Database tools
+        "ms-mssql.mssql",
+        "ckolkman.vscode-postgres",
+        
+        // Git and version control
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        
+        // Utilities
+        "ms-vscode.live-server",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-yaml",
+        "redhat.vscode-xml",
+        
+        // Testing
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        
+        // REST API testing
+        "humao.rest-client",
+        
+        // Environment files
+        "mikestead.dotenv",
+        
+        // Markdown
+        "yzhang.markdown-all-in-one"
+    ]
+}
