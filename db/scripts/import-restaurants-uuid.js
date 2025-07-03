@@ -80,8 +80,13 @@ BEGIN;
         sql += `) ON CONFLICT (id) DO NOTHING;\n\n`;
         
         // Add menu items if they exist
-        if (restaurant.menu && Array.isArray(restaurant.menu)) {
-            restaurant.menu.forEach((item, itemIndex) => {
+        if (restaurant.menuItems && Array.isArray(restaurant.menuItems)) {
+            restaurant.menuItems.forEach((item, itemIndex) => {
+                // Skip items with null or undefined prices
+                if (item.price === null || item.price === undefined) {
+                    return;
+                }
+                
                 const itemUUID = generateUUID(`${restaurant.id}-${item.name}-${itemIndex}`);
                 
                 sql += `INSERT INTO menu_items (id, restaurant_id, name, description, price, category, is_available)\n`;
