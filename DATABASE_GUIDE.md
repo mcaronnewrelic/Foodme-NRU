@@ -26,11 +26,34 @@ docker compose ps
 
 ### 2. Initialize with Restaurant Data
 
-The database is automatically initialized when you start it for the first time. The initialization scripts are located in `db/init/` and run in alphabetical order:
+**Option A: Fresh Database (Recommended)**
+```bash
+# Stop and remove existing database (if any)
+docker compose down -v
 
+# Generate UUID-compatible import SQL
+npm run db:generate-import-uuid
+
+# Start fresh database (will auto-run initialization scripts)
+docker compose up -d db
+
+# Wait for initialization to complete
+sleep 10
+```
+
+**Option B: Import into Running Database**
+```bash
+# Generate UUID-compatible import SQL
+npm run db:generate-import-uuid
+
+# Import restaurant data manually
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+```
+
+**Initialization Scripts (run alphabetically):**
 1. **`01-init-schema.sql`** - Creates tables, indexes, and basic structure
 2. **`02-load-restaurant-data.sql`** - Loads sample restaurant data (manual entries)
-3. **`03-import-all-restaurants.sql`** - Imports all restaurants from `restaurants.json` (auto-generated)
+3. **`04-import-restaurants-uuid.sql`** - Imports all restaurants with UUID compatibility (auto-generated)
 
 ### 3. Verify the Setup
 
@@ -47,8 +70,14 @@ npm run db:connect
 ### Data Management
 
 ```bash
-# Generate fresh import SQL from restaurants.json
+# Generate UUID-compatible import SQL (RECOMMENDED)
+npm run db:generate-import-uuid
+
+# Generate legacy import SQL (may have schema issues)
 npm run db:generate-import
+
+# Import restaurant data into running database
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
 
 # Test database connection and show statistics
 npm run db:test
@@ -72,6 +101,9 @@ npm run db:logs
 # Start just the database
 docker compose up -d db
 
+# Start all services (database + application)
+docker compose up -d
+
 # Stop the database
 docker compose stop db
 
@@ -83,6 +115,9 @@ docker compose restart db
 
 # Remove database (⚠️ deletes all data)
 docker compose down -v
+
+# Fresh start with clean database
+docker compose down -v && npm run db:generate-import-uuid && docker compose up -d
 ```
 
 ## 🔧 Database Configuration
@@ -116,18 +151,87 @@ DB_SSL=false
 ```
 db/
 ├── password.txt                    # Database password (gitignored)
+├── scripts/                       # Database utility scripts
+│   ├── import-restaurants.js      # Legacy import script (schema issues)
+│   ├── import-restaurants-uuid.js # UUID-compatible import script (recommended)
+│   └── test-database.js          # Tests connection and shows data
 └── init/                          # Initialization scripts (run alphabetically)
     ├── 01-init-schema.sql         # Database schema and tables
     ├── 02-load-restaurant-data.sql # Sample restaurant data
-    └── 03-import-all-restaurants.sql # All restaurants from JSON (auto-generated)
-
-scripts/
-├── import-restaurants.js          # Generates SQL from restaurants.json
-└── test-database.js              # Tests connection and shows data
+    ├── 03-import-all-restaurants.sql # Legacy import (has UUID issues)
+    └── 04-import-restaurants-uuid.sql # UUID-compatible import (auto-generated)
 
 server/data/
 └── restaurants.json               # Source restaurant data
 ```
+
+## 🐳 Loading Data with Docker Compose
+
+### Method 1: Fresh Start (Recommended)
+
+This method ensures a clean database with proper initialization:
+
+```bash
+# 1. Stop and remove any existing database
+docker compose down -v
+
+# 2. Generate UUID-compatible import SQL
+npm run db:generate-import-uuid
+
+# 3. Start the database (auto-runs init scripts)
+docker compose up -d db
+
+# 4. Wait for initialization to complete
+sleep 10
+
+# 5. Verify data was loaded
+docker compose exec db psql -U foodme_user -d foodme -c "SELECT COUNT(*) FROM restaurants;"
+```
+
+### Method 2: Import into Running Database
+
+If you already have a running database:
+
+```bash
+# 1. Generate UUID-compatible import SQL
+npm run db:generate-import-uuid
+
+# 2. Clear existing data and import fresh
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+
+# 3. Verify the import
+docker compose exec db psql -U foodme_user -d foodme -c "SELECT name, cuisine_type FROM restaurants LIMIT 5;"
+```
+
+### Method 3: One-Line Fresh Setup
+
+For a complete fresh start in one command:
+
+```bash
+docker compose down -v && npm run db:generate-import-uuid && docker compose up -d && sleep 15 && npm run db:test
+```
+
+### Troubleshooting Import Issues
+
+**If you see UUID errors:**
+```bash
+ERROR: invalid input syntax for type uuid: "esthers"
+```
+
+**Solution:** Make sure you're using the UUID-compatible script:
+```bash
+# Use this (UUID-compatible)
+npm run db:generate-import-uuid
+
+# NOT this (has schema issues)
+npm run db:generate-import
+```
+
+**Expected Results:**
+- ✅ 39 restaurants imported
+- ✅ No UUID format errors
+- ✅ Foreign key constraints intact
+- ✅ Deterministic UUIDs generated
 
 ## 🍽️ Restaurant Data
 
@@ -141,13 +245,17 @@ The restaurant data comes from `server/data/restaurants.json` which contains:
 
 ### Data Processing
 
-The `import-restaurants.js` script:
+**UUID-Compatible Import (Recommended):**
+The `import-restaurants-uuid.js` script:
 
 1. **Reads** `restaurants.json`
-2. **Processes** restaurant and menu item data
-3. **Categorizes** menu items automatically
-4. **Generates** SQL INSERT statements
-5. **Creates** `03-import-all-restaurants.sql`
+2. **Generates deterministic UUIDs** from restaurant string IDs
+3. **Processes** restaurant and menu item data with proper UUID format
+4. **Creates** PostgreSQL-compatible INSERT statements
+5. **Generates** `04-import-restaurants-uuid.sql`
+
+**Legacy Import (Has Issues):**
+The `import-restaurants.js` script has schema compatibility issues with UUID columns and should not be used with the current database schema.
 
 ### Menu Item Categories
 
@@ -241,22 +349,30 @@ docker compose exec db psql -U foodme_user -d foodme -c "SELECT version();"
 ### Data Import Issues
 
 ```bash
-# Regenerate import file
-npm run db:generate-import
+# Use UUID-compatible import (recommended)
+npm run db:generate-import-uuid
 
 # Check import file syntax
-head -50 db/init/03-import-all-restaurants.sql
+head -50 db/init/04-import-restaurants-uuid.sql
 
-# Manual import (if needed)
-docker compose exec -T db psql -U foodme_user -d foodme < db/init/03-import-all-restaurants.sql
+# Manual import with UUID support
+docker compose exec -T db psql -U foodme_user -d foodme < db/init/04-import-restaurants-uuid.sql
+
+# If you get UUID errors, make sure you're using the UUID-compatible script
+# Common error: "invalid input syntax for type uuid"
+# Solution: Use npm run db:generate-import-uuid instead of npm run db:generate-import
 ```
 
 ### Reset Database
 
 ```bash
 # Complete reset (⚠️ deletes all data)
-docker compose down
-docker volume rm foodme_db-data
+docker compose down -v
+
+# Generate fresh UUID-compatible import
+npm run db:generate-import-uuid
+
+# Start fresh database
 docker compose up -d db
 
 # Wait for initialization to complete
