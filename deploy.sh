@@ -166,36 +166,39 @@ build_app() {
 send_deployment_marker() {
     print_info "Sending deployment marker to New Relic..."
     
-    # Get git information
+    # Get git information and escape for JSON
     REVISION=$(git rev-parse HEAD)
-    CHANGELOG=$(git log --oneline -1)
-    USER=$(git config user.name)
+    CHANGELOG=$(git log --oneline -1 | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+    USER=$(git config user.name | sed 's/"/\\"/g')
  
     print_info "Deployment details:"
     print_info "  Revision: $REVISION"
     print_info "  Changelog: $CHANGELOG"
     print_info "  User: $USER"
     
-    DATA_BINARY='{"query":"mutation { changeTrackingCreateDeployment( deployment: {commit: "'$REVISION'", description: "'$CHANGELOG'", user: "'$USER'", changelog: "'$CHANGELOG'", deploymentType: BASIC, entityGuid: "'$ENTITY_GUID'"}}", "variables":""}'
-    print_info "  DataBinary: $DATA_BINARY"
+    # Create JSON payload with proper escaping
+    cat > /tmp/deployment_payload.json << EOF
+{
+  "query": "mutation { changeTrackingCreateDeployment( deployment: {commit: \"$REVISION\", description: \"$CHANGELOG\", user: \"$USER\", changelog: \"$CHANGELOG\", version: \"1.0.0\", deploymentType: BASIC, entityGuid: \"$ENTITY_GUID\"}) { deploymentId entityGuid } }",
+  "variables": {}
+}
+EOF
+    
+    print_info "JSON Payload:"
+    cat /tmp/deployment_payload.json
     
     # Send deployment marker for the main server
     print_info "Marking server deployment..."
-    # Echo the curl command for debugging
-    print_info "Executing curl command:"
-    echo "curl https://api.newrelic.com/graphql \\"
-    echo "  -H 'Content-Type: application/json' \\"
-    echo "  -H 'API-Key: $NEW_RELIC_API_KEY' \\"
-    echo "  --data-binary '$DATA_BINARY'"
-
-    # Enable debug mode to show commands being executed
-    set -x
-    curl https://api.newrelic.com/graphql \
+    
+    # Use the JSON file for the request
+    curl -s -w "\nHTTP Response Code: %{http_code}\n" \
+      https://api.newrelic.com/graphql \
       -H 'Content-Type: application/json' \
       -H "API-Key: $NEW_RELIC_API_KEY" \
-      --data-binary "$DATA_BINARY"
-    # Disable debug mode
-    set +x
+      --data @/tmp/deployment_payload.json
+    
+    # Clean up temporary file
+    rm -f /tmp/deployment_payload.json
 
     print_success "Deployment marker sent to New Relic"
 }
