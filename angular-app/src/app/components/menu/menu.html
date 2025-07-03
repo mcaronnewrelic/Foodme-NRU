@@ -1,0 +1,170 @@
+<!-- Header Navigation -->
+<app-header></app-header>
+
+<div class="container">
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="text-center">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <p class="mt-3">Loading restaurant menu...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">Error</h4>
+    <p>{{ error() }}</p>
+    <hr>
+    <button class="btn btn-primary" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i> Back to Restaurants
+    </button>
+  </div>
+
+  <!-- Restaurant Menu Content -->
+  <div *ngIf="!loading() && !error() && restaurant()">
+    <!-- Restaurant Header -->
+    <div class="row">
+      <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a [routerLink]="['/restaurants']">Restaurants</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+              {{ restaurant()?.name }}
+            </li>
+          </ol>
+        </nav>
+        
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h1 class="card-title">{{ restaurant()?.name }}</h1>
+                <p class="text-muted mb-2">{{ restaurant()?.cuisine }} Cuisine</p>
+                <div class="row mb-3">
+                  <div class="col-auto">
+                    <small class="text-warning">
+                      ★ ★ ★ ★ ★
+                    </small>
+                    <span class="ms-2">{{ restaurant()?.rating }}/5</span>
+                  </div>
+                  <div class="col-auto">
+                    <ng-container *ngFor="let dollar of [1,2,3,4]">
+                      <span [class.text-success]="dollar <= (restaurant()?.price || 0)"
+                            [class.text-muted]="dollar > (restaurant()?.price || 0)">$</span>
+                    </ng-container>
+                  </div>
+                </div>
+                <p *ngIf="restaurant()?.description" class="text-muted">
+                  {{ restaurant()?.description }}
+                </p>
+              </div>
+              <div class="col-md-4 text-center">
+                <img *ngIf="restaurant()?.image" 
+                     [src]="restaurant()?.image" 
+                     [alt]="restaurant()?.name"
+                     class="img-fluid rounded" style="max-height: 150px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart Summary (if items in cart) -->
+    <div *ngIf="cartService.totalItems() > 0" class="alert alert-info">
+      <div class="row align-items-center">
+        <div class="col">
+          <strong>{{ cartService.totalItems() }}</strong> items in cart - 
+          <strong>${{ (cartService.totalPrice() || 0).toFixed(2) }}</strong>
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-success" (click)="proceedToCheckout()">
+            <i class="bi bi-cart-check"></i> Checkout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu Categories -->
+    <div *ngIf="getCategoryKeys().length > 0" class="row">
+      <div class="col-md-12">
+        <h2 class="mb-4">Menu</h2>
+        
+        <!-- Category Navigation -->
+        <div class="mb-4">
+          <div class="btn-group" role="group">
+            <a *ngFor="let category of getCategoryKeys()" 
+               [href]="getCategoryLink(category)"
+               class="btn btn-outline-primary btn-sm">
+              {{ category }} ({{ menuCategories()[category].length }})
+            </a>
+          </div>
+        </div>
+
+        <!-- Menu Items by Category -->
+        <div *ngFor="let category of getCategoryKeys()" 
+             [id]="getCategoryId(category)"
+             class="mb-5">
+          <h3 class="mb-3 text-primary">{{ category }}</h3>
+          <div class="row">
+            <div *ngFor="let item of menuCategories()[category]" class="col-md-6 col-lg-4 mb-3">
+              <div class="card h-100" 
+                   (click)="addToCart(item)"
+                   role="button"
+                   [attr.aria-label]="'Add ' + item.name + ' to cart for $' + (item.price || 0).toFixed(2)"
+                   tabindex="0"
+                   (keydown.enter)="addToCart(item)"
+                   (keydown.space)="addToCart(item); $event.preventDefault()"
+                   style="cursor: pointer;">
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title">{{ item.name }}</h5>
+                  <p class="card-text flex-grow-1">{{ item.description }}</p>
+                  <div class="d-flex justify-content-between align-items-center mt-auto">
+                    <span class="h5 text-success mb-0">${{ (item.price || 0).toFixed(2) }}</span>
+                    <button class="btn btn-primary btn-sm" 
+                            (click)="addToCart(item); $event.stopPropagation()"
+                            [disabled]="!restaurant()"
+                            [attr.aria-label]="'Add ' + item.name + ' to cart'">
+                      <i class="bi bi-cart-plus"></i> Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Menu Items -->
+    <div *ngIf="getCategoryKeys().length === 0" class="text-center">
+      <div class="alert alert-info">
+        <h4 class="alert-heading">No Menu Available</h4>
+        <p>This restaurant doesn't have menu items available at the moment.</p>
+        <hr>
+        <button class="btn btn-primary" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Back to Restaurants
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-4 mb-4">
+      <div class="col-md-12">
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-secondary" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i> Back to Restaurants
+          </button>
+          <button *ngIf="cartService.totalItems() > 0" 
+                  class="btn btn-success" 
+                  (click)="proceedToCheckout()">
+            <i class="bi bi-cart-check"></i> 
+            Checkout ({{ cartService.totalItems() }} items - ${{ (cartService.totalPrice() || 0).toFixed(2) }})
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

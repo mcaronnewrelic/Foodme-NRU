@@ -1,0 +1,78 @@
+<!-- Header Navigation -->
+<app-header></app-header>
+
+<div class="container mt-4">
+  <section class="how-it-works-section">
+    <h2 class="mb-4">How It Works: Your Craving, Delivered.</h2>
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <p class="lead">It's simple:</p>
+        <ol class="fm-steps list-group list-group-numbered">
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-map-marker-alt text-primary me-3"></i>
+              <strong>Enter delivery address</strong>
+            </div>
+          </li>
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-store text-primary me-3"></i>
+              <strong>Pick a great restaurant</strong>
+            </div>
+          </li>
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-utensils text-primary me-3"></i>
+              <strong>Select yummy food</strong>
+            </div>
+          </li>
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-clock text-primary me-3"></i>
+              <strong>Enter delivery time</strong>
+            </div>
+          </li>
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-credit-card text-primary me-3"></i>
+              <strong>Enter payment details</strong>
+            </div>
+          </li>
+          <li class="list-group-item d-flex align-items-center">
+            <div class="ms-2">
+              <i class="fas fa-truck text-success me-3"></i>
+              <strong>And the food will be on the way!</strong>
+            </div>
+          </li>
+        </ol>
+        
+        <div class="text-center mt-4">
+          <a routerLink="/customer" class="btn btn-primary btn-lg">
+            <i class="fas fa-play me-2"></i>
+            Get Started
+          </a>
+        </div>
+        
+        <!-- APM Testing Section -->
+        <div class="mt-5 pt-4 border-top">
+          <h4 class="text-center mb-3 text-muted">
+            <i class="fas fa-bug me-2"></i>
+            APM Testing
+          </h4>
+          <div class="text-center">
+            <p class="text-muted small mb-3">
+              For developers: Test error monitoring and APM integration
+            </p>
+            <button 
+              type="button" 
+              class="btn btn-outline-danger"
+              (click)="simulateError()">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Simulate Synchronous Error
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

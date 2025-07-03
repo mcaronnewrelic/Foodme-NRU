@@ -1,0 +1,26 @@
+/* Import Bootstrap CSS */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* You can add global styles to this file, and also import other style files */
+
+/* Custom styles for FoodMe app */
+.restaurant-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-2px);
+}
+
+.delivery-section {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}

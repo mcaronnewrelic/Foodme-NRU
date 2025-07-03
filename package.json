@@ -1,0 +1,59 @@
+{
+  "name": "foodme",
+  "version": "1.0.0",
+  "description": "NRU tutorial",
+  "keywords": [],
+  "homepage": "http://foodme.nru.to/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/newrelicuniversity/foodme.git"
+  },
+  "author": "NRU Team",
+  "contributors": [
+    "Michael Caron <mcaron@newrelic.com>"
+  ],
+  "main": "server/start.js",
+  "scripts": {
+    "install:all": "npm install && cd angular-app && npm install",
+    "build:angular": "cd angular-app && npm run build",
+    "build": "npm run build:angular && cp -r server dist/",
+    "start": "npm run build:angular && node -r newrelic server/start.js --env-file=.env",
+    "start:prod": "NODE_ENV=production node -r newrelic dist/server/start.js --env-file=.env",
+    "dev": "node --env-file=.env server/start.js",
+    "stop": "pkill --signal SIGINT node",
+    "loadtest": ".venv/bin/locust -f locustfile.py --host=http://localhost:3000",
+    "loadtest:headless": ".venv/bin/locust -f locustfile.py --host=http://localhost:3000 --headless -u 10 -r 2 -t 60s",
+    "loadtest:web": ".venv/bin/locust -f locustfile.py --host=http://localhost:3000 --web-host=0.0.0.0 --web-port=8089",
+    "newrelic:deployment": "USER=$(git config user.name) && CHANGELOG=$(git log --oneline -1) && COMMIT=$(git rev-parse HEAD) && curl -X POST https://api.newrelic.com/graphql -H 'Content-Type: application/json' -H 'API-Key: $NEW_RELIC_API_KEY' --data-raw '{\"query\":\"mutation { changeTrackingCreateDeployment(deployment: {description: \\\"FoodMe Node.js Server Deployment\\\", user: \\\"'$USER'\\\", changelog: \\\"'$CHANGELOG'\\\", commit: \\\"'$COMMIT'\\\", deploymentType: BASIC}) { deploymentId } }\"}'",
+    "docker:build": "docker build -t foodme:latest .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env foodme:latest",
+    "docker:run:prod": "docker run -p 3000:3000 -e NODE_ENV=production -e NEW_RELIC_LICENSE_KEY=\"$NEW_RELIC_LICENSE_KEY\" -e NEW_RELIC_API_KEY=\"$NEW_RELIC_API_KEY\" foodme:latest",
+    "docker:compose": "docker-compose up --build",
+    "docker:compose:prod": "docker-compose up --build foodme",
+    "docker:with-secrets": "./run-with-secrets.sh",
+    "setup:env": "cp .env.template .env && echo 'Please edit .env with your actual values'",
+    "validate:env": "test -f .env && echo '✅ .env file exists' || echo '❌ .env file missing - run: npm run setup:env'",
+    "deploy": "./deploy.sh",
+    "deploy:build": "./deploy.sh --build",
+    "deploy:marker": "./deploy.sh --marker", 
+    "deploy:start": "./deploy.sh --start",
+    "deploy:test": "./deploy.sh --loadtest",
+    "security:validate": "./validate-security.sh",
+    "security:docker": "docker run --rm -i hadolint/hadolint < dockerfile"
+
+  },
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "csv": ">=0.2.1",
+    "express": "^5.1.0",
+    "express-handlebars": "^8.0.2",
+    "morgan": "^1.10.0",
+    "newrelic": "^12.21.0",
+    "open": "^8.4.2",
+    "pino": "^8.7.0"
+  },
+  "engines": {
+    "node": ">=20.14.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,56 @@
+.how-it-works-section {
+  padding: 2rem 0;
+}
+
+.how-it-works-section h2 {
+  text-align: center;
+  color: #333;
+  font-weight: 600;
+}
+
+.fm-steps {
+  margin: 2rem 0;
+}
+
+.fm-steps .list-group-item {
+  border: none;
+  border-left: 4px solid #007bff;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.fm-steps .list-group-item:hover {
+  background-color: #e9ecef;
+  transform: translateX(5px);
+}
+
+.fm-steps .list-group-item:last-child {
+  border-left-color: #28a745;
+}
+
+.fm-steps .list-group-item:last-child:hover {
+  background-color: #d4edda;
+}
+
+.lead {
+  font-size: 1.2rem;
+  color: #666;
+  text-align: center;
+}
+
+/* APM Testing Section */
+.border-top {
+  border-color: #e9ecef !important;
+}
+
+.btn-outline-danger {
+  transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}

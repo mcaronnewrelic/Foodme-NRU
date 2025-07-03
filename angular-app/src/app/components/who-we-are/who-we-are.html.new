@@ -1,0 +1,128 @@
+<!-- Header Navigation -->
+<app-header></app-header>
+
+<div class="container">
+  <section class="who-we-are-section">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <h2 id="who-we-are" class="text-center mb-5 display-4">Who We Are: Your Craving, Delivered.</h2>
+
+        <div class="intro-section mb-5">
+          <p class="lead text-center">
+            At FoodMe, we believe that great food shouldn't be a luxury, nor a hassle. We're a passionate team of food lovers, tech enthusiasts, and logistics wizards united by a simple mission: to bring the delicious culinary creations of your favorite local restaurants directly to your doorstep with unparalleled ease and speed.
+          </p>
+        </div>
+
+        <div class="story-section mb-5">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h3 class="mb-3">
+                <i class="fas fa-book-open text-primary"></i> Our Story
+              </h3>
+              <p class="text-muted">
+                FoodMe was born from a shared love for diverse cuisines and the frustration of missed meal times. We envisioned a world where busy schedules don't mean compromising on taste or quality. What started as a simple idea among friends quickly blossomed into a vibrant platform connecting hungry diners with the incredible culinary talent in their neighborhoods.
+              </p>
+            </div>
+            <div class="col-md-4 text-center">
+              <i class="fas fa-heart text-danger" style="font-size: 4rem;"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="values-section mb-5">
+          <h3 class="text-center mb-4">
+            <i class="fas fa-compass text-primary"></i> What Drives Us
+          </h3>
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-clock text-primary"></i> Convenience
+                  </h5>
+                  <p class="card-text">
+                    We live in a fast-paced world, and your time is precious. FoodMe is designed to be effortlessly simple, we make food delivery a seamless experience.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-utensils text-primary"></i> Variety
+                  </h5>
+                  <p class="card-text">
+                    We celebrate diversity in food! Our platform partners with a vast array of restaurants, from hidden local gems to popular culinary hotspots, ensuring you always find exactly what you're craving.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-award text-primary"></i> Quality
+                  </h5>
+                  <p class="card-text">
+                    We're committed to ensuring that the food you receive is as fresh, hot, and delicious as if you were dining in. We work closely with our restaurant partners and delivery fleet to maintain high standards.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fas fa-users text-primary"></i> Community
+                  </h5>
+                  <p class="card-text">
+                    We're more than just a delivery service; we're part of the local food ecosystem. By supporting local restaurants, we help them thrive, create jobs, and enrich our communities.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row justify-content-center">
+            <div class="col-lg-8">
+              <div class="card">
+                <div class="card-body text-center">
+                  <h5 class="card-title">
+                    <i class="fas fa-fire text-danger"></i> Passion for Food
+                  </h5>
+                  <p class="card-text">
+                    Ultimately, we do what we do because we love food. We understand the joy a good meal brings, and our greatest satisfaction comes from being the bridge between you and your next unforgettable dining experience.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="join-section mb-5">
+          <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+              <h3 class="card-title">
+                <i class="fas fa-hands-helping"></i> Join the FoodMe Family
+              </h3>
+              <p class="card-text lead">
+                Whether you're looking for a quick lunch, a cozy dinner, or catering for a gathering, FoodMe is here to simplify your life and satisfy your appetite. We're constantly striving to improve, expand, and deliver more joy, one delicious meal at a time.
+              </p>
+              <a routerLink="/customer" class="btn btn-light btn-lg">
+                <i class="fas fa-play"></i> Start Ordering
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="tagline-section text-center">
+          <h4 class="text-muted display-6 fst-italic">
+            <i class="fas fa-quote-left"></i>
+            FoodMe: Your plate, your pace.
+            <i class="fas fa-quote-right"></i>
+          </h4>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

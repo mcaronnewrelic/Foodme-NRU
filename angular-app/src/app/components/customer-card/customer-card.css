@@ -1,0 +1,42 @@
+.customer-card {
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  margin-bottom: 0.5rem;
+}
+
+.info-item strong {
+  color: #495057;
+  font-weight: 600;
+}
+
+.address-text {
+  background-color: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border-left: 3px solid #007bff;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.card-header h6 {
+  font-weight: 600;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .card-header .btn {
+    align-self: flex-end;
+  }
+}

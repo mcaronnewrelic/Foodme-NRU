@@ -1,0 +1,74 @@
+<!-- Header Navigation -->
+<app-header></app-header>
+
+<!-- Add spacing below header -->
+<div class="mt-4"></div>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Your Information</h2>
+          
+          <form (ngSubmit)="onSubmit()">
+            <div class="form-group mb-3">
+              <label for="name" class="form-label">Name</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name"
+                [value]="customerForm().name"
+                (input)="updateForm('name', $any($event.target).value)"
+                placeholder="Enter your name">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email"
+                [value]="customerForm().email"
+                (input)="updateForm('email', $any($event.target).value)"
+                placeholder="Enter your email">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="phone" class="form-label">Phone</label>
+              <input 
+                type="tel" 
+                class="form-control" 
+                id="phone"
+                [value]="customerForm().phone"
+                (input)="updateForm('phone', $any($event.target).value)"
+                placeholder="Enter your phone number">
+            </div>
+
+            <div class="form-group mb-3">
+              <label for="address" class="form-label">Delivery Address *</label>
+              <textarea 
+                class="form-control" 
+                id="address"
+                rows="3"
+                [value]="customerForm().address"
+                (input)="updateForm('address', $any($event.target).value)"
+                placeholder="Enter your delivery address"
+                required></textarea>
+              <small class="form-text text-muted">This field is required to continue.</small>
+            </div>
+
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary btn-lg"
+                [disabled]="!isFormValid()">
+                Continue to Restaurants
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

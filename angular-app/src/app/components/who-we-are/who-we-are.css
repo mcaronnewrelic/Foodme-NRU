@@ -1,0 +1,92 @@
+.who-we-are-section {
+  padding: 2rem 0;
+}
+
+.who-we-are-section h2 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 2rem;
+}
+
+.intro-section .lead {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #555;
+}
+
+.story-section,
+.values-section,
+.join-section {
+  margin-bottom: 3rem;
+}
+
+.story-section h3,
+.values-section h3 {
+  color: #333;
+  font-weight: 600;
+}
+
+.value-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  background: #ffffff;
+}
+
+.value-card .card-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.value-card .card-text {
+  color: #666;
+  line-height: 1.6;
+}
+
+.join-section .card {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+}
+
+.join-section .btn-light {
+  color: #007bff;
+  font-weight: 600;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+}
+
+.join-section .btn-light:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.tagline-section h4 {
+  font-size: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .who-we-are-section {
+    padding: 1rem 0;
+  }
+  
+  .intro-section .lead {
+    font-size: 1rem;
+  }
+  
+  .tagline-section h4 {
+    font-size: 1.2rem;
+  }
+}

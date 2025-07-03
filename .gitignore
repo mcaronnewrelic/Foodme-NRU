@@ -1,0 +1,17 @@
+**/.DS_Store
+nbproject
+manifest.mf
+build.xml
+newrelic_agent.log
+
+.setup/
+.project
+.settings
+.idea/*
+.env
+.env.local
+node_modules/
+dist/
+venv/
+.venv/
+__pycache__/

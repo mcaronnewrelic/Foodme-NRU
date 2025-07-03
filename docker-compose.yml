@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Standard service using .env file
+  foodme:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # Alternative: explicit environment variables (override .env)
+  foodme-env-vars:
+    build: .
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      # Pass environment variables from host or .env file
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NEW_RELIC_API_KEY=${NEW_RELIC_API_KEY}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-FoodMe-App}
+    restart: unless-stopped
+
+  # Example with Docker secrets (for Docker Swarm)
+  foodme-with-secrets:
+    build: .
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - NEW_RELIC_APP_NAME=FoodMe-App-Secrets
+    secrets:
+      - new_relic_license_key
+      - new_relic_api_key
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+
+# Define secrets for Docker Swarm
+secrets:
+  new_relic_license_key:
+    external: true
+  new_relic_api_key:
+    external: true

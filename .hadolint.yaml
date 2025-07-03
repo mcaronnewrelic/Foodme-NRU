@@ -1,0 +1,27 @@
+# Hadolint configuration for secure Docker practices
+# See: https://github.com/hadolint/hadolint#configure
+
+# Rules to enforce for security
+failure-threshold: warning
+
+# Specific security rules we want to enforce
+ignored:
+  # We're okay with this rule as we use WORKDIR appropriately
+  # - DL3003
+
+# Rules that should always fail the build
+strict-labels: false
+
+# Override severity for critical security rules
+override:
+  # Enforce no secrets in ARG/ENV
+  error:
+    - DL3007  # Using latest tag
+    - DL3008  # Pin versions in apt
+    - DL3009  # Delete apt cache
+    - DL3010  # Copy vs ADD
+    - DL3020  # Use COPY instead of ADD for files
+    - DL3025  # Use arguments JSON notation for CMD and ENTRYPOINT
+
+# Custom rules for our project
+label-schema: true
