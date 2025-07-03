@@ -133,6 +133,7 @@ class DatabaseService {
             const restaurantQuery = `
                 SELECT 
                     r.id,
+                    r.original_id,
                     r.name,
                     r.description,
                     r.cuisine_type as cuisine,
@@ -165,6 +166,7 @@ class DatabaseService {
             
             return {
                 id: restaurant.id,
+                original_id: restaurant.original_id,
                 name: restaurant.name,
                 description: restaurant.description,
                 cuisine: restaurant.cuisine,
@@ -172,7 +174,8 @@ class DatabaseService {
                 price: this.calculatePriceLevel(menuItemsResult.rows),
                 menuItems: menuItemsResult.rows.map(item => ({
                     name: item.name,
-                    price: parseFloat(item.price)
+                    price: parseFloat(item.price),
+                    category: item.category
                 })),
                 deliveryTime: restaurant.delivery_time,
                 deliveryFee: parseFloat(restaurant.delivery_fee),

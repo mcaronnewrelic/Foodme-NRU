@@ -79,7 +79,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // In dev: server runs from /server/, Angular build is in /dist/browser/
   // In prod: server runs from /dist/server/, Angular build is in /dist/browser/
   // In Docker: server runs from /foodme/app/server/, Angular build is in /foodme/app/browser/
-  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd().includes('/foodme');
+  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
   let ANGULAR_DIST_DIR;
   
   if (isDocker) {
