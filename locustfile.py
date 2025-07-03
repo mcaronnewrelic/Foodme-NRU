@@ -2,7 +2,7 @@
 
 import json
 import random
-from locust import FastHttpUser, TaskSet, between
+from locust import FastHttpUser, TaskSet, between, task
 from faker import Faker
 fake = Faker()
 
@@ -75,7 +75,13 @@ class UserBehavior(TaskSet):
     def on_start(self):
         restaurants(self)
 
-    tasks = [restaurants, order]
+    @task(3)
+    def get_restaurants(self):
+        restaurants(self)
+    
+    @task(1) 
+    def place_order(self):
+        order(self)
 
 class WebsiteUser(FastHttpUser):
     tasks = [UserBehavior]

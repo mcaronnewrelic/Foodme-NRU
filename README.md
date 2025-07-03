@@ -61,6 +61,9 @@ FoodMe is a demonstration application that showcases modern web development prac
 npm run setup:env
 # Edit .env with your configuration
 
+# Auto-detect best Docker configuration for your environment
+./docker-setup.sh
+
 # Install dependencies
 npm run install:all
 
@@ -108,12 +111,14 @@ npm run docker:run
 | Document | Description |
 |----------|-------------|
 | **[Setup Guide](./SETUP_GUIDE.md)** | Complete project setup, dependencies, and development environment configuration |
+| **[DevContainer Setup](./DEVCONTAINER_SETUP.md)** | Docker Compose configurations for dev containers and restricted environments |
 | **[Database Guide](./DATABASE_GUIDE.md)** | PostgreSQL setup, initialization, and restaurant data management |
 | **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** | Complete deployment workflows and environment management |
 | **[Load Testing](./LOAD_TESTING.md)** | Performance testing with Locust, metrics, and analysis |
 
 ### 💡 Quick Reference
 - **Setup Guide**: Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for complete project setup
+- **DevContainer Setup**: Use [DEVCONTAINER_SETUP.md](./DEVCONTAINER_SETUP.md) for dev container configurations
 - **Database Setup**: Use [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for PostgreSQL initialization  
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
@@ -183,6 +188,103 @@ PORT=3000
 - **Non-root user** execution for security
 - **Environment variable injection** for configuration
 - **.dockerignore** for build context optimization
+
+### DevContainer & Docker Compose Configurations
+
+FoodMe includes multiple Docker Compose configurations to support different development environments:
+
+#### Main Configuration (`docker-compose.yml`)
+- **Purpose**: Production-ready setup with full New Relic monitoring
+- **Features**: Complete infrastructure monitoring, nginx reverse proxy, PostgreSQL
+- **Best for**: Host development, CI/CD pipelines, production deployment
+
+#### DevContainer Fallback (`docker-compose.dev.yml`)
+- **Purpose**: Simplified setup for dev containers with limited privileges
+- **Features**: Basic New Relic monitoring without privileged access requirements
+- **Best for**: GitHub Codespaces, VS Code dev containers, restricted environments
+
+#### Load Testing (`docker-compose.loadtest.yml`)
+- **Purpose**: Isolated load testing with Locust
+- **Features**: Performance testing against running application
+- **Best for**: Load testing, performance benchmarking
+
+#### Using Fallback Configurations in DevContainers
+
+**Method 1: Override with specific compose file**
+```bash
+# Use dev container friendly configuration
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# Use load testing configuration
+docker compose -f docker-compose.loadtest.yml up -d
+```
+
+**Method 2: Environment-specific startup**
+```bash
+# For restricted environments (like dev containers)
+export DOCKER_COMPOSE_ENV=dev
+npm run docker:compose:dev
+
+# For load testing
+npm run loadtest:docker
+```
+
+**Method 3: Manual container selection**
+```bash
+# Start only specific services from dev config
+docker compose -f docker-compose.dev.yml up newrelic-infra-simple -d
+
+# Start load testing
+docker compose -f docker-compose.loadtest.yml up locust
+```
+
+#### DevContainer Configuration Differences
+
+| Feature | Main Config | DevContainer Config |
+|---------|-------------|-------------------|
+| **Privileged Access** | ✅ Full host access | ❌ Restricted for security |
+| **Process Monitoring** | ✅ Enabled | ❌ Disabled |
+| **Host Volume Mounts** | ✅ Full host filesystem | ❌ Docker socket only |
+| **Network Mode** | Bridge with custom network | Bridge mode |
+| **New Relic Features** | Full monitoring suite | Basic container monitoring |
+
+#### Troubleshooting DevContainer Issues
+
+If you encounter issues with the main configuration in a dev container:
+
+1. **Permission Errors**: Use the dev configuration
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+2. **Privileged Access Denied**: The dev config removes privileged requirements
+   ```bash
+   # Check what's different
+   grep -A 10 "privileged\|cap_add\|pid:" docker-compose.yml
+   # vs
+   grep -A 10 "network_mode\|volumes:" docker-compose.dev.yml
+   ```
+
+3. **Volume Mount Issues**: Dev config uses minimal volume mounts
+   ```bash
+   # Only mounts Docker socket instead of full host
+   docker compose -f docker-compose.dev.yml logs newrelic-infra-simple
+   ```
+
+#### Adding to Package.json Scripts
+
+Add these convenience scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "docker:compose:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
+    "docker:compose:loadtest": "docker compose -f docker-compose.loadtest.yml up",
+    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down"
+  }
+}
+```
 
 ## 🧪 Testing & Quality
 

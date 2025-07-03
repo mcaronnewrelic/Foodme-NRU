@@ -8,7 +8,6 @@ services:
     container_name: newrelic-infra-dev
     restart: unless-stopped
     # Remove privileged access and host networking for dev container compatibility
-    network_mode: bridge
     volumes:
       # Minimal volume mounts that work in most dev container setups
       - "/var/run/docker.sock:/var/run/docker.sock:ro"

@@ -1,0 +1,19 @@
+services:
+  # Locust load testing service
+  locust:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./locustfile.py:/app/locustfile.py
+      - ./requirements.txt:/app/requirements.txt
+    networks:
+      - foodme_foodme_network
+    command: >
+      bash -c "
+        pip install -r requirements.txt && 
+        locust -f locustfile.py --host=http://foodme:3000 --headless -u 5 -r 1 -t 30s
+      "
+
+networks:
+  foodme_foodme_network:
+    external: true
