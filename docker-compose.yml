@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Standard service using .env file
+  # Main FoodMe application service
   foodme:
     build: .
     ports:
@@ -11,6 +11,69 @@ services:
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - foodme_network
+
+  # Nginx reverse proxy with HTTPS support
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-foodme
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces
+      - type: bind
+        source: .setup/nginx/foodme.local.conf
+        target: /etc/nginx/conf.d/foodme.conf
+        read_only: true
+      - type: bind
+        source: .setup/certs/foodme.local.crt
+        target: /etc/nginx/certs/foodme.crt
+        read_only: true
+      - type: bind
+        source: .setup/certs/foodme.local.key
+        target: /etc/nginx/certs/foodme.key
+        read_only: true
+    networks:
+      - foodme_network
+    depends_on:
+      - foodme
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # PostgreSQL database
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    user: postgres
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_DB=foodme
+      - POSTGRES_USER=foodme_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+      - "5432"
+    networks:
+      - foodme_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d foodme -U foodme_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # Alternative: explicit environment variables (override .env)
   foodme-env-vars:
@@ -24,6 +87,8 @@ services:
       - NEW_RELIC_API_KEY=${NEW_RELIC_API_KEY}
       - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-FoodMe-App}
     restart: unless-stopped
+    networks:
+      - foodme_network
 
   # Example with Docker secrets (for Docker Swarm)
   foodme-with-secrets:
@@ -37,12 +102,26 @@ services:
       - new_relic_license_key
       - new_relic_api_key
     restart: unless-stopped
+    networks:
+      - foodme_network
     deploy:
       replicas: 1
 
-# Define secrets for Docker Swarm
+# Docker volumes for persistent data
+volumes:
+  db-data:
+    driver: local
+
+# Docker networks
+networks:
+  foodme_network:
+    driver: bridge
+
+# Define secrets for Docker Swarm and database
 secrets:
   new_relic_license_key:
     external: true
   new_relic_api_key:
     external: true
+  db-password:
+    file: db/password.txt

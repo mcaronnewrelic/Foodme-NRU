@@ -32,7 +32,7 @@
     "docker:compose": "docker-compose up --build",
     "docker:compose:prod": "docker-compose up --build foodme",
     "docker:with-secrets": "./run-with-secrets.sh",
-    "setup:env": "cp .env.template .env && echo 'Please edit .env with your actual values'",
+    "setup:env": "cp .env.example .env && echo 'Please edit .env with your actual values'",
     "validate:env": "test -f .env && echo '✅ .env file exists' || echo '❌ .env file missing - run: npm run setup:env'",
     "deploy": "./deploy.sh",
     "deploy:build": "./deploy.sh --build",

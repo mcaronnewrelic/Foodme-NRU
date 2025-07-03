@@ -111,7 +111,7 @@ npm run docker:run
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow
-- **Environment Setup**: Copy `.env.template` to `.env` and configure your settings
+- **Environment Setup**: Copy `.env.example` to `.env` and configure your settings
 
 ## 🛠️ Development
 
@@ -159,7 +159,7 @@ npm run security:validate    # Run security validation
 ## 🔧 Configuration
 
 ### Environment Variables
-Copy `.env.template` to `.env` and configure:
+Copy `.env.example` to `.env` and configure:
 
 ```bash
 # New Relic Configuration

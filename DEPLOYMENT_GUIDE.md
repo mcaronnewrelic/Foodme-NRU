@@ -37,8 +37,8 @@ This quick reference shows all the ways to deploy and manage the FoodMe applicat
 
 ## 📁 Required Files
 
-- ✅ `.env` - Your actual secrets (from `.env.template`)
-- ✅ `.env.template` - Template with placeholders
+- ✅ `.env` - Your actual secrets (from `.env.example`)
+- ✅ `.env.example` - Template with placeholders
 - ✅ `deploy.sh` - Main deployment script
 - ✅ `docker-compose.yml` - Container orchestration
 
@@ -98,7 +98,7 @@ docker-compose up --build    # Compose deployment
 ## 🌟 Best Practices
 
 - ✅ Use `.env` file for all environments
-- ✅ Keep `.env.template` updated
+- ✅ Keep `.env.example` updated
 - ✅ Never commit `.env` to git
 - ✅ Use different credentials per environment
 - ✅ Rotate API keys regularly

@@ -42,7 +42,7 @@ load_env_file() {
         print_success "Environment variables loaded from .env file"
     else
         print_warning ".env file not found, using system environment variables"
-        print_info "To create .env file, run: cp .env.template .env"
+        print_info "To create .env file, run: cp .env.example .env"
     fi
 }
 
@@ -52,7 +52,7 @@ validate_env_file() {
     
     if [ ! -f ".env" ]; then
         print_error ".env file not found"
-        print_info "Create one from template: cp .env.template .env"
+        print_info "Create one from template: cp .env.example .env"
         return 1
     fi
     
@@ -328,7 +328,7 @@ show_help() {
     echo "    NEW_RELIC_LICENSE_KEY  License key for APM agent"
     echo ""
     echo "Setup:"
-    echo "  1. Copy template: cp .env.template .env"
+    echo "  1. Copy template: cp .env.example .env"
     echo "  2. Edit .env with your actual New Relic credentials"
     echo "  3. Run: $0"
     echo ""
