@@ -308,7 +308,7 @@ download_mkcert() {
 # Function to generate SSL certificates using mkcert
 generate_certificates() {
     local domain="$1"
-    local certs_dir="certs"
+    local certs_dir="$PROCESS_DIR/certs"
     
     log_info "Generating SSL certificates for $domain..."
     
@@ -318,27 +318,56 @@ generate_certificates() {
         return 1
     }
     
-    # Install CA if not already installed
-    log_info "Installing mkcert CA (may prompt for password)..."
-    if ! ./mkcert -install; then
-        log_error "Failed to install mkcert CA"
-        log_info "You may need to install the CA manually"
-        return 1
+    # Check if certificates already exist
+    if [[ -f "$certs_dir/$domain.crt" && -f "$certs_dir/$domain.key" ]]; then
+        log_info "SSL certificates for $domain already exist, skipping generation"
+        log_success "Using existing SSL certificates"
+        return 0
     fi
     
-    # Generate certificates
-    log_info "Generating certificates for $domain and *.$domain..."
-    if ! ./mkcert -key-file "./$certs_dir/$domain.key" -cert-file "./$certs_dir/$domain.crt" "$domain" "*.$domain"; then
-        log_error "Failed to generate SSL certificates"
-        return 1
+    # Check if we have existing certificates we can copy
+    if [[ -f "$certs_dir/local.foodme.nru.to.crt" && -f "$certs_dir/local.foodme.nru.to.key" ]]; then
+        log_info "Found existing certificates, copying for $domain..."
+        cp "$certs_dir/local.foodme.nru.to.crt" "$certs_dir/$domain.crt" || {
+            log_error "Failed to copy existing certificate"
+            return 1
+        }
+        cp "$certs_dir/local.foodme.nru.to.key" "$certs_dir/$domain.key" || {
+            log_error "Failed to copy existing key"
+            return 1
+        }
+        log_success "SSL certificates copied successfully"
+        return 0
     fi
     
-    # Set appropriate permissions
-    chmod 644 "./$certs_dir/$domain.crt" "./$certs_dir/$domain.key" || {
-        log_warning "Failed to set certificate permissions"
-    }
+    # Try to use mkcert if available
+    if [[ -x "./mkcert" ]]; then
+        # Install CA if not already installed
+        log_info "Installing mkcert CA (may prompt for password)..."
+        if ! ./mkcert -install; then
+            log_warning "Failed to install mkcert CA, but continuing..."
+        fi
+        
+        # Generate certificates
+        log_info "Generating certificates for $domain and *.$domain..."
+        if ./mkcert -key-file "./$certs_dir/$domain.key" -cert-file "./$certs_dir/$domain.crt" "$domain" "*.$domain"; then
+            # Set appropriate permissions
+            chmod 644 "./$certs_dir/$domain.crt" "./$certs_dir/$domain.key" || {
+                log_warning "Failed to set certificate permissions"
+            }
+            log_success "SSL certificates generated successfully"
+            return 0
+        else
+            log_warning "mkcert failed, but continuing with setup..."
+        fi
+    fi
     
-    log_success "SSL certificates generated successfully"
+    log_warning "Could not generate certificates, you may need to provide them manually"
+    log_info "Place your certificate files at:"
+    log_info "  - $certs_dir/$domain.crt"
+    log_info "  - $certs_dir/$domain.key"
+    
+    return 0  # Don't fail the entire setup
 }
 
 # Function to create the Nginx configuration file
@@ -470,24 +499,6 @@ EOF
     
     log_success "Nginx configuration created successfully at $nginx_dir/$domain.conf"
 }
-    }
-    
-    # Nginx status endpoint
-    location /nginx-status {
-        access_log off;
-        return 200 "OK";
-        add_header Content-Type text/plain;
-    }
-}
-EOF
-    
-    if [[ $? -ne 0 ]]; then
-        log_error "Failed to create Nginx configuration"
-        return 1
-    fi
-    
-    log_success "Nginx configuration created successfully"
-}
 
 # Function to create the Docker Compose file
 create_docker_compose() {
@@ -495,6 +506,16 @@ create_docker_compose() {
     local app_name="$2"
     
     log_info "Creating Docker Compose configuration..."
+    
+    # Check if docker-compose.yml already exists in the project root
+    if [[ -f "../docker-compose.yml" ]]; then
+        log_info "Existing docker-compose.yml found in project root, skipping generation"
+        log_info "To use the generated nginx configuration, ensure docker-compose.yml references:"
+        log_info "  - .setup/nginx/$domain.conf for nginx config"
+        log_info "  - .setup/certs/$domain.crt and .setup/certs/$domain.key for SSL"
+        log_success "Using existing Docker Compose configuration"
+        return 0
+    fi
     
     cat > docker-compose.yml << EOF
 # Docker Compose configuration for $domain
@@ -523,21 +544,6 @@ services:
     labels:
       - "traefik.enable=false"
       - "com.docker.compose.project=$app_name"
-    depends_on:
-      - $app_name
-
-  $app_name:
-    build: .
-    container_name: $app_name-app
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    networks:
-      - ${app_name}_network
-    environment:
-      - NODE_ENV=production
-    labels:
-      - "com.docker.compose.project=$app_name"
 
 networks:
   ${app_name}_network:
@@ -565,29 +571,64 @@ start_services() {
         compose_cmd="docker-compose"
     fi
     
-    # Stop any existing services
-    log_info "Stopping any existing services..."
-    $compose_cmd down --remove-orphans &> /dev/null || true
-    
-    # Start services
-    log_info "Starting nginx container..."
-    if ! $compose_cmd up -d; then
-        log_error "Failed to start Docker services"
-        log_info "You can try manually with: cd $PROCESS_DIR && $compose_cmd up -d"
-        return 1
-    fi
-    
-    # Wait for services to be ready
-    log_info "Waiting for services to be ready..."
-    sleep 5
-    
-    # Check if nginx is running
-    if ! $compose_cmd ps | grep -q "nginx-$app_name.*Up"; then
-        log_warning "Nginx container may not be running properly"
-        log_info "Check status with: cd $PROCESS_DIR && $compose_cmd ps"
-        log_info "View logs with: cd $PROCESS_DIR && $compose_cmd logs nginx"
+    # Check if we should use existing docker-compose.yml in project root
+    if [[ -f "../docker-compose.yml" ]]; then
+        log_info "Using existing docker-compose.yml from project root..."
+        cd ..
+        
+        # Stop any existing services
+        log_info "Stopping any existing services..."
+        $compose_cmd down --remove-orphans &> /dev/null || true
+        
+        # Start services
+        log_info "Starting services with existing configuration..."
+        if ! $compose_cmd up -d; then
+            log_error "Failed to start Docker services"
+            log_info "You can try manually with: $compose_cmd up -d"
+            cd "$PROCESS_DIR"
+            return 1
+        fi
+        
+        # Wait for services to be ready
+        log_info "Waiting for services to be ready..."
+        sleep 5
+        
+        # Check if nginx is running
+        if $compose_cmd ps | grep -q "nginx.*Up"; then
+            log_success "Docker services started successfully"
+        else
+            log_warning "Services may not be running properly"
+            log_info "Check status with: $compose_cmd ps"
+            log_info "View logs with: $compose_cmd logs"
+        fi
+        
+        cd "$PROCESS_DIR"
     else
-        log_success "Docker services started successfully"
+        # Use generated docker-compose.yml in .setup directory
+        # Stop any existing services
+        log_info "Stopping any existing services..."
+        $compose_cmd down --remove-orphans &> /dev/null || true
+        
+        # Start services
+        log_info "Starting nginx container..."
+        if ! $compose_cmd up -d; then
+            log_error "Failed to start Docker services"
+            log_info "You can try manually with: cd $PROCESS_DIR && $compose_cmd up -d"
+            return 1
+        fi
+        
+        # Wait for services to be ready
+        log_info "Waiting for services to be ready..."
+        sleep 5
+        
+        # Check if nginx is running
+        if ! $compose_cmd ps | grep -q "nginx-$app_name.*Up"; then
+            log_warning "Nginx container may not be running properly"
+            log_info "Check status with: cd $PROCESS_DIR && $compose_cmd ps"
+            log_info "View logs with: cd $PROCESS_DIR && $compose_cmd logs nginx"
+        else
+            log_success "Docker services started successfully"
+        fi
     fi
 }
 
