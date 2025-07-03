@@ -42,6 +42,11 @@ var removeMenuItems = function(restaurant) {
     }
   });
 
+  // Add image URL based on restaurant ID
+  if (restaurant.id) {
+    clone.image = `/assets/img/restaurants/${restaurant.id}.jpg`;
+  }
+
   return clone;
 };
 
