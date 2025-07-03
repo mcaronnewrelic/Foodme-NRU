@@ -29,15 +29,15 @@ services:
     volumes:
       - ${LOCAL_WORKSPACE_FOLDER:-./}:/workspaces
       - type: bind
-        source: nginx-config/foodme.conf
+        source: .setup/nginx/foodme.local.conf
         target: /etc/nginx/conf.d/default.conf
         read_only: true
       - type: bind
-        source: .setup/certs/local.foodme.nru.to.crt
+        source: .setup/certs/foodme.local.crt
         target: /etc/nginx/certs/foodme.crt
         read_only: true
       - type: bind
-        source: .setup/certs/local.foodme.nru.to.key
+        source: .setup/certs/foodme.local.key
         target: /etc/nginx/certs/foodme.key
         read_only: true
     networks:
