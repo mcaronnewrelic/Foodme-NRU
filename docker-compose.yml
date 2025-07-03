@@ -113,7 +113,7 @@ services:
       - NRIA_ENABLE_PROCESS_METRICS=true
       - NRIA_DOCKER_LABELS=true
       # Custom attributes for easier filtering in New Relic
-      - NRIA_CUSTOM_ATTRIBUTES='{"environment":"docker-compose","application":"foodme"}'
+      - NRIA_CUSTOM_ATTRIBUTES={"environment":"docker-compose","application":"foodme"}
 
   # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
   # foodme-with-secrets:
