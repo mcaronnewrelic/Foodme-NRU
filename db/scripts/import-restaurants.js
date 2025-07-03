@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 // Read the restaurants JSON file
 const restaurantsFile = path.join(__dirname, '../../server/data/restaurants.json');
@@ -82,7 +83,7 @@ BEGIN;
         
         // Insert restaurant
         sql += `-- Restaurant ${index + 1}: ${restaurant.name}
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     ${cleanString(restaurant.id)},
     ${cleanString(restaurant.name)},

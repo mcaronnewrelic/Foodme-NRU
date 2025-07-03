@@ -1,5 +1,5 @@
 -- Auto-generated SQL file for importing all restaurant data
--- Generated on: 2025-07-03T09:19:29.008Z
+-- Generated on: 2025-07-03T09:34:33.851Z
 -- Source: server/data/restaurants.json
 
 -- Clear existing data
@@ -11,7 +11,7 @@ ALTER TABLE restaurants ALTER COLUMN id TYPE varchar(50);
 BEGIN;
 
 -- Restaurant 1: Esther's German Saloon
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'esthers',
     'Esther''s German Saloon',
@@ -19,8 +19,8 @@ VALUES (
     'German',
     3,
     '25-35 min',
-    6.01,
-    17.54,
+    4.78,
+    22.75,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -92,7 +92,7 @@ VALUES ('esthers', 'Wurstsalad mit Bauernbrot', 6.95, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 2: Robatayaki Hachi
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'robatayaki',
     'Robatayaki Hachi',
@@ -100,8 +100,8 @@ VALUES (
     'Japanese',
     5,
     '30-45 min',
-    7.42,
-    22.58,
+    7.21,
+    20.46,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -164,7 +164,7 @@ VALUES ('robatayaki', 'Wakame salad', 4.95, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 3: BBQ Tofu Paradise
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'tofuparadise',
     'BBQ Tofu Paradise',
@@ -172,8 +172,8 @@ VALUES (
     'Vegetarian',
     1,
     '20-30 min',
-    3.13,
-    16.53,
+    4.85,
+    14.53,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -239,7 +239,7 @@ VALUES ('tofuparadise', 'vegetable stew', 5.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 4: Le Bateau Rouge
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'bateaurouge',
     'Le Bateau Rouge',
@@ -247,8 +247,8 @@ VALUES (
     'French',
     4,
     '35-50 min',
-    7.74,
-    25.96,
+    8.76,
+    26.78,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -311,7 +311,7 @@ VALUES ('bateaurouge', 'tarte tatin', 5.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 5: Khartoum Khartoum
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'khartoum',
     'Khartoum Khartoum',
@@ -319,8 +319,8 @@ VALUES (
     'african',
     2,
     '25-35 min',
-    4.65,
-    16.93,
+    4.50,
+    21.15,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -383,7 +383,7 @@ VALUES ('khartoum', 'Yassa Lamb', 8.25, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 6: Sally's Diner
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'sallys',
     'Sally''s Diner',
@@ -391,8 +391,8 @@ VALUES (
     'American',
     3,
     '30-45 min',
-    6.17,
-    26.79,
+    7.38,
+    21.90,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -458,7 +458,7 @@ VALUES ('sallys', 'Spaghetti and meatballs', 11.45, 'Noodles', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 7: Saucy Piggy
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'saucy',
     'Saucy Piggy',
@@ -466,8 +466,8 @@ VALUES (
     'barbecue',
     2,
     '25-35 min',
-    5.61,
-    15.86,
+    6.18,
+    22.18,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -533,7 +533,7 @@ VALUES ('saucy', 'Riblets', 10.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 8: Czech Point
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'czechpoint',
     'Czech Point',
@@ -541,8 +541,8 @@ VALUES (
     'czech/slovak',
     4,
     '15-25 min',
-    2.15,
-    9.52,
+    1.70,
+    11.56,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -605,7 +605,7 @@ VALUES ('czechpoint', 'Sour cabbage soup', 10.45, 'Soups', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 9: Der Speisewagen
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'speisewagen',
     'Der Speisewagen',
@@ -613,8 +613,8 @@ VALUES (
     'German',
     5,
     '25-35 min',
-    5.16,
-    19.21,
+    5.86,
+    22.72,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -686,7 +686,7 @@ VALUES ('speisewagen', 'Wurstsalad mit Bauernbrot', 6.95, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 10: Beijing Express
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'beijing',
     'Beijing Express',
@@ -694,8 +694,8 @@ VALUES (
     'Chinese',
     4,
     '20-30 min',
-    4.54,
-    19.95,
+    3.43,
+    15.60,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -761,7 +761,7 @@ VALUES ('beijing', 'Young Chow fried rice', 6.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 11: Satay Village
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'satay',
     'Satay Village',
@@ -769,8 +769,8 @@ VALUES (
     'Thai',
     2,
     '30-45 min',
-    6.30,
-    27.54,
+    7.80,
+    23.82,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -836,7 +836,7 @@ VALUES ('satay', 'Tofu salad rolls', 10.45, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 12: Cancun
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'cancun',
     'Cancun',
@@ -844,8 +844,8 @@ VALUES (
     'Mexican',
     3,
     '25-35 min',
-    5.84,
-    15.17,
+    4.90,
+    21.44,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -914,7 +914,7 @@ VALUES ('cancun', 'Vegetarian platter', 4.55, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 13: Curry Up
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'curryup',
     'Curry Up',
@@ -922,8 +922,8 @@ VALUES (
     'Indian',
     5,
     '30-45 min',
-    6.32,
-    29.72,
+    6.91,
+    20.74,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -989,7 +989,7 @@ VALUES ('curryup', 'Tandoori Chicken', 4.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 14: Carthage
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'carthage',
     'Carthage',
@@ -997,8 +997,8 @@ VALUES (
     'african',
     1,
     '20-30 min',
-    4.21,
-    11.08,
+    3.53,
+    16.49,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1061,7 +1061,7 @@ VALUES ('carthage', 'Yassa Lamb', 8.25, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 15: Burgerama
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'burgerama',
     'Burgerama',
@@ -1069,8 +1069,8 @@ VALUES (
     'American',
     4,
     '35-50 min',
-    8.38,
-    29.92,
+    9.43,
+    32.11,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1136,7 +1136,7 @@ VALUES ('burgerama', 'Spaghetti and meatballs', 11.45, 'Noodles', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 16: Three Little Pigs
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'littlepigs',
     'Three Little Pigs',
@@ -1144,8 +1144,8 @@ VALUES (
     'barbecue',
     2,
     '25-35 min',
-    5.15,
-    18.70,
+    5.22,
+    20.86,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1211,7 +1211,7 @@ VALUES ('littlepigs', 'Riblets', 10.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 17: Little Prague
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'littleprague',
     'Little Prague',
@@ -1219,8 +1219,8 @@ VALUES (
     'czech/slovak',
     3,
     '30-45 min',
-    6.47,
-    21.56,
+    6.97,
+    23.55,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1283,7 +1283,7 @@ VALUES ('littleprague', 'Sour cabbage soup', 10.45, 'Soups', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 18: Kohl Haus
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'kohlhaus',
     'Kohl Haus',
@@ -1291,8 +1291,8 @@ VALUES (
     'German',
     2,
     '25-35 min',
-    4.92,
-    19.82,
+    4.71,
+    23.07,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1364,7 +1364,7 @@ VALUES ('kohlhaus', 'Wurstsalad mit Bauernbrot', 6.95, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 19: Dragon's Tail
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'dragon',
     'Dragon''s Tail',
@@ -1372,8 +1372,8 @@ VALUES (
     'Chinese',
     4,
     '15-25 min',
-    3.45,
-    6.72,
+    1.99,
+    5.11,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1439,7 +1439,7 @@ VALUES ('dragon', 'Young Chow fried rice', 6.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 20: Hit Me Baby One More Thai
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'babythai',
     'Hit Me Baby One More Thai',
@@ -1447,8 +1447,8 @@ VALUES (
     'Thai',
     5,
     '25-35 min',
-    4.58,
-    17.96,
+    4.87,
+    16.62,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1514,7 +1514,7 @@ VALUES ('babythai', 'Tofu salad rolls', 10.45, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 21: The Whole Tamale
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'wholetamale',
     'The Whole Tamale',
@@ -1522,8 +1522,8 @@ VALUES (
     'Mexican',
     4,
     '20-30 min',
-    3.07,
-    19.81,
+    3.68,
+    19.93,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1592,7 +1592,7 @@ VALUES ('wholetamale', 'Vegetarian platter', 4.55, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 22: Birmingham Bhangra
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'bhangra',
     'Birmingham Bhangra',
@@ -1600,8 +1600,8 @@ VALUES (
     'Indian',
     2,
     '30-45 min',
-    7.62,
-    23.10,
+    7.58,
+    24.44,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1667,7 +1667,7 @@ VALUES ('bhangra', 'Tandoori Chicken', 4.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 23: Taqueria
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'taqueria',
     'Taqueria',
@@ -1675,8 +1675,8 @@ VALUES (
     'Mexican',
     3,
     '25-35 min',
-    5.40,
-    16.10,
+    5.16,
+    22.56,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1745,7 +1745,7 @@ VALUES ('taqueria', 'Vegetarian platter', 4.55, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 24: Pedro's
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'pedros',
     'Pedro''s',
@@ -1753,8 +1753,8 @@ VALUES (
     'Mexican',
     5,
     '30-45 min',
-    7.89,
-    20.71,
+    7.51,
+    28.06,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1823,7 +1823,7 @@ VALUES ('pedros', 'Vegetarian platter', 4.55, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 25: Super Wonton Express
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'superwonton',
     'Super Wonton Express',
@@ -1831,8 +1831,8 @@ VALUES (
     'Chinese',
     1,
     '20-30 min',
-    3.79,
-    15.64,
+    3.49,
+    10.82,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1898,7 +1898,7 @@ VALUES ('superwonton', 'Young Chow fried rice', 6.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 26: Naan Sequitur
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'naansequitur',
     'Naan Sequitur',
@@ -1906,8 +1906,8 @@ VALUES (
     'Indian',
     4,
     '35-50 min',
-    7.95,
-    32.79,
+    8.15,
+    25.00,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -1973,7 +1973,7 @@ VALUES ('naansequitur', 'Tandoori Chicken', 4.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 27: Sakura
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'sakura',
     'Sakura',
@@ -1981,8 +1981,8 @@ VALUES (
     'Japanese',
     2,
     '25-35 min',
-    5.90,
-    19.69,
+    6.45,
+    18.94,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2045,7 +2045,7 @@ VALUES ('sakura', 'Wakame salad', 4.95, 'Salads', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 28: Shandong Lu
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'shandong',
     'Shandong Lu',
@@ -2053,8 +2053,8 @@ VALUES (
     'Chinese',
     3,
     '30-45 min',
-    6.25,
-    27.82,
+    6.94,
+    28.80,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2120,7 +2120,7 @@ VALUES ('shandong', 'Young Chow fried rice', 6.45, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 29: Curry Galore
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'currygalore',
     'Curry Galore',
@@ -2128,8 +2128,8 @@ VALUES (
     'Indian',
     2,
     '25-35 min',
-    5.68,
-    18.87,
+    5.20,
+    17.36,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2195,7 +2195,7 @@ VALUES ('currygalore', 'Tandoori Chicken', 4.95, 'Main Dishes', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 30: North by Northwest
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'north',
     'North by Northwest',
@@ -2203,8 +2203,8 @@ VALUES (
     'cafe',
     4,
     '15-25 min',
-    2.71,
-    12.36,
+    3.28,
+    6.16,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2273,7 +2273,7 @@ VALUES ('north', 'Turkey Sandwich', 7.55, 'Sandwiches', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 31: Full of Beans
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'beans',
     'Full of Beans',
@@ -2281,8 +2281,8 @@ VALUES (
     'cafe',
     5,
     '25-35 min',
-    6.16,
-    24.39,
+    5.13,
+    20.14,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2351,7 +2351,7 @@ VALUES ('beans', 'Turkey Sandwich', 7.55, 'Sandwiches', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 32: Tropical Jeeve's Cafe
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'jeeves',
     'Tropical Jeeve''s Cafe',
@@ -2359,8 +2359,8 @@ VALUES (
     'cafe',
     4,
     '20-30 min',
-    4.59,
-    15.09,
+    4.94,
+    13.91,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2429,7 +2429,7 @@ VALUES ('jeeves', 'Turkey Sandwich', 7.55, 'Sandwiches', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 33: Zardoz Cafe
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'zardoz',
     'Zardoz Cafe',
@@ -2437,8 +2437,8 @@ VALUES (
     'cafe',
     2,
     '30-45 min',
-    6.25,
-    28.95,
+    7.24,
+    23.68,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2507,7 +2507,7 @@ VALUES ('zardoz', 'Turkey Sandwich', 7.55, 'Sandwiches', true)
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 34: Angular Pizza
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'angular',
     'Angular Pizza',
@@ -2515,8 +2515,8 @@ VALUES (
     'pizza',
     5,
     '15-25 min',
-    3.03,
-    5.22,
+    2.53,
+    7.60,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2579,7 +2579,7 @@ VALUES ('angular', 'Thin crust sausage and guanciale bacon', 4.95, 'Main Dishes'
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 35: Flavia
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'flavia',
     'Flavia',
@@ -2587,8 +2587,8 @@ VALUES (
     'pizza',
     5,
     '30-45 min',
-    6.17,
-    21.71,
+    7.00,
+    26.75,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2651,7 +2651,7 @@ VALUES ('flavia', 'Thin crust sausage and guanciale bacon', 4.95, 'Main Dishes',
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 36: Luigi's House of Pies
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'luigis',
     'Luigi''s House of Pies',
@@ -2659,8 +2659,8 @@ VALUES (
     'pizza',
     1,
     '20-30 min',
-    3.24,
-    19.55,
+    4.03,
+    15.97,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2723,7 +2723,7 @@ VALUES ('luigis', 'Thin crust sausage and guanciale bacon', 4.95, 'Main Dishes',
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 37: Thick and Thin
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'thick',
     'Thick and Thin',
@@ -2731,8 +2731,8 @@ VALUES (
     'pizza',
     4,
     '35-50 min',
-    8.82,
-    27.99,
+    8.19,
+    27.38,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2795,7 +2795,7 @@ VALUES ('thick', 'Thin crust sausage and guanciale bacon', 4.95, 'Main Dishes', 
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 38: When in Rome
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'wheninrome',
     'When in Rome',
@@ -2803,8 +2803,8 @@ VALUES (
     'pizza',
     2,
     '25-35 min',
-    4.63,
-    20.88,
+    5.31,
+    24.64,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
@@ -2867,7 +2867,7 @@ VALUES ('wheninrome', 'Thin crust sausage and guanciale bacon', 4.95, 'Main Dish
 ON CONFLICT DO NOTHING;
 
 -- Restaurant 39: Pizza 76
-INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
+INSERT INTO restaurants (restaurant_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)
 VALUES (
     'pizza76',
     'Pizza 76',
@@ -2875,8 +2875,8 @@ VALUES (
     'pizza',
     3,
     '30-45 min',
-    6.09,
-    24.90,
+    6.34,
+    22.10,
     true
 ) ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,

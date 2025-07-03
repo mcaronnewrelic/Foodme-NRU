@@ -35,6 +35,7 @@
     "setup:env": "cp .env.example .env && echo 'Please edit .env with your actual values'",
     "validate:env": "test -f .env && echo '✅ .env file exists' || echo '❌ .env file missing - run: npm run setup:env'",
     "db:generate-import": "node db/scripts/import-restaurants.js",
+    "db:generate-import-uuid": "node db/scripts/import-restaurants-uuid.js",
     "db:test": "node db/scripts/test-database.js",
     "db:connect": "docker compose exec db psql -U foodme_user -d foodme",
     "db:backup": "docker compose exec db pg_dump -U foodme_user foodme > backup_$(date +%Y%m%d_%H%M%S).sql",
@@ -42,12 +43,11 @@
     "db:logs": "docker compose logs db",
     "deploy": "./deploy.sh",
     "deploy:build": "./deploy.sh --build",
-    "deploy:marker": "./deploy.sh --marker", 
+    "deploy:marker": "./deploy.sh --marker",
     "deploy:start": "./deploy.sh --start",
     "deploy:test": "./deploy.sh --loadtest",
     "security:validate": "./validate-security.sh",
     "security:docker": "docker run --rm -i hadolint/hadolint < dockerfile"
-
   },
   "dependencies": {
     "body-parser": "^1.20.0",
@@ -58,7 +58,8 @@
     "newrelic": "^12.21.0",
     "open": "^8.4.2",
     "pg": "^8.12.0",
-    "pino": "^8.7.0"
+    "pino": "^8.7.0",
+    "uuid": "^9.0.1"
   },
   "engines": {
     "node": ">=20.14.0"
