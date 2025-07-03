@@ -4,34 +4,8 @@
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.clickable-menu-card {
-  cursor: pointer;
-  user-select: none;
-  border: 1px solid #e9ecef;
-}
-
-.clickable-menu-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.15);
-  border-color: #007bff;
-}
-
-.clickable-menu-card:focus {
-  outline: 2px solid #007bff;
-  outline-offset: 2px;
-}
-
-.clickable-menu-card:active {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-}
-
-.clickable-menu-card.disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.card:hover {
+/* Legacy card hover for non-menu items */
+.card:not(.menu-item-card):hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -64,52 +38,128 @@
   scroll-margin-top: 120px;
 }
 
+/* Menu Item Card Animations */
 .menu-item-card {
+  position: relative;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  cursor: pointer;
+  user-select: none;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
-  transition: all 0.2s ease-in-out;
 }
 
 .menu-item-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.15);
   border-color: #007bff;
+}
+
+.menu-item-card:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.menu-item-card:active {
+  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
 }
 
-.cart-summary {
-  position: sticky;
-  top: 70px;
-  z-index: 99;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Adding to cart animation */
+.menu-item-card.adding-to-cart {
+  animation: addToCartPulse 0.5s ease-in-out;
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-.breadcrumb {
-  background-color: transparent;
-  padding: 0;
-  margin-bottom: 1rem;
+.menu-item-card.recently-added {
+  border-color: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  animation: addedToCartGlow 2s ease-in-out;
 }
 
-.breadcrumb-item + .breadcrumb-item::before {
-  content: "›";
-  color: #6c757d;
+@keyframes addToCartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
-.restaurant-header-card {
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+@keyframes addedToCartGlow {
+  0% { 
+    border-color: #28a745;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  }
+  50% { 
+    border-color: #28a745;
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.6);
+  }
+  100% { 
+    border-color: #e9ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.category-nav {
-  background: linear-gradient(to bottom, #ffffff, #f8f9fa);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 2rem;
+/* Add to cart button animations */
+.add-to-cart-btn {
+  transition: all 0.3s ease-in-out;
+  min-width: 80px;
 }
 
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
+.add-to-cart-btn.adding {
+  animation: buttonPulse 0.5s ease-in-out;
 }
+
+.add-to-cart-btn.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+@keyframes buttonPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Cart feedback overlay */
+.cart-feedback-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.feedback-animation {
+  font-size: 2rem;
+  animation: feedbackScale 0.5s ease-in-out;
+}
+
+@keyframes feedbackScale {
+  0% { 
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Icon transitions */
+.bi-cart-plus, .bi-cart-check {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Existing styles */
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

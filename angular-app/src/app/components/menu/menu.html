@@ -110,7 +110,9 @@
           <h3 class="mb-3 text-primary">{{ category }}</h3>
           <div class="row">
             <div *ngFor="let item of menuCategories()[category]" class="col-md-6 col-lg-4 mb-3">
-              <div class="card h-100" 
+              <div class="card h-100 menu-item-card" 
+                   [class.adding-to-cart]="isAddingToCart(item.id)"
+                   [class.recently-added]="isRecentlyAdded(item.id)"
                    (click)="addToCart(item)"
                    role="button"
                    [attr.aria-label]="'Add ' + item.name + ' to cart for $' + (item.price || 0).toFixed(2)"
@@ -123,12 +125,28 @@
                   <p class="card-text flex-grow-1">{{ item.description }}</p>
                   <div class="d-flex justify-content-between align-items-center mt-auto">
                     <span class="h5 text-success mb-0">${{ (item.price || 0).toFixed(2) }}</span>
-                    <button class="btn btn-primary btn-sm" 
+                    <button class="btn btn-primary btn-sm add-to-cart-btn" 
+                            [class.btn-success]="isRecentlyAdded(item.id)"
+                            [class.adding]="isAddingToCart(item.id)"
                             (click)="addToCart(item); $event.stopPropagation()"
-                            [disabled]="!restaurant()"
+                            [disabled]="!restaurant() || isAddingToCart(item.id)"
                             [attr.aria-label]="'Add ' + item.name + ' to cart'">
-                      <i class="bi bi-cart-plus"></i> Add
+                      <i class="bi bi-cart-plus" 
+                         [class.bi-cart-plus]="!isRecentlyAdded(item.id)"
+                         [class.bi-cart-check]="isRecentlyAdded(item.id)"></i>
+                      <span *ngIf="isAddingToCart(item.id)">Adding...</span>
+                      <span *ngIf="!isAddingToCart(item.id) && !isRecentlyAdded(item.id)">Add</span>
+                      <span *ngIf="isRecentlyAdded(item.id) && !isAddingToCart(item.id)">Added!</span>
                     </button>
+                  </div>
+                </div>
+                
+                <!-- Visual feedback overlay -->
+                <div class="cart-feedback-overlay" 
+                     *ngIf="isAddingToCart(item.id) || isRecentlyAdded(item.id)">
+                  <div class="feedback-animation">
+                    <i class="bi bi-cart-plus-fill" *ngIf="isAddingToCart(item.id)"></i>
+                    <i class="bi bi-check-circle-fill text-success" *ngIf="isRecentlyAdded(item.id) && !isAddingToCart(item.id)"></i>
                   </div>
                 </div>
               </div>

@@ -75,34 +75,39 @@ services:
       # Pass environment variables from host or .env file
       - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_API_KEY=${NEW_RELIC_API_KEY}
-      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-FoodMe-App}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME}
     restart: unless-stopped
     networks:
       - foodme_network
 
-  # New Relic Infrastructure Agent for container monitoring - DISABLED for dev container
-  # newrelic-infra:
-  #   image: newrelic/infrastructure:latest
-  #   container_name: newrelic-infra
-  #   restart: unless-stopped
-  #   cap_add:
-  #     - SYS_PTRACE
-  #   network_mode: host
-  #   pid: host
-  #   privileged: true
-  #   volumes:
-  #     - "/:/host:ro"
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #     - "./newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
-  #   environment:
-  #     - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
-  #     - NRIA_DISPLAY_NAME=FoodMe-Infrastructure
-  #     - NRIA_VERBOSE=1
-  #     # Enable Docker integration
-  #     - NRIA_ENABLE_PROCESS_METRICS=true
-  #     - NRIA_DOCKER_LABELS=true
-  #     # Custom attributes for easier filtering in New Relic
-  #     - NRIA_CUSTOM_ATTRIBUTES={"environment":"docker-compose","application":"foodme"}
+  # New Relic Infrastructure Agent for container monitoring
+  newrelic-infra:
+    image: newrelic/infrastructure:latest
+    container_name: newrelic-infra
+    restart: unless-stopped
+    # Remove problematic capabilities for dev container
+    # cap_add:
+    #   - SYS_PTRACE
+    # network_mode: bridge  # Removed - conflicts with networks config
+    # pid: host  # Disable for dev container compatibility
+    # privileged: true  # Disable for dev container compatibility
+    volumes:
+      # Minimal volume mounts for dev container compatibility
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # Comment out problematic mounts
+      # - "/:/host:ro"
+      # - "./newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
+    environment:
+      - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NRIA_DISPLAY_NAME=FoodMe-Infrastructure-DevContainer
+      - NRIA_VERBOSE=1
+      # Disable features that require privileged access
+      - NRIA_ENABLE_PROCESS_METRICS=false
+      - NRIA_DOCKER_LABELS=true
+      # Custom attributes for easier filtering in New Relic
+      - NRIA_CUSTOM_ATTRIBUTES={"environment":"devcontainer","application":"foodme"}
+    networks:
+      - foodme_network
 
   # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
   # foodme-with-secrets:

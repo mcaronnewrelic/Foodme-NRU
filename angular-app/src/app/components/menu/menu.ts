@@ -19,6 +19,10 @@ export class MenuComponent implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   
+  // Visual feedback for adding items to cart
+  addingToCart = signal<string | null>(null);
+  recentlyAdded = signal<Set<string>>(new Set());
+  
   // Group menu items by category
   menuCategories = computed(() => {
     const restaurant = this.restaurant();
@@ -78,12 +82,41 @@ export class MenuComponent implements OnInit {
   addToCart(item: MenuItem) {
     const restaurant = this.restaurant();
     if (restaurant) {
+      // Set visual feedback
+      this.addingToCart.set(item.id);
+      
+      // Add to cart
       this.cartService.addToCart({
         menuItem: item,
         quantity: 1,
         restaurant: restaurant
       });
+      
+      // Add to recently added set for visual feedback
+      const currentSet = this.recentlyAdded();
+      currentSet.add(item.id);
+      this.recentlyAdded.set(new Set(currentSet));
+      
+      // Clear adding state after animation
+      setTimeout(() => {
+        this.addingToCart.set(null);
+      }, 500);
+      
+      // Clear recently added state after feedback period
+      setTimeout(() => {
+        const currentSet = this.recentlyAdded();
+        currentSet.delete(item.id);
+        this.recentlyAdded.set(new Set(currentSet));
+      }, 2000);
     }
+  }
+
+  isAddingToCart(itemId: string): boolean {
+    return this.addingToCart() === itemId;
+  }
+
+  isRecentlyAdded(itemId: string): boolean {
+    return this.recentlyAdded().has(itemId);
   }
 
   getCategoryKeys() {
