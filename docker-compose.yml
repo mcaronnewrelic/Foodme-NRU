@@ -92,6 +92,29 @@ services:
     networks:
       - foodme_network
 
+  # New Relic Infrastructure Agent for container monitoring
+  newrelic-infra:
+    image: newrelic/infrastructure:latest
+    container_name: newrelic-infra
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    network_mode: host
+    pid: host
+    privileged: true
+    volumes:
+      - "/:/host:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - NRIA_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+      - NRIA_DISPLAY_NAME=FoodMe-Infrastructure
+      - NRIA_VERBOSE=1
+      # Enable Docker integration
+      - NRIA_ENABLE_PROCESS_METRICS=true
+      - NRIA_DOCKER_LABELS=true
+      # Custom attributes for easier filtering in New Relic
+      - NRIA_CUSTOM_ATTRIBUTES='{"environment":"docker-compose","application":"foodme"}'
+
   # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
   # foodme-with-secrets:
   #   build: .
