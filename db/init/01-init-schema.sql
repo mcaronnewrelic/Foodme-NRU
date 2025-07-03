@@ -7,6 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Create tables for the FoodMe application
 CREATE TABLE IF NOT EXISTS restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    original_id VARCHAR(100) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     image_url VARCHAR(500),
@@ -72,6 +73,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_restaurants_original_id ON restaurants(original_id);
 CREATE INDEX IF NOT EXISTS idx_restaurants_cuisine_type ON restaurants(cuisine_type);
 CREATE INDEX IF NOT EXISTS idx_restaurants_is_active ON restaurants(is_active);
 CREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_id ON menu_items(restaurant_id);
@@ -101,11 +103,11 @@ CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers FOR EACH R
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert sample data for development (optional)
-INSERT INTO restaurants (name, description, image_url, cuisine_type, rating, delivery_time, delivery_fee, min_order) VALUES
-('Tasty Thai', 'Authentic Thai cuisine with fresh ingredients', '/assets/img/restaurants/thai.jpg', 'Thai', 4.5, '25-40 min', 2.99, 15.00),
-('Pizza Palace', 'Wood-fired pizzas and Italian classics', '/assets/img/restaurants/pizza.jpg', 'Italian', 4.2, '20-35 min', 3.50, 12.00),
-('Burger Barn', 'Gourmet burgers and crispy fries', '/assets/img/restaurants/burger.jpg', 'American', 4.0, '15-30 min', 2.50, 10.00),
-('Sushi Zen', 'Fresh sushi and Japanese specialties', '/assets/img/restaurants/sushi.jpg', 'Japanese', 4.7, '30-45 min', 4.00, 20.00)
+INSERT INTO restaurants (original_id, name, description, image_url, cuisine_type, rating, delivery_time, delivery_fee, min_order) VALUES
+('sample_thai', 'Tasty Thai', 'Authentic Thai cuisine with fresh ingredients', '/assets/img/restaurants/thai.jpg', 'Thai', 4.5, '25-40 min', 2.99, 15.00),
+('sample_pizza', 'Pizza Palace', 'Wood-fired pizzas and Italian classics', '/assets/img/restaurants/pizza.jpg', 'Italian', 4.2, '20-35 min', 3.50, 12.00),
+('sample_burger', 'Burger Barn', 'Gourmet burgers and crispy fries', '/assets/img/restaurants/burger.jpg', 'American', 4.0, '15-30 min', 2.50, 10.00),
+('sample_sushi', 'Sushi Zen', 'Fresh sushi and Japanese specialties', '/assets/img/restaurants/sushi.jpg', 'Japanese', 4.7, '30-45 min', 4.00, 20.00)
 ON CONFLICT DO NOTHING;
 
 -- Success message

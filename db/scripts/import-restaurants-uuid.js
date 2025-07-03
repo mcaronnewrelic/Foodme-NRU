@@ -66,9 +66,10 @@ BEGIN;
         };
         
         sql += `-- Restaurant ${index + 1}: ${restaurant.name}\n`;
-        sql += `INSERT INTO restaurants (id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)\n`;
+        sql += `INSERT INTO restaurants (id, original_id, name, description, cuisine_type, rating, delivery_time, delivery_fee, min_order, is_active)\n`;
         sql += `VALUES (\n`;
         sql += `    '${restaurantUUID}',\n`;
+        sql += `    ${cleanString(restaurant.id)},\n`;
         sql += `    ${cleanString(restaurant.name)},\n`;
         sql += `    ${cleanString(restaurant.description)},\n`;
         sql += `    ${cleanString(restaurant.cuisine)},\n`;

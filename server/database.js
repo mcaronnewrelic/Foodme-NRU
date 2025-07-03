@@ -69,6 +69,7 @@ class DatabaseService {
             const restaurantsQuery = `
                 SELECT 
                     r.id,
+                    r.original_id,
                     r.name,
                     r.description,
                     r.cuisine_type as cuisine,
@@ -98,6 +99,7 @@ class DatabaseService {
                 // Transform to match JSON structure
                 return {
                     id: restaurant.id,
+                    original_id: restaurant.original_id,
                     name: restaurant.name,
                     description: restaurant.description,
                     cuisine: restaurant.cuisine,

@@ -42,8 +42,11 @@ var removeMenuItems = function(restaurant) {
     }
   });
 
-  // Add image URL based on restaurant ID
-  if (restaurant.id) {
+  // Add image URL based on restaurant original ID
+  if (restaurant.original_id) {
+    clone.image = `/assets/img/restaurants/${restaurant.original_id}.jpg`;
+  } else if (restaurant.id) {
+    // Fallback to regular id for non-database sources
     clone.image = `/assets/img/restaurants/${restaurant.id}.jpg`;
   }
 
