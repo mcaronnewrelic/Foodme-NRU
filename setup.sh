@@ -1,193 +1,672 @@
 #!/bin/bash
 
-# This script sets up a development server for any application(running on a local port) using Docker, Nginx, and mkcert.
-# It downloads mkcert, generates SSL certificates, creates an Nginx configuration file, and sets up a Docker Compose file.
-# The script requires a Domain Name, Application Name and Port as an argument.
+# FoodMe Development Environment Setup Script
+# ===========================================
+# This script sets up a secure HTTPS development environment for the FoodMe application
+# using Docker, Nginx reverse proxy, and mkcert for SSL certificates.
+# 
+# Features:
+# - Automatic SSL certificate generation with mkcert
+# - Nginx reverse proxy configuration with HTTPS redirect
+# - Docker Compose setup for easy container management
+# - Cross-platform support (macOS, Linux, Windows via WSL)
+# - Automatic hosts file management
+# - Comprehensive error handling and validation
+#
+# Requirements:
+# - Docker and Docker Compose
+# - Internet connection (to download mkcert)
+# - sudo privileges (for hosts file modification)
+#
+# Usage: ./setup.sh <domain> <app_name> <port>
+# Example: ./setup.sh foodme.local foodme 3000
 
-# Get the operating system type
-OS_TYPE="$(echo "$(uname -s)" | tr '[:upper:]' '[:lower:]')"
+set -euo pipefail  # Exit on error, undefined variables, and pipe failures
 
-# Get the system architecture
-ARCHITECTURE="$(echo "$(uname -m)" | tr '[:upper:]' '[:lower:]')"
+# Script configuration
+readonly SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly PROCESS_DIR=".setup"
+readonly MKCERT_VERSION="latest"
 
-ACTUAL_OS_TYPE="$OS_TYPE"
-ACTUAL_ARCHITECTURE="$ARCHITECTURE"
+# Global variables
+declare OS_TYPE=""
+declare ARCHITECTURE=""
 
-PROCESS_DIR=".setup"
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
 
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1" >&2
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1" >&2
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Error handling
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "Setup failed with exit code $exit_code"
+        log_info "Cleaning up temporary files..."
+        [[ -d "$PROCESS_DIR" ]] && rm -rf "$PROCESS_DIR/mkcert*" 2>/dev/null || true
+        log_info "You can try running the script again or check the logs above for more details"
+    fi
+}
+
+trap cleanup EXIT
+
+# Show usage information
+show_usage() {
+    cat << EOF
+Usage: $SCRIPT_NAME <domain> <app_name> <port>
+
+Arguments:
+  domain    - The domain name for the local HTTPS setup (e.g., foodme.local)
+  app_name  - The application name for Docker containers (e.g., foodme)
+  port      - The port where your application is running (e.g., 3000)
+
+Examples:
+  $SCRIPT_NAME foodme.local foodme 3000
+  $SCRIPT_NAME myapp.dev myapp 8080
+
+This script will:
+1. Download and install mkcert for SSL certificate generation
+2. Create SSL certificates for the specified domain
+3. Set up an Nginx reverse proxy with HTTPS redirect
+4. Configure Docker Compose for easy container management
+5. Add the domain to your hosts file (requires sudo)
+
+Requirements:
+- Docker and Docker Compose installed and running
+- Internet connection (to download mkcert)
+- sudo privileges (for hosts file modification)
+EOF
+}
+
+# System detection
+get_system_info() {
+    local os_type="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    local architecture="$(uname -m | tr '[:upper:]' '[:lower:]')"
+    
+    # Normalize OS type
+    case "$os_type" in
+        darwin) OS_TYPE="darwin" ;;
+        linux) OS_TYPE="linux" ;;
+        mingw*|msys*|cygwin*) OS_TYPE="windows" ;;
+        *) OS_TYPE="linux" ;; # Default fallback
+    esac
+    
+    # Normalize architecture
+    case "$architecture" in
+        x86_64|amd64) ARCHITECTURE="amd64" ;;
+        arm64|aarch64) ARCHITECTURE="arm64" ;;
+        armv7l) ARCHITECTURE="armv7" ;;
+        i386|i686) ARCHITECTURE="386" ;;
+        *) ARCHITECTURE="amd64" ;; # Default fallback
+    esac
+    
+    log_info "Detected system: $OS_TYPE/$ARCHITECTURE"
+}
+
+
+# Input validation
+validate_inputs() {
+    local domain="$1"
+    local app_name="$2"
+    local port="$3"
+    
+    # Validate domain format
+    if [[ ! "$domain" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]$ ]]; then
+        log_error "Invalid domain format: $domain"
+        log_info "Domain should contain only letters, numbers, dots, and hyphens"
+        return 1
+    fi
+    
+    # Validate app name format
+    if [[ ! "$app_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]]; then
+        log_error "Invalid app name format: $app_name"
+        log_info "App name should contain only letters, numbers, underscores, and hyphens"
+        return 1
+    fi
+    
+    # Validate port number
+    if [[ ! "$port" =~ ^[0-9]+$ ]] || [[ "$port" -lt 1 ]] || [[ "$port" -gt 65535 ]]; then
+        log_error "Invalid port number: $port"
+        log_info "Port should be a number between 1 and 65535"
+        return 1
+    fi
+    
+    # Check for privileged ports
+    if [[ "$port" -lt 1024 ]] && [[ "$(id -u)" -ne 0 ]]; then
+        log_warning "Port $port is privileged (< 1024) and may require root access"
+    fi
+    
+    log_success "Input validation passed"
+}
 
 # Function to check if Docker is installed and running
 check_dependencies() {
+    log_info "Checking system dependencies..."
+    
     # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
-        echo "Error: Docker is not installed. Please install Docker and try again."
-        exit 1
+        log_error "Docker is not installed"
+        log_info "Please install Docker from: https://docs.docker.com/get-docker/"
+        return 1
     fi
 
     # Check if Docker is running
     if ! docker info &> /dev/null; then
-        echo "Error: Docker is not running. Please start Docker and try again."
-        exit 1
+        log_error "Docker is not running"
+        log_info "Please start Docker and try again"
+        return 1
     fi
+
+    # Check if Docker Compose is available
+    if ! docker compose version &> /dev/null && ! docker-compose --version &> /dev/null; then
+        log_error "Docker Compose is not available"
+        log_info "Please install Docker Compose or use a newer version of Docker"
+        return 1
+    fi
+    
+    # Check internet connectivity
+    if ! curl -s --connect-timeout 5 https://dl.filippo.io &> /dev/null; then
+        log_error "No internet connection to download mkcert"
+        log_info "Please check your internet connection"
+        return 1
+    fi
+    
+    log_success "All dependencies are available"
 }
 
-# Function to preprocess the script
-pre_process() {
-    if [[ "$OS_TYPE" != "darwin" && "$OS_TYPE" != "linux" ]]; then
-        ACTUAL_OS_TYPE="windows"
-    fi
-
-    # Reassign the architecture value based on the correct knowledge available
-    if [[ "$ARCHITECTURE" == "x86_64" ]]; then
-        ACTUAL_ARCHITECTURE="amd64"
-    fi
-
-    echo; echo "OS Type: $ACTUAL_OS_TYPE"; echo "OS Architecture: $ACTUAL_ARCHITECTURE"
-
-    # Check if the '.setup' directory exists
-    if [ ! -d "$PROCESS_DIR" ]; then
-        mkdir "$PROCESS_DIR" 2>/dev/null
-        echo; echo "Created '$PROCESS_DIR' folder"
-    fi
-
-    cd "$PROCESS_DIR"
-}
-
-
-add_virtual_host() {
-    HOSTS_FILE="/etc/hosts"
-
-    if [[ "$ACTUAL_OS_TYPE" == "windows" ]]; then
-        HOSTS_FILE="/c/Windows/System32/drivers/etc/hosts"
-    fi
-
-    if ! grep -q "$1" "$HOSTS_FILE"; then
-
-        if [[ "$ACTUAL_OS_TYPE" == "windows" ]]; then
-                echo "127.0.0.1 $1" | tee -a "$HOSTS_FILE" > /dev/null
-        else
-                echo "127.0.0.1 $1" | sudo tee -a "$HOSTS_FILE" > /dev/null
-        fi
-
-        echo; echo "Added $1 to '"$HOSTS_FILE"' file"
+# Function to setup working directory
+setup_workspace() {
+    log_info "Setting up workspace in $PROCESS_DIR..."
+    
+    # Create process directory if it doesn't exist
+    if [[ ! -d "$PROCESS_DIR" ]]; then
+        mkdir -p "$PROCESS_DIR" || {
+            log_error "Failed to create $PROCESS_DIR directory"
+            return 1
+        }
+        log_success "Created $PROCESS_DIR directory"
     else
-        echo ""\
-        "'$1' already added in '"$HOSTS_FILE"' file, skipping this step."
+        log_info "$PROCESS_DIR directory already exists"
     fi
+
+    # Change to process directory
+    cd "$PROCESS_DIR" || {
+        log_error "Failed to change to $PROCESS_DIR directory"
+        return 1
+    }
+    
+    log_success "Workspace setup complete"
 }
 
+
+# Function to manage hosts file entries
+manage_hosts_file() {
+    local domain="$1"
+    local hosts_file="/etc/hosts"
+    
+    # Determine hosts file location based on OS
+    case "$OS_TYPE" in
+        windows)
+            hosts_file="/c/Windows/System32/drivers/etc/hosts"
+            ;;
+        *)
+            hosts_file="/etc/hosts"
+            ;;
+    esac
+    
+    log_info "Managing hosts file: $hosts_file"
+    
+    # Check if entry already exists
+    if grep -q "127.0.0.1[[:space:]]*$domain" "$hosts_file" 2>/dev/null; then
+        log_info "Entry for $domain already exists in hosts file"
+        return 0
+    fi
+    
+    # Add entry to hosts file
+    local entry="127.0.0.1 $domain"
+    log_info "Adding $domain to hosts file..."
+    
+    case "$OS_TYPE" in
+        windows)
+            echo "$entry" >> "$hosts_file" || {
+                log_error "Failed to add entry to hosts file"
+                log_info "You may need to run this script as Administrator"
+                return 1
+            }
+            ;;
+        *)
+            if [[ "$(id -u)" -eq 0 ]]; then
+                echo "$entry" >> "$hosts_file"
+            else
+                echo "$entry" | sudo tee -a "$hosts_file" > /dev/null || {
+                    log_error "Failed to add entry to hosts file"
+                    log_info "Please run with sudo or add '$entry' to $hosts_file manually"
+                    return 1
+                }
+            fi
+            ;;
+    esac
+    
+    log_success "Added $domain to hosts file"
+}
 
 # Function to download mkcert
 download_mkcert() {
-    echo; echo "Downlinading mkcert."
-
-    MKCERT_EXECUTABLE="mkcert-v*-$ACTUAL_OS_TYPE-$ACTUAL_ARCHITECTURE*"
-    curl -JLO "https://dl.filippo.io/mkcert/latest?for=$ACTUAL_OS_TYPE/$ACTUAL_ARCHITECTURE"
-    mv $MKCERT_EXECUTABLE "mkcert"
-    chmod +x "mkcert"
+    log_info "Downloading mkcert for $OS_TYPE/$ARCHITECTURE..."
+    
+    # Check if mkcert already exists and is executable
+    if [[ -x "./mkcert" ]]; then
+        log_info "mkcert already exists and is executable"
+        return 0
+    fi
+    
+    # Download mkcert
+    local download_url="https://dl.filippo.io/mkcert/latest?for=$OS_TYPE/$ARCHITECTURE"
+    log_info "Downloading from: $download_url"
+    
+    if ! curl -fsSL "$download_url" -o mkcert; then
+        log_error "Failed to download mkcert"
+        log_info "Please check your internet connection and try again"
+        return 1
+    fi
+    
+    # Make executable
+    chmod +x mkcert || {
+        log_error "Failed to make mkcert executable"
+        return 1
+    }
+    
+    # Verify download
+    if [[ ! -x "./mkcert" ]]; then
+        log_error "Downloaded mkcert is not executable"
+        return 1
+    fi
+    
+    log_success "mkcert downloaded successfully"
 }
 
 # Function to generate SSL certificates using mkcert
 generate_certificates() {
-    mkdir 'certs' 2>/dev/null
-    "./mkcert" -install -key-file "./certs/$1.key" -cert-file "./certs/$1.crt" $1 *.$1
-    chmod +rw "./certs"
+    local domain="$1"
+    local certs_dir="certs"
+    
+    log_info "Generating SSL certificates for $domain..."
+    
+    # Create certs directory
+    mkdir -p "$certs_dir" || {
+        log_error "Failed to create certificates directory"
+        return 1
+    }
+    
+    # Install CA if not already installed
+    log_info "Installing mkcert CA (may prompt for password)..."
+    if ! ./mkcert -install; then
+        log_error "Failed to install mkcert CA"
+        log_info "You may need to install the CA manually"
+        return 1
+    fi
+    
+    # Generate certificates
+    log_info "Generating certificates for $domain and *.$domain..."
+    if ! ./mkcert -key-file "./$certs_dir/$domain.key" -cert-file "./$certs_dir/$domain.crt" "$domain" "*.$domain"; then
+        log_error "Failed to generate SSL certificates"
+        return 1
+    fi
+    
+    # Set appropriate permissions
+    chmod 644 "./$certs_dir/$domain.crt" "./$certs_dir/$domain.key" || {
+        log_warning "Failed to set certificate permissions"
+    }
+    
+    log_success "SSL certificates generated successfully"
 }
 
 # Function to create the Nginx configuration file
-create_nginx_conf() {
-    echo; echo "Generating nginx configuration file."
-
-    mkdir "nginx" 2>/dev/null
-
-    cat <<EOF >"nginx/$1.conf"
-    server {
-        listen 80;
-        server_name $1 www.$1;
-
-        location / {
-            return 301 https://\$host\$request_uri;
-        }
+create_nginx_config() {
+    local domain="$1"
+    local port="$2"
+    local nginx_dir="nginx"
+    
+    log_info "Creating Nginx configuration for $domain:$port..."
+    
+    # Create nginx directory
+    mkdir -p "$nginx_dir" || {
+        log_error "Failed to create nginx directory"
+        return 1
     }
+    
+    # Generate nginx configuration
+    cat > "$nginx_dir/$domain.conf" << EOF
+# Nginx configuration for $domain
+# Generated by FoodMe setup script
 
-    server {
-        listen 443 ssl;
-        server_name $1 www.$1;
-        ssl_certificate /etc/nginx/certs/$1.crt;
-        ssl_certificate_key /etc/nginx/certs/$1.key;
-
-        location / {
-            proxy_pass http://foodme:${2};
-            proxy_set_header Upgrade \$http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host \$host;
-            proxy_set_header X-Real-IP \$remote_addr;
-            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto \$scheme;
-        }
+server {
+    listen 80;
+    server_name $domain www.$domain;
+    
+    # Redirect all HTTP traffic to HTTPS
+    location / {
+        return 301 https://\$host\$request_uri;
     }
+    
+    # Health check endpoint
+    location /nginx-health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $domain www.$domain;
+    
+    # SSL Configuration
+    ssl_certificate /etc/nginx/certs/$domain.crt;
+    ssl_certificate_key /etc/nginx/certs/$domain.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+    
+    # Proxy configuration
+    location / {
+        # Check if backend is available
+        proxy_pass http://host.docker.internal:$port;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Forwarded-Port \$server_port;
+        
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Error handling
+        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+        proxy_next_upstream_tries 1;
+    }
+    
+    # Nginx status endpoint
+    location /nginx-status {
+        access_log off;
+        return 200 "OK";
+        add_header Content-Type text/plain;
+    }
+}
 EOF
+    
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to create Nginx configuration"
+        return 1
+    fi
+    
+    log_success "Nginx configuration created successfully"
 }
 
 # Function to create the Docker Compose file
 create_docker_compose() {
-     echo; echo "Generating 'docker-compose.yml' file."
+    local domain="$1"
+    local app_name="$2"
+    
+    log_info "Creating Docker Compose configuration..."
+    
+    cat > docker-compose.yml << EOF
+# Docker Compose configuration for $domain
+# Generated by FoodMe setup script
 
-    cat <<EOF >"docker-compose.yml"
-    services:
-        nginx:
-            image: nginx:latest
-            container_name: nginx-$2
-            ports:
-            - '80:80'
-            - "443:443"
-            volumes:
-            - './nginx/$1.conf:/etc/nginx/conf.d/$1.conf'
-            - './certs/$1.crt:/etc/nginx/certs/$1.crt'
-            - './certs/$1.key:/etc/nginx/certs/$1.key'
-            networks:
-            - nginx_network
-
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-$app_name
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/$domain.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs/$domain.crt:/etc/nginx/certs/$domain.crt:ro
+      - ./certs/$domain.key:/etc/nginx/certs/$domain.key:ro
     networks:
-        nginx_network:
+      - ${app_name}_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=false"
+      - "com.docker.compose.project=$app_name"
+
+networks:
+  ${app_name}_network:
+    name: ${app_name}_network
+    driver: bridge
 EOF
+    
+    if [[ $? -ne 0 ]]; then
+        log_error "Failed to create Docker Compose configuration"
+        return 1
+    fi
+    
+    log_success "Docker Compose configuration created successfully"
 }
 
-# Function to run Docker Compose
-run_docker_compose() {
-    echo; echo "Starting nginx docker container"
-
-    docker-compose up -d
+# Function to start Docker services
+start_services() {
+    local app_name="$1"
+    
+    log_info "Starting Docker services..."
+    
+    # Choose docker compose command
+    local compose_cmd="docker compose"
+    if ! docker compose version &> /dev/null; then
+        compose_cmd="docker-compose"
+    fi
+    
+    # Stop any existing services
+    log_info "Stopping any existing services..."
+    $compose_cmd down --remove-orphans &> /dev/null || true
+    
+    # Start services
+    log_info "Starting nginx container..."
+    if ! $compose_cmd up -d; then
+        log_error "Failed to start Docker services"
+        log_info "You can try manually with: cd $PROCESS_DIR && $compose_cmd up -d"
+        return 1
+    fi
+    
+    # Wait for services to be ready
+    log_info "Waiting for services to be ready..."
+    sleep 5
+    
+    # Check if nginx is running
+    if ! $compose_cmd ps | grep -q "nginx-$app_name.*Up"; then
+        log_warning "Nginx container may not be running properly"
+        log_info "Check status with: cd $PROCESS_DIR && $compose_cmd ps"
+        log_info "View logs with: cd $PROCESS_DIR && $compose_cmd logs nginx"
+    else
+        log_success "Docker services started successfully"
+    fi
 }
 
-# Function to post-process the script
-post_process() {
-    cd ".."
-    echo "Setup complete! Now you can run this command if nginx server is not started due to any reason: cd .setup && docker-compose up -d"
+# Function to verify the setup
+verify_setup() {
+    local domain="$1"
+    local port="$2"
+    
+    log_info "Verifying setup..."
+    
+    # Check if certificates exist
+    if [[ ! -f "certs/$domain.crt" ]] || [[ ! -f "certs/$domain.key" ]]; then
+        log_error "SSL certificates not found"
+        return 1
+    fi
+    
+    # Check if nginx config exists
+    if [[ ! -f "nginx/$domain.conf" ]]; then
+        log_error "Nginx configuration not found"
+        return 1
+    fi
+    
+    # Check if docker-compose.yml exists
+    if [[ ! -f "docker-compose.yml" ]]; then
+        log_error "Docker Compose configuration not found"
+        return 1
+    fi
+    
+    # Test nginx configuration syntax
+    local compose_cmd="docker compose"
+    if ! docker compose version &> /dev/null; then
+        compose_cmd="docker-compose"
+    fi
+    
+    if ! $compose_cmd config > /dev/null 2>&1; then
+        log_error "Docker Compose configuration is invalid"
+        return 1
+    fi
+    
+    log_success "Setup verification completed successfully"
 }
 
-# Check if argument count is correct
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <Domain> <App Name> <Port>"
-    exit 1
+# Function to show completion summary
+show_completion_summary() {
+    local domain="$1"
+    local app_name="$2"
+    local port="$3"
+    
+    log_success "FoodMe HTTPS development environment setup completed!"
+    echo
+    echo "📋 Setup Summary:"
+    echo "  • Domain: https://$domain"
+    echo "  • App Name: $app_name" 
+    echo "  • Backend Port: $port"
+    echo "  • SSL Certificates: Generated and installed"
+    echo "  • Nginx Proxy: Configured and running"
+    echo "  • Hosts File: Updated"
+    echo
+    echo "🚀 Next Steps:"
+    echo "  1. Start your application on port $port"
+    echo "  2. Visit https://$domain in your browser"
+    echo "  3. Your app will be served with HTTPS automatically"
+    echo
+    echo "📝 Useful Commands:"
+    echo "  • View nginx status: cd $PROCESS_DIR && docker compose ps"
+    echo "  • View nginx logs: cd $PROCESS_DIR && docker compose logs nginx"
+    echo "  • Stop nginx: cd $PROCESS_DIR && docker compose down"
+    echo "  • Restart nginx: cd $PROCESS_DIR && docker compose restart"
+    echo
+    echo "🔧 Troubleshooting:"
+    echo "  • If nginx fails to start: Check if ports 80/443 are available"
+    echo "  • If certificates don't work: Try running 'mkcert -install' manually"
+    echo "  • If domain doesn't resolve: Check your hosts file entry"
+    echo
+    echo "📁 Generated Files:"
+    echo "  • SSL Certificates: $PROCESS_DIR/certs/"
+    echo "  • Nginx Config: $PROCESS_DIR/nginx/$domain.conf"
+    echo "  • Docker Compose: $PROCESS_DIR/docker-compose.yml"
+}
+
+# Main execution function
+main() {
+    local domain="$1"
+    local app_name="$2"
+    local port="$3"
+    
+    log_info "Starting FoodMe HTTPS development environment setup..."
+    log_info "Domain: $domain, App: $app_name, Port: $port"
+    echo
+    
+    # Step 1: Get system information
+    get_system_info
+    
+    # Step 2: Validate inputs
+    validate_inputs "$domain" "$app_name" "$port"
+    
+    # Step 3: Check dependencies
+    check_dependencies
+    
+    # Step 4: Setup workspace
+    setup_workspace
+    
+    # Step 5: Download mkcert
+    download_mkcert
+    
+    # Step 6: Generate SSL certificates
+    generate_certificates "$domain"
+    
+    # Step 7: Create nginx configuration
+    create_nginx_config "$domain" "$port"
+    
+    # Step 8: Create docker compose configuration
+    create_docker_compose "$domain" "$app_name"
+    
+    # Step 9: Manage hosts file
+    manage_hosts_file "$domain"
+    
+    # Step 10: Start services
+    start_services "$app_name"
+    
+    # Step 11: Verify setup
+    verify_setup "$domain" "$port"
+    
+    # Step 12: Change back to original directory
+    cd "$SCRIPT_DIR"
+    
+    # Step 13: Show completion summary
+    show_completion_summary "$domain" "$app_name" "$port"
+}
+
+# Script entry point
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Check if help is requested
+    if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+        show_usage
+        exit 0
+    fi
+    
+    # Check argument count
+    if [[ $# -ne 3 ]]; then
+        log_error "Invalid number of arguments"
+        echo
+        show_usage
+        exit 1
+    fi
+    
+    # Run main function with provided arguments
+    main "$1" "$2" "$3"
 fi
-
-# check_dependencies
-pre_process
-
-download_mkcert
-
-# generate certificate
-generate_certificates "$1"
-
-# generate nginx config file
-create_nginx_conf "$1" "$3"
-
-# generate docker compose file
-create_docker_compose "$1" "$2"
-
-add_virtual_host "$1"
-
-run_docker_compose
-
-post_process
