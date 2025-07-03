@@ -34,6 +34,12 @@
     "docker:with-secrets": "./run-with-secrets.sh",
     "setup:env": "cp .env.example .env && echo 'Please edit .env with your actual values'",
     "validate:env": "test -f .env && echo '✅ .env file exists' || echo '❌ .env file missing - run: npm run setup:env'",
+    "db:generate-import": "node scripts/import-restaurants.js",
+    "db:test": "node scripts/test-database.js",
+    "db:connect": "docker compose exec db psql -U foodme_user -d foodme",
+    "db:backup": "docker compose exec db pg_dump -U foodme_user foodme > backup_$(date +%Y%m%d_%H%M%S).sql",
+    "db:restore": "cat backup.sql | docker compose exec -T db psql -U foodme_user -d foodme",
+    "db:logs": "docker compose logs db",
     "deploy": "./deploy.sh",
     "deploy:build": "./deploy.sh --build",
     "deploy:marker": "./deploy.sh --marker", 
@@ -51,6 +57,7 @@
     "morgan": "^1.10.0",
     "newrelic": "^12.21.0",
     "open": "^8.4.2",
+    "pg": "^8.12.0",
     "pino": "^8.7.0"
   },
   "engines": {

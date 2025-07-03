@@ -10,6 +10,8 @@ services:
       - .env
     environment:
       - NODE_ENV=production
+      - DOCKER_COMPOSE=true
+      - DB_HOST=db
     restart: unless-stopped
     depends_on:
       db:
@@ -90,22 +92,22 @@ services:
     networks:
       - foodme_network
 
-  # Example with Docker secrets (for Docker Swarm)
-  foodme-with-secrets:
-    build: .
-    ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
-      - NEW_RELIC_APP_NAME=FoodMe-App-Secrets
-    secrets:
-      - new_relic_license_key
-      - new_relic_api_key
-    restart: unless-stopped
-    networks:
-      - foodme_network
-    deploy:
-      replicas: 1
+  # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
+  # foodme-with-secrets:
+  #   build: .
+  #   ports:
+  #     - "3002:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - NEW_RELIC_APP_NAME=FoodMe-App-Secrets
+  #   secrets:
+  #     - new_relic_license_key
+  #     - new_relic_api_key
+  #   restart: unless-stopped
+  #   networks:
+  #     - foodme_network
+  #   deploy:
+  #     replicas: 1
 
 # Docker volumes for persistent data
 volumes:
@@ -119,9 +121,9 @@ networks:
 
 # Define secrets for Docker Swarm and database
 secrets:
-  new_relic_license_key:
-    external: true
-  new_relic_api_key:
-    external: true
+  # new_relic_license_key:
+  #   external: true
+  # new_relic_api_key:
+  #   external: true
   db-password:
     file: db/password.txt

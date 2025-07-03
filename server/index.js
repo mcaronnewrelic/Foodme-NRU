@@ -22,10 +22,16 @@ var open = require('open');
 
 var RestaurantRecord = require('./model').Restaurant;
 var MemoryStorage = require('./storage').Memory;
+const DatabaseService = require('./database');
 
 var API_URL = '/api/restaurant';
 var API_URL_ID = API_URL + '/:id';
 var API_URL_ORDER = '/api/order';
+
+// Global variables for data access
+let storage = null;
+let dbService = null;
+let useDatabase = false;
 
 var removeMenuItems = function(restaurant) {
   var clone = {};
@@ -42,7 +48,16 @@ var removeMenuItems = function(restaurant) {
 
 exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   var app = express();
-  var storage = new MemoryStorage();
+  storage = new MemoryStorage();
+  dbService = new DatabaseService();
+  
+  // Determine data source based on environment
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isDockerCompose = process.env.DOCKER_COMPOSE === 'true' || process.env.DB_HOST === 'db';
+  useDatabase = isProduction || isDockerCompose;
+  
+  console.log('Environment:', isProduction ? 'production' : 'development');
+  console.log('Data source:', useDatabase ? 'PostgreSQL database' : 'JSON file');
   
   // Flag to track if this is the first request
   let isFirstRequest = true;
@@ -55,13 +70,20 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // Determine Angular dist directory based on environment
   // In dev: server runs from /server/, Angular build is in /dist/browser/
   // In prod: server runs from /dist/server/, Angular build is in /dist/browser/
-  const isProduction = process.env.NODE_ENV === 'production';
-  const ANGULAR_DIST_DIR = isProduction 
-    ? path.join(__dirname, '../browser')     // Production: /dist/server/ -> /dist/browser/
-    : path.join(__dirname, '../dist/browser'); // Development: /server/ -> /dist/browser/
+  // In Docker: server runs from /foodme/app/server/, Angular build is in /foodme/app/browser/
+  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd().includes('/foodme');
+  let ANGULAR_DIST_DIR;
   
-  console.log('Environment:', isProduction ? 'production' : 'development');
+  if (isDocker) {
+    ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
+  } else if (isProduction) {
+    ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Production: /dist/server/ -> /dist/browser/
+  } else {
+    ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser'); // Development: /server/ -> /dist/browser/
+  }
+  
   console.log('Angular dist directory:', ANGULAR_DIST_DIR);
+  console.log('Directory exists:', fs.existsSync(ANGULAR_DIST_DIR));
   
   app.use((req, res, next) => {
     // Block direct access to index.html - let the catch-all handler serve it with New Relic
@@ -200,21 +222,41 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   http://localhost:3000/simulate/uncaught-exception
   */
   // API
-  app.get(API_URL, function(req, res, next) {
-    res.status(200).send(storage.getAll().map(removeMenuItems));
+  app.get(API_URL, async function(req, res, next) {
+    try {
+      if (useDatabase) {
+        const restaurants = await dbService.getAllRestaurants();
+        res.status(200).send(restaurants.map(removeMenuItems));
+      } else {
+        res.status(200).send(storage.getAll().map(removeMenuItems));
+      }
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+      res.status(500).send({ error: 'Failed to fetch restaurants' });
+    }
   });
 
 
-  app.post(API_URL, function(req, res, next) {
-    var restaurant = new RestaurantRecord(req.body);
-    var errors = [];
+  app.post(API_URL, async function(req, res, next) {
+    try {
+      if (useDatabase) {
+        const restaurant = await dbService.addRestaurant(req.body);
+        return res.status(201).send(restaurant);
+      } else {
+        var restaurant = new RestaurantRecord(req.body);
+        var errors = [];
 
-    if (restaurant.validate(errors)) {
-      storage.add(restaurant);
-      return res.send(201, restaurant);
+        if (restaurant.validate(errors)) {
+          storage.add(restaurant);
+          return res.status(201).send(restaurant);
+        }
+
+        return res.status(400).send({ error: errors });
+      }
+    } catch (error) {
+      console.error('Error adding restaurant:', error);
+      res.status(500).send({ error: 'Failed to add restaurant' });
     }
-
-    return res.status(400).send({ error: errors });
   });
 
   app.post(API_URL_ORDER, jsonParser, function(req, res, next) {  
@@ -249,37 +291,77 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   });
 
 
-  app.get(API_URL_ID, function(req, res, next) {
-    var restaurant = storage.getById(req.params.id);
-    if (restaurant) {
-      return res.status(200).send(restaurant);
+  app.get(API_URL_ID, async function(req, res, next) {
+    try {
+      if (useDatabase) {
+        const restaurant = await dbService.getRestaurantById(req.params.id);
+        if (restaurant) {
+          return res.status(200).send(restaurant);
+        }
+        return res.status(404).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
+      } else {
+        var restaurant = storage.getById(req.params.id);
+        if (restaurant) {
+          return res.status(200).send(restaurant);
+        }
+        return res.status(404).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
+      }
+    } catch (error) {
+      console.error('Error fetching restaurant by ID:', error);
+      res.status(500).send({ error: 'Failed to fetch restaurant' });
     }
-    return res.status(400).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
   });
 
 
-  app.put(API_URL_ID, function(req, res, next) {
-    var restaurant = storage.getById(req.params.id);
-    var errors = [];
+  app.put(API_URL_ID, async function(req, res, next) {
+    try {
+      if (useDatabase) {
+        const restaurant = await dbService.updateRestaurant(req.params.id, req.body);
+        if (restaurant) {
+          return res.status(200).send(restaurant);
+        }
+        return res.status(404).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
+      } else {
+        var restaurant = storage.getById(req.params.id);
+        var errors = [];
 
-    if (restaurant) {
-      restaurant.update(req.body);
-      return res.status(200).send(restaurant);
+        if (restaurant) {
+          restaurant.update(req.body);
+          return res.status(200).send(restaurant);
+        }
+
+        restaurant = new RestaurantRecord(req.body);
+        if (restaurant.validate(errors)) {
+          storage.add(restaurant);
+          return res.status(201).send(restaurant);
+        }
+
+        return res.status(400).send({ error: errors });
+      }
+    } catch (error) {
+      console.error('Error updating restaurant:', error);
+      res.status(500).send({ error: 'Failed to update restaurant' });
     }
-
-    restaurant = new RestaurantRecord(req.body);
-    if (restaurant.validate(errors)) {
-      storage.add(restaurant);
-      return res.send(201, restaurant);
-    }
-
-    return res.send(400, { error: errors });
   });
 
 
-  app.delete(API_URL_ID, function(req, res, next) {
-    if (storage.deleteById(req.params.id)) {
-      return res.send(204, null);
+  app.delete(API_URL_ID, async function(req, res, next) {
+    try {
+      if (useDatabase) {
+        const success = await dbService.deleteRestaurant(req.params.id);
+        if (success) {
+          return res.status(204).send(null);
+        }
+        return res.status(404).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
+      } else {
+        if (storage.deleteById(req.params.id)) {
+          return res.status(204).send(null);
+        }
+        return res.status(404).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
+      }
+    } catch (error) {
+      console.error('Error deleting restaurant:', error);
+      res.status(500).send({ error: 'Failed to delete restaurant' });
     }
 
     return res.send(400, { error: 'No restaurant with id "' + req.params.id + '"!' });
@@ -311,9 +393,18 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     }
     
     // Read Angular's built index.html and inject New Relic
-    const indexPath = isProduction 
-      ? path.join(__dirname, '../browser/index.html')     // Production: /dist/server/ -> /dist/browser/index.html
-      : path.join(__dirname, '../dist/browser/index.html'); // Development: /server/ -> /dist/browser/index.html
+    // Use the same logic as ANGULAR_DIST_DIR to determine the correct path
+    let indexPath;
+    if (isDocker) {
+      indexPath = path.join(__dirname, '../browser/index.html'); // Docker: /foodme/app/server/ -> /foodme/app/browser/index.html
+    } else if (isProduction) {
+      indexPath = path.join(__dirname, '../browser/index.html'); // Production: /dist/server/ -> /dist/browser/index.html
+    } else {
+      indexPath = path.join(__dirname, '../dist/browser/index.html'); // Development: /server/ -> /dist/browser/index.html
+    }
+    
+    console.log('Looking for index.html at:', indexPath);
+    console.log('Index.html exists:', fs.existsSync(indexPath));
     
     fs.readFile(indexPath, 'utf8', async function(err, htmlContent) {
       if (err) {
@@ -352,17 +443,77 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     });
   });
 
-  // start the server
-  // read the data from json and start the server
-  fs.readFile(DATA_FILE, function(err, data) {
-    JSON.parse(data).forEach(function(restaurant) {
-      storage.add(new RestaurantRecord(restaurant));
-    });
+  // Start the server
+  async function startServer() {
+    try {
+      if (useDatabase) {
+        console.log('🔍 Checking database availability...');
+        const dbAvailable = await dbService.isAvailable();
+        if (!dbAvailable) {
+          console.log('⚠️  Database not available, falling back to JSON file');
+          useDatabase = false;
+        } else {
+          console.log('✅ Database is available and ready');
+        }
+      }
 
+      if (!useDatabase) {
+        console.log('📁 Loading data from JSON file:', DATA_FILE);
+        fs.readFile(DATA_FILE, function(err, data) {
+          if (err) {
+            console.error('❌ Error reading JSON file:', err);
+            process.exit(1);
+          }
+          
+          JSON.parse(data).forEach(function(restaurant) {
+            storage.add(new RestaurantRecord(restaurant));
+          });
+          
+          console.log('✅ Loaded', storage.getAll().length, 'restaurants from JSON file');
+          startHttpServer();
+        });
+      } else {
+        console.log('✅ Using database for restaurant data');
+        startHttpServer();
+      }
+    } catch (error) {
+      console.error('❌ Error starting server:', error);
+      process.exit(1);
+    }
+  }
+
+  function startHttpServer() {
     app.listen(PORT, function() {
-      open('http://localhost:' + PORT + '/');
+      console.log('🚀 FoodMe server started successfully!');
+      console.log('📍 URL: http://localhost:' + PORT + '/');
+      console.log('📊 Data source:', useDatabase ? 'PostgreSQL Database' : 'JSON File');
+      
+      // Only open browser in development mode
+      if (!useDatabase) {
+        open('http://localhost:' + PORT + '/');
+      }
+      
       logger.info('Node Server started on http://localhost:' + PORT + '/');
     });
+  }
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('🛑 Received SIGTERM, shutting down gracefully...');
+    if (dbService) {
+      await dbService.close();
+    }
+    process.exit(0);
   });
 
+  process.on('SIGINT', async () => {
+    console.log('🛑 Received SIGINT, shutting down gracefully...');
+    if (dbService) {
+      await dbService.close();
+    }
+    process.exit(0);
+  });
+
+  // Start the application
+  startServer();
 };
