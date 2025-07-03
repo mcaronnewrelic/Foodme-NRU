@@ -25,7 +25,7 @@ function generateUUID(str) {
 
 // Read the restaurants JSON file
 const restaurantsFile = path.join(__dirname, '../../server/data/restaurants.json');
-const outputFile = path.join(__dirname, '../init/04-import-restaurants-uuid.sql');
+const outputFile = path.join(__dirname, '../init/02-import-restaurants-uuid.sql');
 
 try {
     // Read and parse the JSON data

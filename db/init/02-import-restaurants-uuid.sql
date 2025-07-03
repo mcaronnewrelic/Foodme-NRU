@@ -1,5 +1,5 @@
 -- Auto-generated SQL file for importing restaurant data (UUID version)
--- Generated on: 2025-07-03T09:37:22.461Z
+-- Generated on: 2025-07-03T09:55:13.523Z
 -- Source: server/data/restaurants.json
 
 -- Clear existing data (in dependency order)
