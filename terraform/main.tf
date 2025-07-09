@@ -13,7 +13,7 @@ terraform {
     bucket = "foodme-terraform-state-bucket"
     key    = "foodme/terraform.tfstate"
     region = "us-west-2"
-    
+
     # Enable state locking with DynamoDB
     dynamodb_table = "foodme-terraform-locks"
     encrypt        = true
