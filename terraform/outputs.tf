@@ -25,12 +25,12 @@ output "security_group_id" {
 
 output "subnet_id" {
   description = "ID of the subnet"
-  value       = aws_subnet.foodme_public.id
+  value       = local.public_subnet_id
 }
 
 output "vpc_id" {
   description = "ID of the VPC"
-  value       = aws_vpc.foodme.id
+  value       = local.vpc_id
 }
 
 output "application_url" {
@@ -40,7 +40,7 @@ output "application_url" {
 
 output "ssh_command" {
   description = "SSH command to connect to the instance"
-  value       = "ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_instance.foodme.public_ip}"
+  value       = var.key_name != "" ? "ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_instance.foodme.public_ip}" : "No SSH key configured - use AWS Systems Manager Session Manager"
 }
 
 output "load_balancer_dns" {
@@ -51,4 +51,14 @@ output "load_balancer_dns" {
 output "load_balancer_url" {
   description = "URL of the load balancer"
   value       = var.create_alb ? "http://${aws_lb.foodme[0].dns_name}" : ""
+}
+
+output "vpc_deployment_mode" {
+  description = "Whether using existing VPC or created new VPC"
+  value       = var.use_existing_vpc ? "existing" : "new"
+}
+
+output "vpc_cidr_block" {
+  description = "CIDR block of the VPC"
+  value       = var.use_existing_vpc ? data.aws_vpc.existing[0].cidr_block : aws_vpc.foodme[0].cidr_block
 }
