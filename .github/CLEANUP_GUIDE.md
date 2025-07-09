@@ -201,3 +201,13 @@ After cleanup:
 2. **Fix the underlying issue** (networking, configuration, etc.)
 3. **Test the fix** before running full deployment
 4. **Monitor the next deployment** closely
+
+## 📞 Getting Help
+
+If cleanup issues persist:
+
+1. Check the [main troubleshooting guide](../TROUBLESHOOTING.md)
+2. Review the [EC2 setup guide](../terraform/EC2_KEYPAIR_SETUP.md)
+3. Check [GitHub Actions permissions guide](./GITHUB_ACTIONS_PERMISSIONS.md) for workflow issues
+4. Examine AWS CloudWatch logs for the instance
+5. Consider using the alternative deployment methods mentioned above
