@@ -122,10 +122,10 @@ jobs:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
           TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          TF_VAR_db_name: ${{ secrets.DB_NAME }}
-          TF_VAR_db_user: ${{ secrets.DB_USER }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-          TF_VAR_db_port: ${{ secrets.DB_PORT }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME || 'foodme' }}
+          TF_VAR_db_user: ${{ secrets.DB_USER || 'foodme_user' }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT || '5432' }}
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
@@ -176,10 +176,10 @@ jobs:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
           TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          TF_VAR_db_name: ${{ secrets.DB_NAME }}
-          TF_VAR_db_user: ${{ secrets.DB_USER }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-          TF_VAR_db_port: ${{ secrets.DB_PORT }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME || 'foodme' }}
+          TF_VAR_db_user: ${{ secrets.DB_USER || 'foodme_user' }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT || '5432' }}
 
       - name: Get EC2 instance details
         id: instance

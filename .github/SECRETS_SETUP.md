@@ -41,7 +41,7 @@ Configure these secrets in your GitHub repository settings (`Settings` → `Secr
 
 **Note**: Database secrets are optional because default values are provided in Terraform variables. However, it's **strongly recommended** to set custom values for production deployments for security purposes.
 
-**Auto-Configuration**: When database secrets are provided, they are automatically passed to the EC2 instance during deployment and used to configure PostgreSQL and the application connection.
+**Auto-Configuration**: When database secrets are provided, they are automatically passed to the EC2 instance during deployment and used to configure PostgreSQL and the application connection. If not provided, secure default values are used.
 
 ## 🚀 Setup Instructions
 
@@ -234,6 +234,8 @@ DB_USER=foodme_user
 DB_PASSWORD=foodme_secure_password_2025!  # ⚠️ Change this for production!
 DB_PORT=5432
 ```
+
+**Important**: If you don't set database secrets, these default values will be used automatically. You only need to set the secrets if you want to customize the database configuration.
 
 ### Setting Custom Database Configuration
 
