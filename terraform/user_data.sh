@@ -138,9 +138,30 @@ cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
 server {
     listen 80;
     server_name _;
-    location /api/ { proxy_pass http://localhost:3000; }
-    location /health { proxy_pass http://localhost:3000/health; access_log off; }
-    location / { root /var/www/foodme; try_files $uri $uri/ /index.html; }
+    
+    # API endpoints - proxy to Node.js app
+    location /api/ { 
+        proxy_pass http://localhost:3000; 
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Health check endpoint - proxy to Node.js app
+    location = /health { 
+        proxy_pass http://localhost:3000/health; 
+        access_log off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    
+    # Static files and fallback to index.html
+    location / { 
+        root /var/www/foodme; 
+        try_files $uri $uri/ /index.html; 
+        add_header Cache-Control "public, max-age=3600";
+    }
 }
 EOF
 
