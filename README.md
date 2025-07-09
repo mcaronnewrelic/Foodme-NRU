@@ -56,6 +56,25 @@ FoodMe is a demonstration application that showcases modern web development prac
 
 ## 🚀 Quick Start
 
+### Option 1: GitHub Actions Deployment (Recommended)
+
+Deploy automatically to AWS EC2 using GitHub Actions:
+
+1. **Fork this repository**
+2. **Configure GitHub Secrets**:
+   ```
+   AWS_ACCESS_KEY_ID=your-access-key
+   AWS_SECRET_ACCESS_KEY=your-secret-key
+   EC2_KEY_NAME=your-key-pair-name
+   EC2_PRIVATE_KEY=your-private-key-content
+   NEW_RELIC_API_KEY=your-newrelic-api-key
+   ALLOWED_CIDR_BLOCKS=["YOUR_IP/32"]
+   ```
+3. **Push to main branch** or manually trigger the deployment workflow
+4. **Access your application** at the provided EC2 instance IP
+
+### Option 2: Local Development
+
 ```bash
 # Setup environment
 npm run setup:env
@@ -114,12 +133,15 @@ npm run docker:run
 | **[DevContainer Setup](./DEVCONTAINER_SETUP.md)** | Docker Compose configurations for dev containers and restricted environments |
 | **[Database Guide](./DATABASE_GUIDE.md)** | PostgreSQL setup, initialization, and restaurant data management |
 | **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** | Complete deployment workflows and environment management |
+| **[Terraform Deployment](./terraform/README.md)** | AWS EC2 deployment using Terraform and GitHub Actions |
 | **[Load Testing](./LOAD_TESTING.md)** | Performance testing with Locust, metrics, and analysis |
 
 ### 💡 Quick Reference
 - **Setup Guide**: Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for complete project setup
 - **DevContainer Setup**: Use [DEVCONTAINER_SETUP.md](./DEVCONTAINER_SETUP.md) for dev container configurations
 - **Database Setup**: Use [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for PostgreSQL initialization  
+- **Terraform Deployment**: Use [terraform/README.md](./terraform/README.md) for AWS EC2 deployment
+- **GitHub Actions**: Push to main branch for automatic deployment to EC2
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow

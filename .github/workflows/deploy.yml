@@ -1,0 +1,287 @@
+name: Deploy to EC2 with Terraform
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.6.0
+  NODE_VERSION: 18
+
+jobs:
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    outputs:
+      dist-artifact: ${{ steps.upload.outputs.artifact-id }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm run install:all
+
+    - name: Build Angular app
+      run: npm run build:angular
+
+    - name: Build complete application
+      run: npm run build
+
+    - name: List dist contents
+      run: |
+        echo "Contents of dist directory:"
+        ls -la dist/
+        find dist/ -type f -name "*.js" -o -name "*.html" -o -name "*.css" | head -20
+
+    - name: Upload dist artifact
+      id: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: foodme-dist-${{ github.sha }}
+        path: |
+          dist/
+          !dist/**/*.map
+          !dist/**/test/**
+        retention-days: 30
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: build
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    outputs:
+      tfplan: ${{ steps.plan.outputs.tfplan }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Format Check
+      run: terraform fmt -check
+      working-directory: ./terraform
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+      env:
+        TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: ./terraform
+
+    - name: Terraform Plan
+      id: plan
+      run: |
+        terraform plan \
+          -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+          -var="app_version=${{ github.sha }}" \
+          -out=tfplan
+        echo "tfplan=tfplan" >> $GITHUB_OUTPUT
+      working-directory: ./terraform
+      env:
+        TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+        TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+
+    - name: Upload Terraform Plan
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-plan-${{ github.sha }}
+        path: terraform/tfplan
+        retention-days: 5
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [build, terraform-plan]
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Download Terraform Plan
+      uses: actions/download-artifact@v4
+      with:
+        name: terraform-plan-${{ github.sha }}
+        path: terraform/
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+      env:
+        TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+      working-directory: ./terraform
+      env:
+        TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+        TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+
+    - name: Get EC2 instance details
+      id: instance
+      run: |
+        INSTANCE_IP=$(terraform output -raw instance_public_ip)
+        INSTANCE_ID=$(terraform output -raw instance_id)
+        echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+        echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+      working-directory: ./terraform
+
+    - name: Download dist artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: foodme-dist-${{ github.sha }}
+        path: ./dist-download
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ steps.instance.outputs.ip }} >> ~/.ssh/known_hosts
+
+    - name: Wait for instance to be ready
+      run: |
+        echo "Waiting for instance to be ready..."
+        timeout 300 bash -c 'until nc -z ${{ steps.instance.outputs.ip }} 22; do sleep 5; done'
+        sleep 30  # Additional wait for services to start
+
+    - name: Deploy application
+      run: |
+        # Create deployment directory
+        ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
+        
+        # Upload dist files
+        scp -i ~/.ssh/id_rsa -r dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/
+        
+        # Move files to web directory and set permissions
+        ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.instance.outputs.ip }} "
+          sudo cp -r /tmp/* /var/www/foodme/
+          sudo chown -R nginx:nginx /var/www/foodme
+          sudo chmod -R 755 /var/www/foodme
+          sudo systemctl restart nginx
+          sudo systemctl restart foodme
+        "
+
+    - name: Health check
+      run: |
+        echo "Performing health check..."
+        for i in {1..10}; do
+          if curl -f http://${{ steps.instance.outputs.ip }}/health; then
+            echo "✅ Health check passed"
+            exit 0
+          fi
+          echo "⏳ Attempt $i failed, waiting 30 seconds..."
+          sleep 30
+        done
+        echo "❌ Health check failed"
+        exit 1
+
+    - name: Send New Relic deployment marker
+      if: success()
+      run: |
+        USER="${{ github.actor }}"
+        CHANGELOG="${{ github.event.head_commit.message }}"
+        COMMIT="${{ github.sha }}"
+        
+        curl -X POST https://api.newrelic.com/graphql \
+          -H 'Content-Type: application/json' \
+          -H 'API-Key: ${{ secrets.NEW_RELIC_API_KEY }}' \
+          --data-raw '{
+            "query": "mutation { 
+              changeTrackingCreateDeployment(deployment: {
+                description: \"FoodMe EC2 Deployment via GitHub Actions\",
+                user: \"'$USER'\",
+                changelog: \"'$CHANGELOG'\",
+                commit: \"'$COMMIT'\",
+                deploymentType: BASIC
+              }) { 
+                deploymentId 
+              } 
+            }"
+          }'
+      continue-on-error: true
+
+    - name: Deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Instance ID**: ${{ steps.instance.outputs.id }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Instance IP**: ${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application URL**: http://${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  cleanup:
+    name: Cleanup Artifacts
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    
+    steps:
+    - name: Delete artifacts
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.runId,
+          });
+          
+          for (const artifact of artifacts.data.artifacts) {
+            if (artifact.name.includes('${{ github.sha }}')) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+              console.log(`Deleted artifact: ${artifact.name}`);
+            }
+          }

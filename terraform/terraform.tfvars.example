@@ -1,0 +1,32 @@
+# Environment-specific configurations
+# Copy this file to terraform.tfvars and customize for your environment
+
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "staging"
+
+# EC2 Configuration
+instance_type = "t3.small"
+key_name = "your-key-pair-name"  # Replace with your AWS key pair name
+
+# Security Configuration
+allowed_cidr_blocks = [
+  "0.0.0.0/0"  # Replace with your IP range for better security
+  # Examples:
+  # "123.456.789.123/32"     # Single IP address
+  # "192.168.1.0/24"         # Subnet range
+  # "10.0.0.0/8"             # Large network range
+]
+
+# Application Configuration
+app_port = 3000
+
+# Load Balancer Configuration (optional)
+create_alb = false
+ssl_certificate_arn = ""  # ARN of your SSL certificate
+domain_name = ""          # Your domain name
+
+# Auto Scaling Configuration
+min_size = 1
+max_size = 3
+desired_capacity = 1
