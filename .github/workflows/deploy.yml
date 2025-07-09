@@ -67,6 +67,9 @@ jobs:
           name: foodme-dist-${{ github.sha }}
           path: |
             dist/
+            package.json
+            package-lock.json
+            newrelic.js
             !dist/**/*.map
             !dist/**/test/**
           retention-days: 30
@@ -203,6 +206,16 @@ jobs:
           echo ""
           echo "📁 Directory structure:"
           ls -la ./dist-download/
+          echo ""
+          echo "🔍 Looking for server files:"
+          find ./dist-download -name "server" -type d || echo "No server directory found"
+          find ./dist-download -name "*.js" -path "*/server/*" | head -10 || echo "No server JS files found"
+          echo ""
+          echo "🔍 Looking for package.json:"
+          find ./dist-download -name "package.json" || echo "No package.json found"
+          echo ""
+          echo "🔍 Looking for frontend files:"
+          find ./dist-download -name "*.html" -o -name "*.js" -o -name "*.css" | grep -v server | head -10 || echo "No frontend files found"
 
       - name: Check SSH key availability
         id: check_ssh
@@ -292,8 +305,8 @@ jobs:
           if [ -d "./dist-download/dist" ]; then
             echo "✅ Using dist-download/dist/ directory"
             find ./dist-download/dist -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
-            # Upload dist files from the correct path
-            scp $SSH_OPTS -r ./dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
+            # Upload all files from the build artifact
+            scp $SSH_OPTS -r ./dist-download/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
           elif [ -d "./dist-download" ] && [ "$(find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -1)" ]; then
             echo "✅ Using dist-download/ directory directly"
             find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
@@ -323,30 +336,69 @@ jobs:
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "
             # Stop services first
             sudo systemctl stop foodme || true
-            sudo systemctl stop nginx || true
             
             # Clear old deployment
-            sudo rm -rf /var/www/foodme/*
+            sudo rm -rf /var/www/foodme/dist /var/www/foodme/server /var/www/foodme/package*.json
             
-            # Copy new files
+            # Copy new files - ensure all application files are copied
             sudo cp -r /tmp/foodme-deploy/* /var/www/foodme/
             
+            # Check if server directory exists in the deployed files
+            if [ -d '/var/www/foodme/dist/server' ]; then
+              echo '✅ Server directory found in dist/'
+              # Copy server files to root level for the systemd service
+              sudo cp -r /var/www/foodme/dist/server /var/www/foodme/
+            elif [ -d '/var/www/foodme/server' ]; then
+              echo '✅ Server directory found at root level'
+            else
+              echo '❌ No server directory found! Listing contents:'
+              find /var/www/foodme -type d -name '*server*' || echo 'No server directories found'
+              ls -la /var/www/foodme/
+              if [ -d '/var/www/foodme/dist' ]; then
+                echo 'Contents of dist directory:'
+                ls -la /var/www/foodme/dist/
+              fi
+            fi
+            
+            # Check if package.json exists
+            if [ ! -f '/var/www/foodme/package.json' ]; then
+              echo '❌ package.json not found in /var/www/foodme!'
+              ls -la /var/www/foodme/
+            else
+              echo '✅ package.json found'
+            fi
+            
             # Set proper permissions
-            sudo chown -R nginx:nginx /var/www/foodme
+            sudo chown -R ec2-user:ec2-user /var/www/foodme
             sudo chmod -R 755 /var/www/foodme
             
-            # Create logs directory if it doesn't exist
-            sudo mkdir -p /var/log/foodme
-            sudo chown ec2-user:ec2-user /var/log/foodme
-            
-            # Start services
-            sudo systemctl start nginx
-            sudo systemctl start foodme
-            
-            # Check service status
-            echo 'Service status:'
-            sudo systemctl is-active nginx || echo 'nginx failed to start'
-            sudo systemctl is-active foodme || echo 'foodme failed to start'
+            # Run the deployment script
+            if [ -x '/var/www/foodme/deploy.sh' ]; then
+              echo 'Running deployment script...'
+              cd /var/www/foodme && ./deploy.sh
+            else
+              echo 'No deployment script found, manually starting services...'
+              # Install Node.js dependencies if package.json exists
+              if [ -f '/var/www/foodme/package.json' ]; then
+                echo 'Installing Node.js dependencies...'
+                cd /var/www/foodme && npm install --production
+              fi
+              
+              # Start services
+              sudo systemctl start foodme
+              
+              # Check service status
+              echo 'Service status:'
+              sudo systemctl is-active foodme || echo 'foodme failed to start'
+              
+              # Show detailed status if foodme failed
+              if ! sudo systemctl is-active foodme >/dev/null; then
+                echo 'Foodme service failed - showing detailed status:'
+                sudo systemctl status foodme --no-pager || true
+                echo 'Recent logs:'
+                sudo journalctl -u foodme -n 20 --no-pager || true
+              fi
+            fi
             
             # Clean up temp files
             rm -rf /tmp/foodme-deploy

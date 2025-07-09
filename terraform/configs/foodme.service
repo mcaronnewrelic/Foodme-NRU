@@ -1,0 +1,25 @@
+[Unit]
+Description=FoodMe Node.js Application
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/var/www/foodme
+ExecStartPre=/bin/bash -c 'if [ -f package.json ]; then npm install --production; fi'
+ExecStart=/usr/bin/node server/start.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=PORT=3000
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=foodme
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/foodme /var/www/foodme
+
+[Install]
+WantedBy=multi-user.target

@@ -8,36 +8,36 @@ Configure these secrets in your GitHub repository settings (`Settings` → `Secr
 
 ### AWS Credentials
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS IAM access key | `AKIAIOSFODNN7EXAMPLE` |
+| Secret Name             | Description        | Example                                    |
+| ----------------------- | ------------------ | ------------------------------------------ |
+| `AWS_ACCESS_KEY_ID`     | AWS IAM access key | `AKIAIOSFODNN7EXAMPLE`                     |
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
 
 ### EC2 Configuration
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `EC2_KEY_NAME` | AWS key pair name | `my-foodme-keypair` |
-| `EC2_PRIVATE_KEY` | Private key content | `-----BEGIN RSA PRIVATE KEY-----\n...` |
-| `ALLOWED_CIDR_BLOCKS` | IP ranges allowed to access | `["123.456.789.0/32"]` |
+| Secret Name           | Description                 | Example                                |
+| --------------------- | --------------------------- | -------------------------------------- |
+| `EC2_KEY_NAME`        | AWS key pair name           | `my-foodme-keypair`                    |
+| `EC2_PRIVATE_KEY`     | Private key content         | `-----BEGIN RSA PRIVATE KEY-----\n...` |
+| `ALLOWED_CIDR_BLOCKS` | IP ranges allowed to access | `["123.456.789.0/32"]`                 |
 
 ### Application Secrets
 
-| Secret Name | Description | Example | Required |
-|-------------|-------------|---------|----------|
+| Secret Name             | Description                                         | Example                                | Required  |
+| ----------------------- | --------------------------------------------------- | -------------------------------------- | --------- |
 | `NEW_RELIC_LICENSE_KEY` | New Relic License Key for infrastructure monitoring | `eu01xxXXXXXXXXXXXXXXXXXXXXXXXXXXNRAL` | Optional* |
-| `NEW_RELIC_API_KEY` | New Relic User API Key | `NRAK-XXXXXXXXXXXXXXXX` | Optional |
+| `NEW_RELIC_API_KEY`     | New Relic User API Key                              | `NRAK-XXXXXXXXXXXXXXXX`                | Optional  |
 
 **Note**: `NEW_RELIC_LICENSE_KEY` is optional but **highly recommended** for production monitoring. When provided, it enables comprehensive infrastructure and database monitoring.
 
 ### Database Configuration
 
-| Secret Name | Description | Example | Required |
-|-------------|-------------|---------|----------|
-| `DB_NAME` | PostgreSQL database name | `foodme` | Optional* |
-| `DB_USER` | PostgreSQL database user | `foodme_user` | Optional* |
+| Secret Name   | Description                  | Example                    | Required  |
+| ------------- | ---------------------------- | -------------------------- | --------- |
+| `DB_NAME`     | PostgreSQL database name     | `foodme`                   | Optional* |
+| `DB_USER`     | PostgreSQL database user     | `foodme_user`              | Optional* |
 | `DB_PASSWORD` | PostgreSQL database password | `my_secure_password_2025!` | Optional* |
-| `DB_PORT` | PostgreSQL database port | `5432` | Optional* |
+| `DB_PORT`     | PostgreSQL database port     | `5432`                     | Optional* |
 
 **Note**: Database secrets are optional because default values are provided in Terraform variables. However, it's **strongly recommended** to set custom values for production deployments for security purposes.
 
