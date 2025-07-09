@@ -3,33 +3,70 @@
 Your FoodMe application is deployed at **http://54.188.233.101/** but experiencing issues:
 - **403 Error**: Nginx can't find the index.html file  
 - **Port 3000 Error**: Node.js application may not be running properly
+- **Systemd Service Failing**: ExecStartPre npm install permission issues
 
-## 🚀 Quick Fix (Recommended)
+## 🚀 Quick Fix (Latest - Recommended)
 
-### Step 1: Connect to your EC2 instance
+### Option 1: Complete Deployment Fix
 ```bash
-# If you have the SSH key file
-ssh -i /path/to/your-key.pem ec2-user@54.188.233.101
-
-# If using GitHub SSH key setup
+# Connect to EC2
 ssh ec2-user@54.188.233.101
+
+# Download and run the complete fix
+curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-complete-deployment.sh
+chmod +x fix-complete-deployment.sh
+./fix-complete-deployment.sh
 ```
 
-### Step 2: Run the automated fix
+### Option 2: Systemd Service Fix Only
 ```bash
-# Download and run the fix script
-curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-deployment.sh
-sudo chmod +x fix-deployment.sh
-sudo ./fix-deployment.sh
+# If you only need to fix the systemd service
+curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-systemd-service.sh
+chmod +x fix-systemd-service.sh
+./fix-systemd-service.sh
 ```
 
-**OR** copy the fix script manually:
+## 🔍 Common Issues and Solutions
 
+### Issue 1: Systemd Service Won't Start
+**Symptoms:**
+```
+● foodme.service - FoodMe Node.js Application
+   Loaded: loaded (/etc/systemd/system/foodme.service; enabled; vendor preset: enabled)
+   Active: failed (Result: exit-code) since...
+```
+
+**Root Cause:** The service file has an `ExecStartPre` that tries to run `npm install` with insufficient permissions.
+
+**Solution:** Use the systemd fix script above, or manually update the service file:
 ```bash
-# Create the fix script
-sudo tee fix-deployment.sh > /dev/null << 'EOF'
-#!/bin/bash
-echo "🔧 Creating index.html file..."
+sudo systemctl stop foodme
+sudo tee /etc/systemd/system/foodme.service > /dev/null << 'EOF'
+[Unit]
+Description=FoodMe Node.js Application
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/var/www/foodme
+ExecStart=/usr/bin/node server/start.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable foodme
+sudo systemctl start foodme
+```
+
+### Issue 2: 403 Error (Previous Issue)
+```bash
+# 🔧 Creating index.html file...
 sudo cat > /var/www/foodme/index.html << 'HTML'
 <!DOCTYPE html>
 <html lang="en">
