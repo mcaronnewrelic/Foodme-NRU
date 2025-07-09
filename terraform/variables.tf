@@ -106,3 +106,35 @@ variable "existing_private_subnet_id" {
   type        = string
   default     = ""
 }
+
+variable "new_relic_license_key" {
+  description = "New Relic license key for infrastructure monitoring"
+  type        = string
+  default     = "none"
+  sensitive   = true
+}
+
+variable "db_name" {
+  description = "PostgreSQL database name"
+  type        = string
+  default     = "foodme"
+}
+
+variable "db_user" {
+  description = "PostgreSQL database user"
+  type        = string
+  default     = "foodme_user"
+}
+
+variable "db_password" {
+  description = "PostgreSQL database password"
+  type        = string
+  default     = "foodme_secure_password_2025!"
+  sensitive   = true
+}
+
+variable "db_port" {
+  description = "PostgreSQL database port"
+  type        = number
+  default     = 5432
+}

@@ -148,6 +148,15 @@ resource "aws_security_group" "foodme" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # PostgreSQL port (for local connections)
+  ingress {
+    from_port   = var.db_port
+    to_port     = var.db_port
+    protocol    = "tcp"
+    self        = true
+    description = "PostgreSQL access within security group"
+  }
+
   # Health check port
   ingress {
     from_port   = 8080
@@ -233,9 +242,14 @@ resource "aws_instance" "foodme" {
   iam_instance_profile   = aws_iam_instance_profile.foodme_ec2.name
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    app_port    = var.app_port
-    environment = var.environment
-    app_version = var.app_version
+    app_port              = var.app_port
+    environment           = var.environment
+    app_version           = var.app_version
+    new_relic_license_key = var.new_relic_license_key
+    db_name               = var.db_name
+    db_user               = var.db_user
+    db_password           = var.db_password
+    db_port               = var.db_port
   }))
 
   root_block_device {

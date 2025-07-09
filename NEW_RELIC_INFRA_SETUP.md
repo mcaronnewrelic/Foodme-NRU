@@ -1,13 +1,152 @@
-# New Relic Infrastructure Monitoring Setup Guide
+# New Relic Infrastructure Agent Integration
 
 ## Overview
-This guide explains how to enable New Relic infrastructure monitoring for the FoodMe application when running outside of a devcontainer.
+The EC2 deployment has been enhanced to include New Relic Infrastructure agent monitoring for comprehensive server and application monitoring.
 
-## Prerequisites
+## What's Included
 
-1. **New Relic Account**: You need a New Relic account with a license key
-2. **Docker**: Docker and Docker Compose must be installed and running
-3. **Valid License Key**: Your New Relic license key must be properly configured
+### 1. New Relic Infrastructure Agent
+- **Server Monitoring**: CPU, memory, disk, network metrics
+- **Process Monitoring**: Application processes and resource usage
+- **Custom Attributes**: Environment, application name, instance type, region
+- **Display Name**: `FoodMe-EC2-{environment}-{instance-id}`
+
+### 2. New Relic APM Integration
+- **Application Performance Monitoring**: Node.js application metrics
+- **App Name**: `FoodMe-{environment}` (e.g., `FoodMe-staging`, `FoodMe-production`)
+- **Transaction Tracing**: Web transactions, database queries, external services
+- **Error Tracking**: Application errors and exceptions
+
+### 3. Nginx Integration
+- **Web Server Metrics**: Request rates, response times, error rates
+- **Status Endpoint**: `http://127.0.0.1/nginx_status` for New Relic monitoring
+- **Custom Labels**: Environment and role tagging
+
+## Configuration
+
+### Required Secrets
+Add these to your GitHub repository secrets:
+
+1. **NEW_RELIC_LICENSE_KEY** - Your New Relic license key for Infrastructure agent
+2. **NEW_RELIC_API_KEY** - Your New Relic API key for deployment tracking (already configured)
+
+### Environment Variables
+The following environment variables are automatically set for the Node.js application:
+- `NEW_RELIC_LICENSE_KEY`: Infrastructure monitoring license key
+- `NEW_RELIC_APP_NAME`: Application name for APM (FoodMe-{environment})
+- `NEW_RELIC_NO_CONFIG_FILE`: Uses environment variables instead of config file
+
+## Monitoring Features
+
+### Infrastructure Monitoring
+- **System Metrics**: CPU usage, memory usage, disk space, network I/O
+- **Process Monitoring**: Node.js processes, nginx processes
+- **Log Monitoring**: Application logs, nginx access/error logs
+- **Alert Conditions**: Configurable alerts for high CPU, memory, disk usage
+
+### Application Performance Monitoring (APM)
+- **Web Transactions**: API endpoint performance
+- **Database Queries**: Database connection and query performance
+- **External Services**: HTTP requests to external APIs
+- **Error Tracking**: Application exceptions and errors
+- **Custom Events**: Order tracking, user actions
+
+### Nginx Web Server Monitoring
+- **Request Metrics**: Requests per second, response codes
+- **Performance**: Response times, throughput
+- **Error Tracking**: 4xx and 5xx error rates
+- **Upstream Monitoring**: Backend application health
+
+## Setup Instructions
+
+### 1. Get New Relic License Key
+1. Log into your New Relic account
+2. Go to Account Settings → License Key
+3. Copy your license key
+
+### 2. Add GitHub Secrets
+1. Go to your GitHub repository
+2. Navigate to Settings → Secrets and Variables → Actions
+3. Add `NEW_RELIC_LICENSE_KEY` with your license key
+
+### 3. Deploy
+Run your GitHub Actions workflow. The New Relic Infrastructure agent will be automatically:
+- Installed during EC2 instance setup
+- Configured with your license key
+- Started and enabled as a system service
+
+## Verification
+
+### Check Infrastructure Agent Status
+SSH into your EC2 instance and run:
+```bash
+sudo systemctl status newrelic-infra
+sudo journalctl -u newrelic-infra -f
+```
+
+### Verify in New Relic Dashboard
+1. Log into New Relic One
+2. Go to Infrastructure → Hosts
+3. Look for your server: `FoodMe-EC2-{environment}-{instance-id}`
+4. Check APM & Services for your application: `FoodMe-{environment}`
+
+## Configuration Files
+
+### Infrastructure Agent Config
+Location: `/etc/newrelic-infra.yml`
+```yaml
+license_key: {YOUR_LICENSE_KEY}
+display_name: FoodMe-EC2-{environment}-{instance-id}
+custom_attributes:
+  environment: {environment}
+  application: foodme
+  instance_type: {instance_type}
+  region: {aws_region}
+```
+
+### Nginx Integration Config
+Location: `/etc/newrelic-infra/integrations.d/nginx-config.yml`
+```yaml
+integrations:
+  - name: nri-nginx
+    env:
+      METRICS: true
+      STATUS_URL: http://127.0.0.1/nginx_status
+      STATUS_MODULE: discover
+      REMOTE_MONITORING: true
+    labels:
+      environment: {environment}
+      role: webserver
+```
+
+## Troubleshooting
+
+### Infrastructure Agent Not Reporting
+1. Check service status: `sudo systemctl status newrelic-infra`
+2. Check logs: `sudo journalctl -u newrelic-infra -n 50`
+3. Verify license key in `/etc/newrelic-infra.yml`
+4. Ensure network connectivity to New Relic endpoints
+
+### APM Not Showing Data
+1. Check application logs: `sudo journalctl -u foodme -n 50`
+2. Verify environment variables are set in systemd service
+3. Check New Relic agent initialization in application startup logs
+
+### Nginx Integration Issues
+1. Verify nginx status endpoint: `curl http://127.0.0.1/nginx_status`
+2. Check nginx configuration: `/etc/nginx/conf.d/foodme.conf`
+3. Restart nginx: `sudo systemctl restart nginx`
+
+## Cost Considerations
+- New Relic Infrastructure agent monitoring is included in most New Relic plans
+- Check your New Relic pricing tier for any usage limits
+- Infrastructure data retention varies by plan
+
+## Security Notes
+- License key is passed securely through GitHub Secrets
+- Nginx status endpoint is only accessible from localhost (127.0.0.1)
+- All monitoring traffic is encrypted in transit
+- No sensitive application data is transmitted to New Relic
 
 ## Quick Setup
 

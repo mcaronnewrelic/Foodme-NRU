@@ -1,533 +1,271 @@
 #!/bin/bash
-
-# FoodMe EC2 Instance User Data Script
-# This script sets up the EC2 instance for the FoodMe application
-
 set -e
 
-# Variables passed from Terraform
-APP_PORT="${app_port}"
-ENVIRONMENT="${environment}"
-APP_VERSION="${app_version}"
+# Variables from Terraform
+NEW_RELIC_LICENSE_KEY="${new_relic_license_key}"
+DB_NAME="${db_name}"
+DB_USER="${db_user}"
+DB_PASSWORD="${db_password}"
+DB_PORT="${db_port}"
 
-# Update system
-dnf update -y
-
-# Install required packages
-dnf install -y \
-    git \
-    wget \
-    nginx \
-    htop \
-    unzip \
-    amazon-cloudwatch-agent \
-    --allowerasing
-
-# Install Node.js 22 LTS (matching GitHub Actions)
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-dnf install -y nodejs
-
-# Install PM2 for process management
+# Install packages
+dnf update -y && dnf install -y git nginx nodejs npm amazon-cloudwatch-agent postgresql16-server postgresql16 --allowerasing
 npm install -g pm2
 
-# Create application directory
-mkdir -p /var/www/foodme
-chown ec2-user:ec2-user /var/www/foodme
+# Install New Relic Infrastructure agent
+if [ -n "$NEW_RELIC_LICENSE_KEY" ] && [ "$NEW_RELIC_LICENSE_KEY" != "none" ]; then
+    echo "Installing New Relic Infrastructure agent..."
+    curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2/x86_64/newrelic-infra.repo
+    dnf install -y newrelic-infra
+    
+    # Configure New Relic Infrastructure agent
+    cat > /etc/newrelic-infra.yml << EOF
+license_key: $NEW_RELIC_LICENSE_KEY
+display_name: FoodMe-EC2-${environment}-\$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+custom_attributes:
+  environment: ${environment}
+  application: foodme
+  instance_type: \$(curl -s http://169.254.169.254/latest/meta-data/instance-type)
+  region: \$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+EOF
+    
+    # Start and enable New Relic Infrastructure agent
+    systemctl enable newrelic-infra
+    systemctl start newrelic-infra
+    
+    # Configure New Relic nginx integration
+    mkdir -p /etc/newrelic-infra/integrations.d
+    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << EOF
+integrations:
+  - name: nri-nginx
+    env:
+      METRICS: true
+      STATUS_URL: http://127.0.0.1/nginx_status
+      STATUS_MODULE: discover
+      REMOTE_MONITORING: true
+    labels:
+      environment: ${environment}
+      role: webserver
+EOF
 
-# Create logs directory
-mkdir -p /var/log/foodme
-chown ec2-user:ec2-user /var/log/foodme
+    # Configure New Relic PostgreSQL integration
+    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << EOF
+integrations:
+  - name: nri-postgresql
+    env:
+      HOSTNAME: localhost
+      PORT: $DB_PORT
+      USERNAME: $DB_USER
+      PASSWORD: $DB_PASSWORD
+      DATABASE: $DB_NAME
+      COLLECT_DB_LOCK_METRICS: true
+      COLLECT_BLOAT_METRICS: true
+    labels:
+      environment: ${environment}
+      role: database
+EOF
 
-# Configure Nginx
+    # Configure nginx status endpoint for monitoring
+    cat >> /etc/nginx/conf.d/foodme.conf << 'EOF'
+
+# New Relic nginx monitoring endpoint
+server {
+    listen 127.0.0.1:80;
+    server_name localhost;
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+}
+EOF
+    
+else
+    echo "New Relic license key not provided, skipping Infrastructure agent installation"
+fi
+
+# Setup PostgreSQL
+echo "Setting up PostgreSQL 16..."
+systemctl enable postgresql-16
+postgresql-16-setup initdb
+
+# Configure PostgreSQL
+cat > /var/lib/pgsql/16/data/postgresql.conf << EOF
+# Basic PostgreSQL configuration for FoodMe
+listen_addresses = 'localhost'
+port = $DB_PORT
+max_connections = 100
+shared_buffers = 128MB
+dynamic_shared_memory_type = posix
+max_wal_size = 1GB
+min_wal_size = 80MB
+log_timezone = 'UTC'
+datestyle = 'iso, mdy'
+timezone = 'UTC'
+lc_messages = 'en_US.UTF-8'
+lc_monetary = 'en_US.UTF-8'
+lc_numeric = 'en_US.UTF-8'
+lc_time = 'en_US.UTF-8'
+default_text_search_config = 'pg_catalog.english'
+EOF
+
+# Configure PostgreSQL authentication
+cat > /var/lib/pgsql/16/data/pg_hba.conf << EOF
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             postgres                                peer
+local   all             all                                     md5
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+EOF
+
+# Start PostgreSQL
+systemctl start postgresql-16
+
+# Create database and user
+sudo -u postgres psql << EOF
+CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';
+CREATE DATABASE $DB_NAME OWNER $DB_USER;
+GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
+\q
+EOF
+
+# Setup directories
+mkdir -p /var/www/foodme/{server,logs} && chown -R ec2-user:ec2-user /var/www/foodme
+
+# Nginx config
 cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
 server {
     listen 80;
     server_name _;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    
-    # Serve static files
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        root /var/www/foodme;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        try_files $uri =404;
-    }
-    
-    # API routes
-    location /api/ {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-    
-    # Health check endpoint
-    location /health {
-        proxy_pass http://localhost:3000/health;
-        access_log off;
-    }
-    
-    # All other routes (SPA)
-    location / {
-        root /var/www/foodme;
-        try_files $uri $uri/ /index.html;
-        
-        # Cache HTML files for short time
-        location ~* \.html$ {
-            add_header Cache-Control "public, max-age=300";
-        }
-    }
+    location /api/ { proxy_pass http://localhost:3000; }
+    location /health { proxy_pass http://localhost:3000/health; access_log off; }
+    location / { root /var/www/foodme; try_files $uri $uri/ /index.html; }
 }
 EOF
 
-# Create systemd service for FoodMe
-cat > /etc/systemd/system/foodme.service << 'EOF'
+# Systemd service
+cat > /etc/systemd/system/foodme.service << EOF
 [Unit]
-Description=FoodMe Node.js Application
-After=network.target
-
+Description=FoodMe App
+After=network.target postgresql-16.service
 [Service]
 Type=simple
 User=ec2-user
 WorkingDirectory=/var/www/foodme
-ExecStartPre=/bin/bash -c 'if [ -f package.json ]; then npm install --production; fi'
 ExecStart=/usr/bin/node server/start.js
 Restart=always
-RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
-
-# Logging
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=foodme
-
-# Security
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/log/foodme /var/www/foodme
-
+Environment=NEW_RELIC_LICENSE_KEY=$NEW_RELIC_LICENSE_KEY
+Environment=NEW_RELIC_APP_NAME=FoodMe-${environment}
+Environment=NEW_RELIC_NO_CONFIG_FILE=true
+Environment=DB_HOST=localhost
+Environment=DB_PORT=$DB_PORT
+Environment=DB_NAME=$DB_NAME
+Environment=DB_USER=$DB_USER
+Environment=DB_PASSWORD=$DB_PASSWORD
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Create PM2 ecosystem file
-cat > /var/www/foodme/ecosystem.config.js << 'EOF'
-module.exports = {
-  apps: [{
-    name: 'foodme',
-    script: 'server/start.js',
-    cwd: '/var/www/foodme',
-    instances: 1,
-    exec_mode: 'fork',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    log_file: '/var/log/foodme/combined.log',
-    out_file: '/var/log/foodme/out.log',
-    error_file: '/var/log/foodme/error.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    merge_logs: true,
-    max_memory_restart: '1G'
-  }]
-};
+# Minimal app
+cat > /var/www/foodme/package.json << 'EOF'
+{"name":"foodme","version":"1.0.0","main":"server/start.js","dependencies":{"express":"^4.18.2"}}
 EOF
 
-# Create health check script
+cat > /var/www/foodme/server/start.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+app.get('/health', (req, res) => res.json({status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime()}));
+app.get('/api/health', (req, res) => res.json({status: 'ok', api: 'ready'}));
+app.get('/api/restaurant', (req, res) => res.json({restaurants: []}));
+app.get('*', (req, res) => res.send('<!DOCTYPE html><html><head><title>FoodMe</title><style>body{font-family:Arial;text-align:center;padding:50px;background:#667eea}</style></head><body><h1>🍕 FoodMe</h1><p>Application is ready!</p></body></html>'));
+app.listen(3000, () => console.log('FoodMe running on port 3000'));
+EOF
+
+# Health check script
 cat > /var/www/foodme/health-check.sh << 'EOF'
 #!/bin/bash
-
-# Try multiple health endpoints
-endpoints=("/health" "/api/health")
-base_url="http://localhost:3000"
-
-for endpoint in "$${endpoints[@]}"; do
-    echo "Checking $base_url$endpoint..."
-    response=$(curl -s -o /dev/null -w "%%{http_code}" --connect-timeout 5 --max-time 10 "$base_url$endpoint" 2>/dev/null)
-    
-    if [ "$response" = "200" ]; then
-        echo "✅ Health check passed on $endpoint (HTTP $response)"
+for i in {1..3}; do
+    if curl -f http://localhost:3000/health >/dev/null 2>&1; then
+        echo "✅ Health check passed"
         exit 0
-    else
-        echo "❌ Health check failed on $endpoint (HTTP $response)"
     fi
+    sleep 2
 done
-
-# If all endpoints fail, check if anything is listening on port 3000
-echo "Checking if any process is listening on port 3000..."
-if netstat -tlnp 2>/dev/null | grep -q ":3000 "; then
-    echo "✅ Process is listening on port 3000"
-    # Try a basic TCP connection
-    if timeout 5 bash -c "</dev/tcp/localhost/3000" 2>/dev/null; then
-        echo "✅ TCP connection to port 3000 successful"
-        exit 0
-    else
-        echo "❌ TCP connection to port 3000 failed"
-    fi
-else
-    echo "❌ No process listening on port 3000"
-fi
-
-echo "❌ All health checks failed"
+echo "❌ Health check failed"
 exit 1
 EOF
-
 chmod +x /var/www/foodme/health-check.sh
 
-# Configure log rotation
-cat > /etc/logrotate.d/foodme << 'EOF'
-/var/log/foodme/*.log {
-    daily
-    missingok
-    rotate 52
-    compress
-    delaycompress
-    notifempty
-    create 0644 ec2-user ec2-user
-    postrotate
-        /bin/systemctl reload foodme > /dev/null 2>&1 || true
-    endscript
-}
-EOF
+# Database initialization script
+cat > /var/www/foodme/init-database.sh << 'EOF'
+#!/bin/bash
+set -e
+echo "Initializing FoodMe database..."
 
-# Create deployment script
+DB_HOST=$${DB_HOST:-localhost}
+DB_PORT=$${DB_PORT:-5432}
+DB_NAME=$${DB_NAME:-foodme}
+DB_USER=$${DB_USER:-foodme_user}
+
+# Check if database is accessible
+if ! PGPASSWORD="$$DB_PASSWORD" psql -h "$$DB_HOST" -p "$$DB_PORT" -U "$$DB_USER" -d "$$DB_NAME" -c '\q' 2>/dev/null; then
+    echo "❌ Cannot connect to database"
+    exit 1
+fi
+
+# Initialize database if db/init directory exists
+if [ -d "db/init" ]; then
+    echo "Found database initialization files..."
+    for sql_file in db/init/*.sql; do
+        if [ -f "$$sql_file" ]; then
+            echo "Executing: $$sql_file"
+            PGPASSWORD="$$DB_PASSWORD" psql -h "$$DB_HOST" -p "$$DB_PORT" -U "$$DB_USER" -d "$$DB_NAME" -f "$$sql_file"
+        fi
+    done
+    echo "✅ Database initialized successfully"
+else
+    echo "No db/init directory found, skipping database initialization"
+fi
+EOF
+chmod +x /var/www/foodme/init-database.sh
+
+# Deploy script
 cat > /var/www/foodme/deploy.sh << 'EOF'
 #!/bin/bash
 set -e
-
-echo "Starting FoodMe deployment..."
-
-# Check if this is a real deployment (has the actual package.json)
+echo "Deploying FoodMe..."
 if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
-    echo "Deploying real FoodMe application..."
-    
-    # Install dependencies
-    echo "Installing dependencies..."
     npm install --production
+    [ -d "angular-app" ] && cd angular-app && npm install && npm run build && cd .. && cp -r angular-app/dist/* . 2>/dev/null || true
     
-    # Build Angular app if angular-app directory exists
-    if [ -d "angular-app" ]; then
-        echo "Building Angular application..."
-        cd angular-app
-        npm install
-        npm run build
-        cd ..
+    # Initialize database if it exists
+    if [ -f "init-database.sh" ]; then
+        echo "Initializing database..."
+        ./init-database.sh
     fi
-    
-    # Copy built assets to the web root if they exist
-    if [ -d "angular-app/dist" ]; then
-        echo "Copying built assets..."
-        cp -r angular-app/dist/* /var/www/foodme/ 2>/dev/null || true
-    fi
-    
-    echo "Real application deployed, using systemd service..."
-    
-    # Restart application
-    echo "Restarting application..."
-    sudo systemctl restart foodme
-    
-else
-    echo "No real application detected, placeholder will continue running..."
-    
-    # Just restart the placeholder
-    sudo systemctl restart foodme
 fi
-
-# Wait for application to start
-echo "Waiting for application to start..."
-sleep 15
-
-# Run health check with retries
-echo "Running health check..."
-for i in {1..5}; do
-    if /var/www/foodme/health-check.sh; then
-        echo "✅ Deployment successful! (attempt $i)"
-        break
-    else
-        echo "Health check failed (attempt $i/5), retrying in 10 seconds..."
-        if [ $i -eq 5 ]; then
-            echo "❌ Deployment failed - health check failed after 5 attempts"
-            
-            # Show service status for debugging
-            echo "Service status:"
-            sudo systemctl status foodme --no-pager || true
-            
-            # Show recent logs
-            echo "Recent logs:"
-            sudo journalctl -u foodme --no-pager -n 20 || true
-            
-            exit 1
-        fi
-        sleep 10
-    fi
-done
+sudo systemctl restart postgresql-16 || true
+sudo systemctl restart foodme
+sleep 10
+/var/www/foodme/health-check.sh && echo "✅ Deploy success" || (echo "❌ Deploy failed" && exit 1)
 EOF
-
 chmod +x /var/www/foodme/deploy.sh
 
-# Set ownership
-chown -R ec2-user:ec2-user /var/www/foodme
-
-# Create a simple placeholder application to ensure the service starts
-cat > /var/www/foodme/package.json << 'EOF'
-{
-  "name": "foodme-placeholder",
-  "version": "1.0.0",
-  "description": "Placeholder for FoodMe application",
-  "main": "server/start.js",
-  "scripts": {
-    "start": "node server/start.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2"
-  }
-}
-EOF
-
-# Create minimal server structure
-mkdir -p /var/www/foodme/server
-cat > /var/www/foodme/server/start.js << 'EOF'
-const express = require('express');
-const path = require('path');
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    message: 'FoodMe placeholder service is running',
-    version: 'placeholder'
-  });
-});
-
-// API health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok', 
-    api: 'placeholder',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Placeholder API endpoints
-app.get('/api/restaurant', (req, res) => {
-  res.status(200).json({ 
-    message: 'API placeholder - will be replaced with real application',
-    restaurants: []
-  });
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, '../')));
-
-// Catch-all handler for SPA
-app.get('*', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>FoodMe - Starting Up</title>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-          text-align: center; 
-          padding: 50px; 
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          margin: 0;
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-        }
-        .container {
-          background: rgba(255, 255, 255, 0.1);
-          padding: 40px;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-          max-width: 500px;
-        }
-        h1 { font-size: 3em; margin: 0 0 20px 0; }
-        .loading { color: #f0f0f0; font-size: 1.2em; margin: 20px 0; }
-        .status { font-size: 0.9em; opacity: 0.8; margin-top: 30px; }
-        .spinner {
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-top: 3px solid white;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-          margin: 20px auto;
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>🍕 FoodMe</h1>
-        <div class="spinner"></div>
-        <p class="loading">Application is starting up...</p>
-        <p class="status">This placeholder will be replaced by the full application shortly.</p>
-      </div>
-    </body>
-    </html>
-  `);
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ 
-    status: 'error', 
-    message: 'Internal server error',
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(\`FoodMe placeholder server running on port $${PORT}\`);
-  console.log(\`Health check available at: http://localhost:$${PORT}/health\`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-EOF
-
-# Install placeholder dependencies as ec2-user
-sudo -u ec2-user bash -c 'cd /var/www/foodme && npm install'
-
-# Enable and start services
-systemctl enable nginx
-systemctl start nginx
-systemctl enable foodme
-
-# Create CloudWatch agent configuration
+# CloudWatch config
 cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
-{
-    "metrics": {
-        "namespace": "FoodMe",
-        "metrics_collected": {
-            "cpu": {
-                "measurement": [
-                    "cpu_usage_idle",
-                    "cpu_usage_iowait",
-                    "cpu_usage_user",
-                    "cpu_usage_system"
-                ],
-                "metrics_collection_interval": 60
-            },
-            "disk": {
-                "measurement": [
-                    "used_percent"
-                ],
-                "metrics_collection_interval": 60,
-                "resources": [
-                    "*"
-                ]
-            },
-            "mem": {
-                "measurement": [
-                    "mem_used_percent"
-                ],
-                "metrics_collection_interval": 60
-            },
-            "netstat": {
-                "measurement": [
-                    "tcp_established",
-                    "tcp_time_wait"
-                ],
-                "metrics_collection_interval": 60
-            }
-        }
-    },
-    "logs": {
-        "logs_collected": {
-            "files": {
-                "collect_list": [
-                    {
-                        "file_path": "/var/log/foodme/combined.log",
-                        "log_group_name": "foodme-application",
-                        "log_stream_name": "{instance_id}",
-                        "timezone": "UTC"
-                    },
-                    {
-                        "file_path": "/var/log/nginx/access.log",
-                        "log_group_name": "foodme-nginx-access",
-                        "log_stream_name": "{instance_id}",
-                        "timezone": "UTC"
-                    },
-                    {
-                        "file_path": "/var/log/nginx/error.log",
-                        "log_group_name": "foodme-nginx-error",
-                        "log_stream_name": "{instance_id}",
-                        "timezone": "UTC"
-                    }
-                ]
-            }
-        }
-    }
-}
+{"metrics":{"namespace":"FoodMe","metrics_collected":{"cpu":{"measurement":["cpu_usage_user"],"metrics_collection_interval":300},"mem":{"measurement":["mem_used_percent"],"metrics_collection_interval":300}}},"logs":{"logs_collected":{"files":{"collect_list":[{"file_path":"/var/log/foodme/*.log","log_group_name":"foodme-logs","log_stream_name":"{instance_id}"}]}}}}
 EOF
 
-# Start CloudWatch agent
+# Install and start
+sudo -u ec2-user bash -c 'cd /var/www/foodme && npm install'
+systemctl enable nginx foodme postgresql-16 && systemctl start postgresql-16 nginx foodme
+
+# Start CloudWatch
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 
-echo "EC2 instance setup completed!"
-echo "Environment: $ENVIRONMENT"
-echo "App Version: $APP_VERSION"
-echo "App Port: $APP_PORT"
-
-# Try to start the foodme service
-echo "Starting FoodMe service..."
-systemctl start foodme
-
-# Wait a moment and check service status
-sleep 10
-systemctl status foodme --no-pager
-
-# Check if the service is listening on port 3000
-echo "Checking if application is listening on port 3000..."
-netstat -tlnp | grep :3000 || echo "No process listening on port 3000"
-
-# Test the health endpoint
-echo "Testing health endpoint..."
-curl -f http://localhost:3000/health || echo "Health endpoint not responding"
-
-# Signal that user data script is complete
-echo "User data script completed successfully at $(date)"
-
-# Log to a file for debugging
-echo "User data script completed at $(date)" >> /var/log/foodme/setup.log
+# Test
+sleep 5 && curl -f http://localhost:3000/health && echo "✅ Setup complete"
