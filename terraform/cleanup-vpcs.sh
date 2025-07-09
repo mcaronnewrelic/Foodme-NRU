@@ -62,8 +62,165 @@ delete_vpc_with_dependencies() {
     
     echo "🗑️  Deleting VPC: $vpc_id ($vpc_name)"
     
-    # Delete Internet Gateway attachments and gateways
-    echo "  🔌 Cleaning up Internet Gateways..."
+    # 1. Terminate and delete EC2 instances
+    echo "  🖥️  Checking for EC2 instances..."
+    aws ec2 describe-instances --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=instance-state-name,Values=running,pending,stopping,stopped" \
+        --query 'Reservations[].Instances[].InstanceId' --output text | \
+    while read instance_id; do
+        if [ -n "$instance_id" ] && [ "$instance_id" != "None" ]; then
+            echo "    Terminating instance: $instance_id"
+            aws ec2 terminate-instances --region "$REGION" --instance-ids "$instance_id" || true
+        fi
+    done
+    
+    # Wait for instances to terminate
+    if aws ec2 describe-instances --region "$REGION" --filters "Name=vpc-id,Values=$vpc_id" --query 'Reservations[].Instances[].InstanceId' --output text | grep -q .; then
+        echo "    Waiting for instances to terminate..."
+        sleep 30
+    fi
+    
+    # 2. Delete NAT Gateways
+    echo "  🌉 Cleaning up NAT Gateways..."
+    aws ec2 describe-nat-gateways --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'NatGateways[?State!=`deleted`].NatGatewayId' --output text | \
+    while read nat_id; do
+        if [ -n "$nat_id" ] && [ "$nat_id" != "None" ]; then
+            echo "    Deleting NAT Gateway: $nat_id"
+            aws ec2 delete-nat-gateway --region "$REGION" --nat-gateway-id "$nat_id" || true
+        fi
+    done
+    
+    # 3. Delete VPC Endpoints
+    echo "  🔗 Cleaning up VPC Endpoints..."
+    aws ec2 describe-vpc-endpoints --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'VpcEndpoints[].VpcEndpointId' --output text | \
+    while read endpoint_id; do
+        if [ -n "$endpoint_id" ] && [ "$endpoint_id" != "None" ]; then
+            echo "    Deleting VPC Endpoint: $endpoint_id"
+            aws ec2 delete-vpc-endpoint --region "$REGION" --vpc-endpoint-id "$endpoint_id" || true
+        fi
+    done
+    
+    # 4. Delete Load Balancers
+    echo "  ⚖️  Cleaning up Load Balancers..."
+    aws elbv2 describe-load-balancers --region "$REGION" \
+        --query 'LoadBalancers[?VpcId==`'$vpc_id'`].LoadBalancerArn' --output text | \
+    while read lb_arn; do
+        if [ -n "$lb_arn" ] && [ "$lb_arn" != "None" ]; then
+            echo "    Deleting Load Balancer: $lb_arn"
+            aws elbv2 delete-load-balancer --region "$REGION" --load-balancer-arn "$lb_arn" || true
+        fi
+    done
+    
+    # Also check classic load balancers
+    aws elb describe-load-balancers --region "$REGION" \
+        --query 'LoadBalancerDescriptions[?VPCId==`'$vpc_id'`].LoadBalancerName' --output text | \
+    while read lb_name; do
+        if [ -n "$lb_name" ] && [ "$lb_name" != "None" ]; then
+            echo "    Deleting Classic Load Balancer: $lb_name"
+            aws elb delete-load-balancer --region "$REGION" --load-balancer-name "$lb_name" || true
+        fi
+    done
+    
+    # 5. Delete RDS instances and subnets
+    echo "  🗄️  Cleaning up RDS resources..."
+    aws rds describe-db-instances --region "$REGION" \
+        --query 'DBInstances[?DBSubnetGroup.VpcId==`'$vpc_id'`].DBInstanceIdentifier' --output text | \
+    while read db_id; do
+        if [ -n "$db_id" ] && [ "$db_id" != "None" ]; then
+            echo "    Deleting RDS instance: $db_id"
+            aws rds delete-db-instance --region "$REGION" --db-instance-identifier "$db_id" --skip-final-snapshot || true
+        fi
+    done
+    
+    # 6. Delete Network Interfaces
+    echo "  🔌 Cleaning up Network Interfaces..."
+    aws ec2 describe-network-interfaces --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'NetworkInterfaces[].NetworkInterfaceId' --output text | \
+    while read eni_id; do
+        if [ -n "$eni_id" ] && [ "$eni_id" != "None" ]; then
+            echo "    Detaching and deleting ENI: $eni_id"
+            # Try to detach first
+            aws ec2 detach-network-interface --region "$REGION" --network-interface-id "$eni_id" --force 2>/dev/null || true
+            sleep 5
+            # Then delete
+            aws ec2 delete-network-interface --region "$REGION" --network-interface-id "$eni_id" 2>/dev/null || true
+        fi
+    done
+    
+    # 7. Delete Security Group rules first, then groups
+    echo "  🔒 Cleaning up Security Groups..."
+    aws ec2 describe-security-groups --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'SecurityGroups[?GroupName!=`default`].GroupId' --output text | \
+    while read sg_id; do
+        if [ -n "$sg_id" ] && [ "$sg_id" != "None" ]; then
+            echo "    Removing rules from security group: $sg_id"
+            # Remove all ingress rules
+            aws ec2 describe-security-groups --region "$REGION" --group-ids "$sg_id" \
+                --query 'SecurityGroups[0].IpPermissions' --output json | \
+            jq -c '.[]?' 2>/dev/null | \
+            while read rule; do
+                if [ -n "$rule" ] && [ "$rule" != "null" ]; then
+                    aws ec2 revoke-security-group-ingress --region "$REGION" --group-id "$sg_id" --ip-permissions "$rule" 2>/dev/null || true
+                fi
+            done
+            # Remove all egress rules
+            aws ec2 describe-security-groups --region "$REGION" --group-ids "$sg_id" \
+                --query 'SecurityGroups[0].IpPermissionsEgress' --output json | \
+            jq -c '.[]?' 2>/dev/null | \
+            while read rule; do
+                if [ -n "$rule" ] && [ "$rule" != "null" ]; then
+                    aws ec2 revoke-security-group-egress --region "$REGION" --group-id "$sg_id" --ip-permissions "$rule" 2>/dev/null || true
+                fi
+            done
+        fi
+    done
+    
+    # Wait a bit for rules to be removed
+    sleep 10
+    
+    # Now delete the security groups
+    aws ec2 describe-security-groups --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'SecurityGroups[?GroupName!=`default`].GroupId' --output text | \
+    while read sg_id; do
+        if [ -n "$sg_id" ] && [ "$sg_id" != "None" ]; then
+            echo "    Deleting security group: $sg_id"
+            aws ec2 delete-security-group --region "$REGION" --group-id "$sg_id" 2>/dev/null || true
+        fi
+    done
+    
+    # 8. Delete Network ACLs (except default)
+    echo "  🚧 Cleaning up Network ACLs..."
+    aws ec2 describe-network-acls --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'NetworkAcls[?IsDefault!=`true`].NetworkAclId' --output text | \
+    while read acl_id; do
+        if [ -n "$acl_id" ] && [ "$acl_id" != "None" ]; then
+            echo "    Deleting Network ACL: $acl_id"
+            aws ec2 delete-network-acl --region "$REGION" --network-acl-id "$acl_id" 2>/dev/null || true
+        fi
+    done
+    
+    # 9. Delete route tables (except main)
+    echo "  🛣️  Cleaning up Route Tables..."
+    aws ec2 describe-route-tables --region "$REGION" \
+        --filters "Name=vpc-id,Values=$vpc_id" \
+        --query 'RouteTables[?Associations[0].Main!=`true`].RouteTableId' --output text | \
+    while read rt_id; do
+        if [ -n "$rt_id" ] && [ "$rt_id" != "None" ]; then
+            echo "    Deleting route table: $rt_id"
+            aws ec2 delete-route-table --region "$REGION" --route-table-id "$rt_id" 2>/dev/null || true
+        fi
+    done
+    
+    # 10. Delete Internet Gateway attachments and gateways
+    echo "  🌐 Cleaning up Internet Gateways..."
     aws ec2 describe-internet-gateways --region "$REGION" \
         --filters "Name=attachment.vpc-id,Values=$vpc_id" \
         --query 'InternetGateways[].InternetGatewayId' --output text | \
@@ -76,8 +233,8 @@ delete_vpc_with_dependencies() {
         fi
     done
     
-    # Delete subnets
-    echo "  🌐 Cleaning up Subnets..."
+    # 11. Delete subnets
+    echo "  🏘️  Cleaning up Subnets..."
     aws ec2 describe-subnets --region "$REGION" \
         --filters "Name=vpc-id,Values=$vpc_id" \
         --query 'Subnets[].SubnetId' --output text | \
@@ -88,37 +245,25 @@ delete_vpc_with_dependencies() {
         fi
     done
     
-    # Delete route tables (except main)
-    echo "  🛣️  Cleaning up Route Tables..."
-    aws ec2 describe-route-tables --region "$REGION" \
-        --filters "Name=vpc-id,Values=$vpc_id" \
-        --query 'RouteTables[?Associations[0].Main!=`true`].RouteTableId' --output text | \
-    while read rt_id; do
-        if [ -n "$rt_id" ] && [ "$rt_id" != "None" ]; then
-            echo "    Deleting route table: $rt_id"
-            aws ec2 delete-route-table --region "$REGION" --route-table-id "$rt_id" 2>/dev/null || true
-        fi
-    done
+    # 12. Wait a bit for all resources to be cleaned up
+    echo "    Waiting for resources to be fully deleted..."
+    sleep 15
     
-    # Delete security groups (except default)
-    echo "  🔒 Cleaning up Security Groups..."
-    aws ec2 describe-security-groups --region "$REGION" \
-        --filters "Name=vpc-id,Values=$vpc_id" \
-        --query 'SecurityGroups[?GroupName!=`default`].GroupId' --output text | \
-    while read sg_id; do
-        if [ -n "$sg_id" ] && [ "$sg_id" != "None" ]; then
-            echo "    Deleting security group: $sg_id"
-            aws ec2 delete-security-group --region "$REGION" --group-id "$sg_id" 2>/dev/null || true
-        fi
-    done
-    
-    # Finally, delete the VPC
+    # 13. Finally, delete the VPC
     echo "  🏗️  Deleting VPC: $vpc_id"
-    if aws ec2 delete-vpc --region "$REGION" --vpc-id "$vpc_id" 2>/dev/null; then
-        echo "  ✅ VPC deleted successfully: $vpc_id"
-    else
-        echo "  ❌ Failed to delete VPC: $vpc_id (may have dependencies)"
-    fi
+    for attempt in {1..3}; do
+        if aws ec2 delete-vpc --region "$REGION" --vpc-id "$vpc_id" 2>/dev/null; then
+            echo "  ✅ VPC deleted successfully: $vpc_id"
+            return 0
+        else
+            echo "  ⏳ Attempt $attempt failed, waiting and retrying..."
+            sleep 10
+        fi
+    done
+    
+    echo "  ❌ Failed to delete VPC: $vpc_id after 3 attempts"
+    echo "  💡 Remaining dependencies:"
+    aws ec2 describe-vpc-attribute --region "$REGION" --vpc-id "$vpc_id" --attribute enableDnsSupport 2>&1 || echo "    VPC may have additional dependencies"
     echo ""
 }
 
