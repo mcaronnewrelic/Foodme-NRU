@@ -369,10 +369,10 @@ jobs:
 
           # Check different endpoints to diagnose the issue
           echo "🔍 Performing comprehensive health checks..."
-          
+
           # Track consecutive 502 errors for targeted intervention
           consecutive_502_count=0
-          
+
           for i in {1..15}; do
             echo "⏳ Health check attempt $i/15..."
             
@@ -479,22 +479,22 @@ jobs:
               fi
             fi
           done
-          
+
           echo "❌ Health check failed after 15 attempts"
           echo "health_passed=false" >> $GITHUB_OUTPUT
-          
+
           # Final diagnostic information
           echo ""
           echo "� Final diagnostic check:"
           echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-          
+
           # Check if nginx is responding at all
           if curl -s --connect-timeout 5 http://${{ steps.instance.outputs.ip }} > /dev/null 2>&1; then
             echo "✅ Nginx is responding"
           else
             echo "❌ Cannot connect to nginx"
           fi
-          
+
           echo ""
           echo "💡 Troubleshooting steps:"
           echo "1. SSH into the instance: ssh -i your-key.pem ec2-user@${{ steps.instance.outputs.ip }}"
@@ -502,7 +502,7 @@ jobs:
           echo "3. Check logs: sudo journalctl -u foodme -n 50"
           echo "4. Check nginx logs: sudo tail -f /var/log/nginx/error.log"
           echo "5. Check if app is listening: sudo netstat -tlnp | grep :3000"
-          
+
           exit 1
 
       - name: Deployment failure cleanup
