@@ -200,7 +200,7 @@ resource "aws_iam_instance_profile" "foodme_ec2" {
 resource "aws_instance" "foodme" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = var.instance_type
-  key_name               = var.key_name
+  key_name               = var.key_name != "" ? var.key_name : null
   subnet_id              = aws_subnet.foodme_public.id
   vpc_security_group_ids = [aws_security_group.foodme.id]
   iam_instance_profile   = aws_iam_instance_profile.foodme_ec2.name

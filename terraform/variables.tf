@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "environment" {
@@ -25,6 +25,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "AWS key pair name for EC2 access"
   type        = string
+  default     = ""
 }
 
 variable "allowed_cidr_blocks" {
