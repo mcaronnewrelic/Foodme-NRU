@@ -1,13 +1,17 @@
-# FoodMe Database Setup Guide
+# PostgreSQL Database Integration for EC2 Deployment
 
-This guide explains how to set up and initialize the PostgreSQL database with restaurant data from the `restaurants.json` file.
+## Overview
+The EC2 deployment now includes a PostgreSQL database server with automatic initialization from `./db/init` SQL files.
 
-## 🗄️ Database Overview
+## What's Included
 
-The FoodMe application uses PostgreSQL as its primary database with the following structure:
-
-- **restaurants** - Restaurant information (name, cuisine, ratings, etc.)
-- **menu_items** - Menu items for each restaurant
+### 1. PostgreSQL Server
+- **Version**: PostgreSQL 16
+- **Host**: localhost (127.0.0.1)
+- **Port**: 5432 (configurable)
+- **Database**: `foodme` (configurable)
+- **User**: `foodme_user` (configurable)
+- **Authentication**: MD5 password authentication
 - **customers** - Customer information
 - **orders** - Order history
 - **order_items** - Individual items within orders

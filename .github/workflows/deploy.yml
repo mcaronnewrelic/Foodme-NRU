@@ -121,6 +121,11 @@ jobs:
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME }}
+          TF_VAR_db_user: ${{ secrets.DB_USER }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT }}
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
@@ -170,6 +175,11 @@ jobs:
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME }}
+          TF_VAR_db_user: ${{ secrets.DB_USER }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT }}
 
       - name: Get EC2 instance details
         id: instance
@@ -298,6 +308,15 @@ jobs:
             echo "Searching for any files in dist-download:"
             find ./dist-download -type f | head -20 || echo "No files found"
             exit 1
+          fi
+
+          # Upload database initialization files
+          echo "📂 Uploading database initialization files..."
+          if [ -d "./db" ]; then
+            scp $SSH_OPTS -r ./db ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
+            echo "✅ Database files uploaded"
+          else
+            echo "⚠️ No database directory found"
           fi
 
           # Move files to web directory and set permissions
