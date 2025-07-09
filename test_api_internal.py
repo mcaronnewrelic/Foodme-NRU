@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-import requests
-import json
 import sys
+import requests
 
 
-def test_api(host="http://foodme:3000"):
+def test_api(api_host="http://foodme:3000"):
     """Test the FoodMe API endpoints from within the Docker network"""
 
-    print(f"Testing API at: {host}")
+    print(f"Testing API at: {api_host}")
 
     try:
         # Test restaurant endpoint
         print("\n1. Testing GET /api/restaurant")
-        response = requests.get(f"{host}/api/restaurant", timeout=10)
+        response = requests.get(f"{api_host}/api/restaurant", timeout=10)
         print(f"   Status: {response.status_code}")
         if response.status_code == 200:
             data = response.json()
@@ -44,7 +43,7 @@ def test_api(host="http://foodme:3000"):
         }
 
         response = requests.post(
-            f"{host}/api/order", json=order_data, timeout=10)
+            f"{api_host}/api/order", json=order_data, timeout=10)
         print(f"   Status: {response.status_code}")
         if response.status_code in [200, 201]:
             print("   ✅ Order placed successfully")
@@ -59,12 +58,17 @@ def test_api(host="http://foodme:3000"):
     except requests.exceptions.Timeout as e:
         print(f"❌ Request timeout: {e}")
         return False
-    except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request error: {e}")
         return False
 
 
-if __name__ == "__main__":
+def main():
+    """Main function to run the API tests"""
     host = sys.argv[1] if len(sys.argv) > 1 else "http://foodme:3000"
-    success = test_api(host)
-    sys.exit(0 if success else 1)
+    test_result = test_api(host)
+    sys.exit(0 if test_result else 1)
+
+
+if __name__ == "__main__":
+    main()

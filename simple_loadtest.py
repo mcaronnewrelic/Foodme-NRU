@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Simple Locust load test for FoodMe application"""
 
-import json
-import random
 from locust import FastHttpUser, task, between
 from faker import Faker
 
@@ -23,7 +21,10 @@ class FoodMeUser(FastHttpUser):
         order_data = {
             "deliverTo": {
                 "name": fake.name(),
-                "address": f"{fake.street_address()}, {fake.city()}, {fake.state_abbr()} {fake.zipcode()}"
+                "address": (
+                    f"{fake.street_address()}, {fake.city()}, "
+                    f"{fake.state_abbr()} {fake.zipcode()}"
+                )
             },
             "restaurant": {
                 "name": "Beijing Express"
@@ -60,4 +61,4 @@ if __name__ == "__main__":
         "-t", "30s"
     ]
 
-    subprocess.run(cmd)
+    subprocess.run(cmd, check=True)

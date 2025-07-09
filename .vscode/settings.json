@@ -44,6 +44,9 @@
     // Python settings (for your Python components)
     "python.defaultInterpreterPath": "./.venv/bin/python",
     "python.terminal.activateEnvironment": true,
+    "python.linting.pylintArgs": [
+        "--disable=missing-class-docstring,missing-function-docstring,missing-module-docstring"
+    ],
     
     // Formatter settings
     "editor.formatOnSave": true,

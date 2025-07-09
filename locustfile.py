@@ -1,6 +1,6 @@
 #!/usr/bin/python
+# pylint: disable=missing-class-docstring,missing-function-docstring
 
-import json
 import random
 from locust import FastHttpUser, TaskSet, between, task
 from faker import Faker
@@ -12,13 +12,13 @@ class Order:
         name = ""
         address = ""
 
-        def toJson(self):
+        def to_json(self):
             return dict(name=self.name, address=self.address)
 
     class Restaurant:
         name = ""
 
-        def toJson(self):
+        def to_json(self):
             return dict(name=self.name)
 
     class Payment:
@@ -27,17 +27,22 @@ class Order:
         number = "1234123412341234"
         type = "visa"
 
-        def toJson(self):
+        def to_json(self):
             return dict(cvc=self.cvc, expire=self.expire, number=self.number, type=self.type)
 
     def __init__(self):
-        self.deliverTo = self.Customer()
+        self.deliver_to = self.Customer()
         self.restaurant = self.Restaurant()
         self.payment = self.Payment()
         self.items = []
 
-    def toJson(self):
-        return dict(deliverTo=self.deliverTo.toJson(), restaurant=self.restaurant.toJson(), payment=self.payment.toJson(), items=self.items)
+    def to_json(self):
+        return dict(
+            deliverTo=self.deliver_to.to_json(),
+            restaurant=self.restaurant.to_json(),
+            payment=self.payment.to_json(),
+            items=self.items
+        )
 
 
 customers = [
@@ -52,48 +57,59 @@ customers = [
 
 orders = []
 
-order = Order()
-order.restaurant.name = "Beijing Express"
-order.items = [{"name": "Egg rolls (4)", "price": 3.95, "qty": 1}, {
-    "name": "General Tao's chicken", "price": 5.95, "qty": 1}, {"name": "Potstickers (6)", "price": 6.95, "qty": 1}]
-orders.append(order)
+sample_order = Order()
+sample_order.restaurant.name = "Beijing Express"
+sample_order.items = [
+    {"name": "Egg rolls (4)", "price": 3.95, "qty": 1},
+    {"name": "General Tao's chicken", "price": 5.95, "qty": 1},
+    {"name": "Potstickers (6)", "price": 6.95, "qty": 1}
+]
+orders.append(sample_order)
 
-order = Order()
-order.restaurant.name = "Naan Sequitur"
-order.items = [{"name": "Butter Chicken", "price": 5.95, "qty": 1}, {"name": "Basmati rice", "price": 6.95, "qty": 1}, {
-    "name": "Plain naan", "price": 5.95, "qty": 1}, {"name": "Gulab Jamun", "price": 8.95, "qty": 1}]
-orders.append(order)
+sample_order = Order()
+sample_order.restaurant.name = "Naan Sequitur"
+sample_order.items = [
+    {"name": "Butter Chicken", "price": 5.95, "qty": 1},
+    {"name": "Basmati rice", "price": 6.95, "qty": 1},
+    {"name": "Plain naan", "price": 5.95, "qty": 1},
+    {"name": "Gulab Jamun", "price": 8.95, "qty": 1}
+]
+orders.append(sample_order)
 
-order = Order()
-order.restaurant.name = "Czech Point"
-order.items = [{"name": "Chicken breast fillet schnitzel ", "price": 10.45, "qty": 1}, {
-    "name": "Dumplings", "price": 5.95, "qty": 1}]
-orders.append(order)
+sample_order = Order()
+sample_order.restaurant.name = "Czech Point"
+sample_order.items = [
+    {"name": "Chicken breast fillet schnitzel ", "price": 10.45, "qty": 1},
+    {"name": "Dumplings", "price": 5.95, "qty": 1}
+]
+orders.append(sample_order)
 
 
-def restaurants(l):
+def get_restaurants(l):
     l.client.get("/api/restaurant")
 
 
-def order(l):
-    order = random.choice(orders)
-    order.deliverTo.name = random.choice(customers)
-    order.deliverTo.address = fake.street_address() + " " + fake.city() + ", " + \
+def place_order(l):
+    selected_order = random.choice(orders)
+    selected_order.deliver_to.name = random.choice(customers)
+    selected_order.deliver_to.address = (
+        fake.street_address() + " " + fake.city() + ", " +
         fake.state_abbr() + " " + fake.zipcode()
-    l.client.post("/api/order", json=order.toJson())
+    )
+    l.client.post("/api/order", json=selected_order.to_json())
 
 
 class UserBehavior(TaskSet):
     def on_start(self):
-        restaurants(self)
+        get_restaurants(self)
 
     @task(3)
-    def get_restaurants(self):
-        restaurants(self)
+    def get_restaurants_task(self):
+        get_restaurants(self)
 
     @task(1)
-    def place_order(self):
-        order(self)
+    def place_order_task(self):
+        place_order(self)
 
 
 class WebsiteUser(FastHttpUser):
