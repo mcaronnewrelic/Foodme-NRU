@@ -154,7 +154,7 @@ cat > /var/www/foodme/health-check.sh << 'EOF'
 endpoints=("/health" "/api/health")
 base_url="http://localhost:3000"
 
-for endpoint in "${endpoints[@]}"; do
+for endpoint in "$${endpoints[@]}"; do
     echo "Checking $base_url$endpoint..."
     response=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "$base_url$endpoint" 2>/dev/null)
     
@@ -410,8 +410,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(\`FoodMe placeholder server running on port \${PORT}\`);
-  console.log(\`Health check available at: http://localhost:\${PORT}/health\`);
+  console.log(\`FoodMe placeholder server running on port $${PORT}\`);
+  console.log(\`Health check available at: http://localhost:$${PORT}/health\`);
 });
 
 // Graceful shutdown
