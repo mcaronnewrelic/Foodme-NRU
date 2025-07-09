@@ -1,19 +1,19 @@
 #!/bin/bash
-# FoodMe EC2 Quick Fix Script
-# This script fixes common deployment issues
+# FoodMe EC2 Quick Fix Script - Minimal Version
+# This script fixes the deployment without npm install complications
 
-echo "🔧 FoodMe Quick Fix Script"
-echo "=========================="
+echo "🔧 FoodMe Minimal Quick Fix"
+echo "============================"
 echo ""
 
 # Check if we're running as root or with sudo
 if [[ $EUID -ne 0 ]]; then
    echo "❌ This script must be run as root or with sudo"
-   echo "Usage: sudo ./fix-deployment.sh"
+   echo "Usage: sudo ./fix-deployment-minimal.sh"
    exit 1
 fi
 
-echo "🎯 Applying Quick Fixes..."
+echo "🎯 Applying Essential Fixes..."
 echo ""
 
 # Fix 1: Create missing index.html file
@@ -116,39 +116,27 @@ EOF
 
 echo "✅ Created index.html"
 
-# Fix 2: Ensure directories exist and set initial permissions
+# Fix 2: Create necessary directories
 echo "2. Creating necessary directories..."
 mkdir -p /var/www/foodme/server
 mkdir -p /var/log/foodme
-chown ec2-user:ec2-user /var/log/foodme
 echo "✅ Created directories"
 
-# Fix 3: Install Node.js dependencies (before changing ownership)
-echo "3. Installing Node.js dependencies..."
-cd /var/www/foodme
-
-# Temporarily ensure ec2-user owns the directory for npm install
-chown -R ec2-user:ec2-user /var/www/foodme
-
-if [ -f package.json ]; then
-    # Clean up any problematic npm files
-    rm -f package-lock.json node_modules/.package-lock.json 2>/dev/null
-    
-    # Install dependencies with proper permissions
-    sudo -u ec2-user npm install --production --no-fund --no-audit
-    echo "✅ Dependencies installed"
-else
-    echo "⚠️  No package.json found - this might be normal if using minimal setup"
-fi
-
-# Fix 4: Set proper file permissions (after npm install)
-echo "4. Setting proper file permissions..."
+# Fix 3: Set proper file permissions for web serving
+echo "3. Setting file permissions..."
+# Set ownership for web files (nginx needs to read)
 chown -R nginx:nginx /var/www/foodme
 chmod -R 755 /var/www/foodme
+
+# Set ownership for logs (ec2-user needs to write)
+chown ec2-user:ec2-user /var/log/foodme
+
+# Ensure ec2-user can write to app directory for runtime files
+chmod 755 /var/www/foodme
 echo "✅ Fixed file permissions"
 
-# Fix 5: Restart services in correct order
-echo "5. Restarting services..."
+# Fix 4: Restart services in correct order
+echo "4. Restarting services..."
 systemctl stop foodme 2>/dev/null
 systemctl stop nginx 2>/dev/null
 
@@ -166,7 +154,7 @@ sleep 2
 
 echo "✅ Services restarted"
 
-# Fix 6: Check service status
+# Fix 5: Check service status
 echo ""
 echo "📊 Service Status Check:"
 echo "----------------------"
@@ -181,6 +169,8 @@ if systemctl is-active foodme >/dev/null; then
     echo "✅ FoodMe App: Running"
 else
     echo "❌ FoodMe App: Not running"
+    echo "   Checking logs..."
+    journalctl -u foodme --no-pager -n 5 | tail -n 3
 fi
 
 if systemctl is-active nginx >/dev/null; then
@@ -189,7 +179,7 @@ else
     echo "❌ Nginx: Not running"
 fi
 
-# Fix 7: Test connectivity
+# Fix 6: Test connectivity
 echo ""
 echo "🔗 Connectivity Tests:"
 echo "---------------------"
@@ -199,6 +189,8 @@ if curl -s http://localhost:3000/health >/dev/null 2>&1; then
     echo "✅ App responds on port 3000"
 else
     echo "❌ App not responding on port 3000"
+    echo "   Checking if port is in use..."
+    netstat -tlnp | grep :3000 || echo "   Port 3000 not listening"
 fi
 
 # Test through Nginx
@@ -216,12 +208,15 @@ else
 fi
 
 echo ""
-echo "🎉 Quick Fix Complete!"
-echo "====================="
+echo "🎉 Minimal Fix Complete!"
+echo "========================"
 echo ""
 echo "Now test your application:"
 echo "• Root URL: http://54.188.233.101/"
 echo "• Health: http://54.188.233.101/health"
 echo "• API: http://54.188.233.101/api/health"
 echo ""
-echo "If issues persist, run: sudo ./diagnose-deployment.sh"
+echo "If the app still doesn't respond on port 3000:"
+echo "• Check logs: sudo journalctl -u foodme -f"
+echo "• The minimal app should work without npm dependencies"
+echo "• Try: sudo systemctl restart foodme"
