@@ -236,7 +236,7 @@ resource "aws_instance" "foodme" {
   vpc_security_group_ids = [aws_security_group.foodme.id]
   iam_instance_profile   = aws_iam_instance_profile.foodme_ec2.name
 
-  user_data = base64encode(templatefile("${path.module}/user_data_compact.sh", {
+  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     app_port              = var.app_port
     environment           = var.environment
     app_version           = var.app_version
