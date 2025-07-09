@@ -2,9 +2,9 @@
 # Run Locust load test from within the Docker network
 
 # Check if services are running
-if ! docker-compose ps | grep -q "Up"; then
+if ! docker-compose -f docker/docker-compose.yml ps | grep -q "Up"; then
     echo "Starting Docker Compose services..."
-    docker-compose up -d
+    docker-compose -f docker/docker-compose.yml up -d
     echo "Waiting for services to be ready..."
     sleep 10
 fi

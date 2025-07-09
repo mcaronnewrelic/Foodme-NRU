@@ -8,14 +8,15 @@ from faker import Faker
 
 fake = Faker()
 
+
 class FoodMeUser(FastHttpUser):
     wait_time = between(1, 3)
-    
+
     @task(3)
     def get_restaurants(self):
         """Get list of restaurants"""
         self.client.get("/api/restaurant")
-    
+
     @task(1)
     def place_order(self):
         """Place a food order"""
@@ -29,7 +30,7 @@ class FoodMeUser(FastHttpUser):
             },
             "payment": {
                 "cvc": "456",
-                "expire": "08/2027", 
+                "expire": "08/2027",
                 "number": "1234123412341234",
                 "type": "visa"
             },
@@ -38,24 +39,25 @@ class FoodMeUser(FastHttpUser):
                 {"name": "General Tao's chicken", "price": 5.95, "qty": 1}
             ]
         }
-        
+
         self.client.post("/api/order", json=order_data)
+
 
 if __name__ == "__main__":
     import subprocess
     import sys
-    
+
     host = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:3000"
     print(f"Running load test against: {host}")
-    
+
     cmd = [
-        "locust", 
+        "locust",
         "-f", __file__,
         "--host", host,
         "--headless",
         "-u", "5",
-        "-r", "1", 
+        "-r", "1",
         "-t", "30s"
     ]
-    
+
     subprocess.run(cmd)

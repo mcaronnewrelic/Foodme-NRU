@@ -123,7 +123,7 @@ npm run docker:run
 |----------|-------------|
 | **[Security Documentation](./SECURITY.md)** | Comprehensive security measures, secret management, and best practices |
 | **[Secret Management Guide](./SECRET_MANAGEMENT.md)** | Environment variable configuration and secret handling |
-| **[Docker Secrets](./DOCKER_SECRETS.md)** | Container security and secret injection patterns |
+| **[Docker Comprehensive Guide](./DOCKER_COMPREHENSIVE_GUIDE.md)** | Complete Docker setup, secrets management, and file organization |
 | **[Security Compliance](./SECURITY_COMPLIANCE.md)** | Compliance checks and validation procedures |
 
 ### 🚀 Deployment & Operations  
@@ -235,10 +235,10 @@ FoodMe includes multiple Docker Compose configurations to support different deve
 **Method 1: Override with specific compose file**
 ```bash
 # Use dev container friendly configuration
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d
 
 # Use load testing configuration
-docker compose -f docker-compose.loadtest.yml up -d
+docker compose -f docker/docker-compose.loadtest.yml up -d
 ```
 
 **Method 2: Environment-specific startup**
@@ -254,10 +254,10 @@ npm run loadtest:docker
 **Method 3: Manual container selection**
 ```bash
 # Start only specific services from dev config
-docker compose -f docker-compose.dev.yml up newrelic-infra-simple -d
+docker compose -f docker/docker-compose.dev.yml up newrelic-infra-simple -d
 
 # Start load testing
-docker compose -f docker-compose.loadtest.yml up locust
+docker compose -f docker/docker-compose.loadtest.yml up locust
 ```
 
 #### DevContainer Configuration Differences
@@ -276,21 +276,21 @@ If you encounter issues with the main configuration in a dev container:
 
 1. **Permission Errors**: Use the dev configuration
    ```bash
-   docker compose -f docker-compose.dev.yml up -d
+   docker compose -f docker/docker-compose.dev.yml up -d
    ```
 
 2. **Privileged Access Denied**: The dev config removes privileged requirements
    ```bash
    # Check what's different
-   grep -A 10 "privileged\|cap_add\|pid:" docker-compose.yml
+   grep -A 10 "privileged\|cap_add\|pid:" docker/docker-compose.yml
    # vs
-   grep -A 10 "network_mode\|volumes:" docker-compose.dev.yml
+   grep -A 10 "network_mode\|volumes:" docker/docker-compose.dev.yml
    ```
 
 3. **Volume Mount Issues**: Dev config uses minimal volume mounts
    ```bash
    # Only mounts Docker socket instead of full host
-   docker compose -f docker-compose.dev.yml logs newrelic-infra-simple
+   docker compose -f docker/docker-compose.dev.yml logs newrelic-infra-simple
    ```
 
 #### Adding to Package.json Scripts
@@ -300,10 +300,10 @@ Add these convenience scripts to your `package.json`:
 ```json
 {
   "scripts": {
-    "docker:compose:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
-    "docker:compose:loadtest": "docker compose -f docker-compose.loadtest.yml up",
-    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
-    "docker:dev:down": "docker compose -f docker-compose.dev.yml down"
+    "docker:compose:dev": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml up -d",
+    "docker:compose:loadtest": "docker compose -f docker/docker-compose.loadtest.yml up",
+    "docker:dev:logs": "docker compose -f docker/docker-compose.dev.yml logs -f",
+    "docker:dev:down": "docker compose -f docker/docker-compose.dev.yml down"
   }
 }
 ```

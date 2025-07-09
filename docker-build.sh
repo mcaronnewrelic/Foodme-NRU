@@ -12,13 +12,13 @@ read -p "Enter choice (1-4): " choice
 case $choice in
     1)
         echo "Building for development..."
-        docker build -t foodme:dev .
+        docker build -f docker/Dockerfile -t foodme:dev .
         echo "Running with .env file..."
         docker run -p 3000:3000 --env-file .env foodme:dev
         ;;
     2)
         echo "Building for production..."
-        docker build -t foodme:prod .
+        docker build -f docker/Dockerfile -t foodme:prod .
         echo "Running with environment variables..."
         echo "Make sure to set NEW_RELIC_LICENSE_KEY and NEW_RELIC_API_KEY in your environment"
         docker run -p 3000:3000 \
@@ -30,11 +30,11 @@ case $choice in
         ;;
     3)
         echo "Using Docker Compose with secrets..."
-        docker-compose up --build foodme-with-secrets
+        docker-compose -f docker/docker-compose.yml up --build foodme-with-secrets
         ;;
     4)
         echo "Using Docker Compose (standard)..."
-        docker-compose up --build
+        docker-compose -f docker/docker-compose.yml up --build
         ;;
     *)
         echo "Invalid choice"

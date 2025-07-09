@@ -1,11 +1,13 @@
 services:
   # Main FoodMe application service
   foodme:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - ../.env
     environment:
       - NODE_ENV=production
       - DOCKER_COMPOSE=true
@@ -20,8 +22,8 @@ services:
   # Nginx reverse proxy with HTTPS support
   nginx:
     build:
-      context: .
-      dockerfile: nginx.dockerfile
+      context: ..
+      dockerfile: docker/nginx.dockerfile
     container_name: nginx-foodme
     restart: unless-stopped
     ports:
