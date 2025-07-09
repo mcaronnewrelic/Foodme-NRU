@@ -6,7 +6,6 @@ After=network.target
 Type=simple
 User=ec2-user
 WorkingDirectory=/var/www/foodme
-ExecStartPre=/bin/bash -c 'if [ -f package.json ]; then npm install --production; fi'
 ExecStart=/usr/bin/node server/start.js
 Restart=always
 RestartSec=10
