@@ -4,21 +4,35 @@ Your FoodMe application is deployed at **http://54.188.233.101/** but experienci
 - **403 Error**: Nginx can't find the index.html file  
 - **Port 3000 Error**: Node.js application may not be running properly
 - **Systemd Service Failing**: ExecStartPre npm install permission issues
+- **Angular Routing Issues**: Nginx serving static files instead of proxying to Node.js
 
 ## 🚀 Quick Fix (Latest - Recommended)
 
-### Option 1: Complete Deployment Fix
+### Option 1: Complete Deployment Fix with Node.js Proxy
 ```bash
 # Connect to EC2
 ssh ec2-user@54.188.233.101
 
-# Download and run the complete fix
+# Apply nginx configuration to proxy ALL requests to Node.js
+curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/apply-nodejs-proxy-nginx.sh
+chmod +x apply-nodejs-proxy-nginx.sh
+sudo ./apply-nodejs-proxy-nginx.sh
+
+# Then run the complete deployment fix
 curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-complete-deployment.sh
 chmod +x fix-complete-deployment.sh
 ./fix-complete-deployment.sh
 ```
 
-### Option 2: Systemd Service Fix Only
+### Option 2: Legacy Complete Deployment Fix
+```bash
+# Download and run the complete fix (old static file serving)
+curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-complete-deployment.sh
+chmod +x fix-complete-deployment.sh
+./fix-complete-deployment.sh
+```
+
+### Option 3: Systemd Service Fix Only
 ```bash
 # If you only need to fix the systemd service
 curl -O https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/fix-systemd-service.sh
@@ -26,9 +40,47 @@ chmod +x fix-systemd-service.sh
 ./fix-systemd-service.sh
 ```
 
+## 🔄 Important: Angular Routing Configuration
+
+The FoodMe application uses Angular client-side routing. There are two approaches to handle this:
+
+### Approach 1: Node.js Proxy (Recommended)
+- **All requests** (including `/`) are proxied to Node.js on port 3000
+- Node.js serves the Angular application and handles routing via catch-all handler
+- Static assets are served through Node.js with caching headers
+- Use: `./apply-nodejs-proxy-nginx.sh`
+
+### Approach 2: Static File Serving (Legacy)
+- Nginx serves static files directly from filesystem
+- Angular routes handled by nginx `try_files` directive
+- API requests proxied to Node.js
+- Use: `./fix-nginx-config.sh`
+
+**Current Configuration Status:**
+- The terraform configuration uses **static file serving** by default
+- For Angular routing to work properly with Node.js, apply the proxy configuration
+
 ## 🔍 Common Issues and Solutions
 
-### Issue 1: Systemd Service Won't Start
+### Issue 1: Angular Routes Return 404
+**Symptoms:**
+- Direct navigation to Angular routes like `/restaurants` returns 404
+- Only root path `/` works
+
+**Root Cause:** Nginx is serving static files and doesn't know about Angular routes
+
+**Solutions:**
+1. **Use Node.js Proxy (Recommended):**
+   ```bash
+   sudo ./apply-nodejs-proxy-nginx.sh
+   ```
+
+2. **Or fix static file configuration:**
+   ```bash
+   sudo ./fix-nginx-config.sh
+   ```
+
+### Issue 2: Systemd Service Won't Start
 **Symptoms:**
 ```
 ● foodme.service - FoodMe Node.js Application
@@ -64,7 +116,7 @@ sudo systemctl enable foodme
 sudo systemctl start foodme
 ```
 
-### Issue 2: 403 Error (Previous Issue)
+### Issue 3: 403 Error (Previous Issue)
 ```bash
 # 🔧 Creating index.html file...
 sudo cat > /var/www/foodme/index.html << 'HTML'

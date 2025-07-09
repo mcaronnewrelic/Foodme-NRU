@@ -1,146 +1,233 @@
 #!/bin/bash
-# FoodMe Nginx Configuration Fix
-# This script fixes the Nginx location block ordering issue
 
-echo "🔧 FoodMe Nginx Configuration Fix"
-echo "=================================="
-echo ""
+echo "=========================================="
+echo "Fixing Nginx Configuration for FoodMe"
+echo "=========================================="
 
-# Check if we're running as root or with sudo
-if [[ $EUID -ne 0 ]]; then
-   echo "❌ This script must be run as root or with sudo"
-   echo "Usage: sudo ./fix-nginx-config.sh"
-   exit 1
-fi
-
-echo "🎯 Fixing Nginx Configuration..."
-echo ""
-
-# Backup current config
-echo "1. Backing up current Nginx config..."
-cp /etc/nginx/conf.d/foodme.conf /etc/nginx/conf.d/foodme.conf.backup 2>/dev/null || echo "No existing config found"
-
-# Create corrected Nginx configuration
-echo "2. Creating corrected Nginx configuration..."
-cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
+# Create nginx configuration that proxies ALL requests to Node.js
+sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
 server {
     listen 80;
     server_name _;
     
-    # API endpoints - proxy to Node.js app
-    location /api/ { 
-        proxy_pass http://localhost:3000; 
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Gzip Compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/rss+xml
+        application/vnd.ms-fontobject
+        application/x-font-ttf
+        application/x-web-app-manifest+json
+        application/xhtml+xml
+        application/xml
+        font/opentype
+        image/svg+xml
+        image/x-icon
+        text/css
+        text/plain
+        text/x-component;
+
+    # Health check endpoint with exact match to avoid conflicts
+    location = /health {
+        proxy_pass http://localhost:3000/health;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # Health check endpoint - proxy to Node.js app (exact match)
-    location = /health { 
-        proxy_pass http://localhost:3000/health; 
         access_log off;
+    }
+
+    # API endpoints
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
     }
     
-    # Static files and fallback to index.html
-    location / { 
-        root /var/www/foodme; 
-        try_files $uri $uri/ /index.html; 
-        add_header Cache-Control "public, max-age=3600";
+    # Static assets - proxy to Node.js with caching headers
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # All other requests - proxy to Node.js (including / and Angular routes)
+    # This allows the catch-all handler in server/index.js to serve index.html
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
     }
 }
 EOF
 
-echo "✅ Updated Nginx configuration"
+echo "✓ Updated nginx configuration to proxy ALL requests to Node.js"
 
-# Test Nginx configuration
-echo "3. Testing Nginx configuration..."
-if nginx -t; then
-    echo "✅ Nginx configuration is valid"
+# Also create the same config for conf.d directory (Amazon Linux style)
+sudo tee /etc/nginx/conf.d/foodme.conf > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Gzip Compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/rss+xml
+        application/vnd.ms-fontobject
+        application/x-font-ttf
+        application/x-web-app-manifest+json
+        application/xhtml+xml
+        application/xml
+        font/opentype
+        image/svg+xml
+        image/x-icon
+        text/css
+        text/plain
+        text/x-component;
+
+    # Health check endpoint with exact match to avoid conflicts
+    location = /health {
+        proxy_pass http://localhost:3000/health;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        access_log off;
+    }
+
+    # API endpoints
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+    
+    # Static assets - proxy to Node.js with caching headers
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # All other requests - proxy to Node.js (including / and Angular routes)
+    # This allows the catch-all handler in server/index.js to serve index.html
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+}
+EOF
+
+echo "✓ Created nginx config for both sites-available and conf.d"
+
+# Remove any conflicting default configs
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/conf.d/default.conf
+
+# Test nginx configuration
+echo "Testing nginx configuration..."
+sudo nginx -t
+
+if [ $? -eq 0 ]; then
+    echo "✓ Nginx configuration is valid"
+    
+    # Reload nginx
+    echo "Reloading nginx..."
+    sudo systemctl reload nginx
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Nginx reloaded successfully"
+    else
+        echo "❌ Failed to reload nginx"
+        exit 1
+    fi
 else
-    echo "❌ Nginx configuration has errors"
-    echo "Restoring backup..."
-    cp /etc/nginx/conf.d/foodme.conf.backup /etc/nginx/conf.d/foodme.conf 2>/dev/null
+    echo "❌ Nginx configuration test failed"
     exit 1
 fi
 
-# Reload Nginx
-echo "4. Reloading Nginx..."
-systemctl reload nginx
-if systemctl is-active nginx >/dev/null; then
-    echo "✅ Nginx reloaded successfully"
-else
-    echo "❌ Nginx reload failed, restarting..."
-    systemctl restart nginx
-    if systemctl is-active nginx >/dev/null; then
-        echo "✅ Nginx restarted successfully"
-    else
-        echo "❌ Nginx failed to start"
-        exit 1
-    fi
-fi
-
-# Test the endpoints
-echo ""
-echo "🔗 Testing Endpoints:"
-echo "--------------------"
-
-# Test health endpoint
-echo -n "Testing /health endpoint: "
-if curl -s http://localhost/health | grep -q "status"; then
-    echo "✅ Working"
-else
-    echo "❌ Not working"
-    echo "Checking if Node.js app is running..."
-    if systemctl is-active foodme >/dev/null; then
-        echo "  FoodMe service is running"
-        echo "  Testing direct connection to Node.js..."
-        if curl -s http://localhost:3000/health | grep -q "status"; then
-            echo "  ✅ Node.js app responds directly"
-            echo "  ❌ Nginx proxy configuration issue"
-        else
-            echo "  ❌ Node.js app not responding"
-        fi
-    else
-        echo "  ❌ FoodMe service not running"
-        echo "  Starting FoodMe service..."
-        systemctl start foodme
-        sleep 3
-        if systemctl is-active foodme >/dev/null; then
-            echo "  ✅ FoodMe service started"
-        else
-            echo "  ❌ FoodMe service failed to start"
-        fi
-    fi
-fi
-
-# Test root endpoint
-echo -n "Testing / (root) endpoint: "
-if curl -s http://localhost/ | grep -q "FoodMe"; then
-    echo "✅ Working"
-else
-    echo "❌ Not working"
-fi
+# Check nginx status
+echo "Checking nginx status..."
+sudo systemctl status nginx --no-pager
 
 echo ""
-echo "📊 Current Status:"
-echo "-----------------"
-echo "Nginx: $(systemctl is-active nginx)"
-echo "FoodMe: $(systemctl is-active foodme)"
-echo ""
-
-echo "🎉 Nginx Configuration Fix Complete!"
-echo "===================================="
-echo ""
-echo "Test your application:"
-echo "• Root: http://54.188.233.101/"
-echo "• Health: http://54.188.233.101/health"
-echo "• API: http://54.188.233.101/api/health"
+echo "=========================================="
+echo "Nginx Configuration Fix Complete!"
+echo "=========================================="
 echo ""
 echo "Key changes made:"
-echo "• Used exact match (=) for /health location"
-echo "• Added proper proxy headers"
-echo "• Ensured location order is correct"
-echo "• Added caching headers for static files"
+echo "• Removed static file serving from nginx"
+echo "• All requests (including /) now proxy to Node.js"
+echo "• Node.js catch-all handler will serve index.html"
+echo "• Static assets still cached but served through Node.js"
+echo "• Health check endpoint uses exact match"
+echo ""
+echo "Test the application:"
+echo "curl -i http://localhost"
+echo "curl -i http://localhost/health"
+echo "curl -i http://localhost/api/food"
+echo ""
