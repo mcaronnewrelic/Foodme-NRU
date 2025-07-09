@@ -140,9 +140,14 @@ resource "aws_security_group" "foodme" {
   }
 }
 
+# Random suffix for resource names to avoid conflicts
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-role"
+  name = "foodme-${var.environment}-ec2-role-${random_id.suffix.hex}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -156,18 +161,11 @@ resource "aws_iam_role" "foodme_ec2" {
       }
     ]
   })
-
-  lifecycle {
-    # Prevent destruction if role already exists
-    # prevent_destroy = true
-    # Ignore changes to name if it already exists
-    ignore_changes = [name]
-  }
 }
 
 # IAM Policy for EC2 Instance
 resource "aws_iam_role_policy" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-policy"
+  name = "foodme-${var.environment}-ec2-policy-${random_id.suffix.hex}"
   role = aws_iam_role.foodme_ec2.id
 
   policy = jsonencode({
@@ -192,7 +190,7 @@ resource "aws_iam_role_policy" "foodme_ec2" {
 
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-profile"
+  name = "foodme-${var.environment}-ec2-profile-${random_id.suffix.hex}"
   role = aws_iam_role.foodme_ec2.name
 }
 
