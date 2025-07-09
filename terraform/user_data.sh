@@ -356,16 +356,25 @@ cat > /var/www/foodme/deploy.sh << 'EOF'
 #!/bin/bash
 set -e
 echo "Deploying FoodMe..."
-if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
+
+# Install dependencies in the appropriate directory
+if [ -d "server" ] && [ -f "server/package.json" ]; then
+    echo "Installing dependencies in server directory..."
+    cd server && npm install --production && cd ..
+elif [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
+    echo "Installing dependencies in root directory..."
     npm install --production
-    [ -d "angular-app" ] && cd angular-app && npm install && npm run build && cd .. && cp -r angular-app/dist/* . 2>/dev/null || true
-    
-    # Initialize database if it exists
-    if [ -f "init-database.sh" ]; then
-        echo "Initializing database..."
-        ./init-database.sh
-    fi
 fi
+
+# Build Angular app if present
+[ -d "angular-app" ] && cd angular-app && npm install && npm run build && cd .. && cp -r angular-app/dist/* . 2>/dev/null || true
+
+# Initialize database if it exists
+if [ -f "init-database.sh" ]; then
+    echo "Initializing database..."
+    ./init-database.sh
+fi
+
 sudo systemctl restart postgresql-16 || true
 sudo systemctl restart foodme
 sleep 10
@@ -379,7 +388,7 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
 EOF
 
 # Install and start
-sudo -u ec2-user bash -c 'cd /var/www/foodme && npm install'
+sudo -u ec2-user bash -c 'cd /var/www/foodme && if [ -d "server" ] && [ -f "server/package.json" ]; then cd server && npm install --production; elif [ -f "package.json" ]; then npm install --production; fi'
 systemctl enable nginx foodme postgresql-16 && systemctl start postgresql-16 nginx foodme
 
 # Start CloudWatch

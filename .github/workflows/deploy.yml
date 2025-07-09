@@ -378,10 +378,16 @@ jobs:
               cd /var/www/foodme && ./deploy.sh
             else
               echo 'No deployment script found, manually starting services...'
-              # Install Node.js dependencies if package.json exists
-              if [ -f '/var/www/foodme/package.json' ]; then
-                echo 'Installing Node.js dependencies...'
+              
+              # Install Node.js dependencies in server directory
+              if [ -d '/var/www/foodme/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
+                echo 'Installing Node.js dependencies in server directory...'
+                cd /var/www/foodme/server && npm install --production
+              elif [ -f '/var/www/foodme/package.json' ]; then
+                echo 'Installing Node.js dependencies in root directory...'
                 cd /var/www/foodme && npm install --production
+              else
+                echo 'No package.json found - dependencies may have been installed during build'
               fi
               
               # Start services
@@ -397,6 +403,14 @@ jobs:
                 sudo systemctl status foodme --no-pager || true
                 echo 'Recent logs:'
                 sudo journalctl -u foodme -n 20 --no-pager || true
+                
+                # Additional debugging for server directory
+                echo 'Checking server directory structure:'
+                ls -la /var/www/foodme/server/ || echo 'Server directory not found'
+                echo 'Checking if start.js exists:'
+                ls -la /var/www/foodme/server/start.js || echo 'start.js not found'
+                echo 'Checking package.json in server:'
+                ls -la /var/www/foodme/server/package.json || echo 'package.json not found in server'
               fi
             fi
             

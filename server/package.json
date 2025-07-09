@@ -1,0 +1,26 @@
+{
+  "name": "foodme-server",
+  "version": "1.0.0",
+  "description": "FoodMe Node.js Server",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "start:prod": "NODE_ENV=production node start.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "csv": ">=0.2.1",
+    "express": "^5.1.0",
+    "express-handlebars": "^8.0.2",
+    "morgan": "^1.10.0",
+    "newrelic": "^12.21.0",
+    "open": "^8.4.2",
+    "pg": "^8.12.0",
+    "pino": "^8.7.0",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=20.14.0"
+  },
+  "license": "MIT"
+}

@@ -19,8 +19,8 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=ec2-user
-WorkingDirectory=/var/www/foodme
-ExecStart=/usr/bin/node server/start.js
+WorkingDirectory=/var/www/foodme/server
+ExecStart=/usr/bin/node start.js
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production

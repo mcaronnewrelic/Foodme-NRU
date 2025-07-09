@@ -71,8 +71,8 @@ After=network.target postgresql.service
 [Service]
 Type=simple
 User=ec2-user
-WorkingDirectory=/var/www/foodme
-ExecStart=/usr/bin/node server/start.js
+WorkingDirectory=/var/www/foodme/server
+ExecStart=/usr/bin/node start.js
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
@@ -85,10 +85,21 @@ SyslogIdentifier=foodme
 WantedBy=multi-user.target
 EOF
 
-# 3. Ensure proper permissions
-echo "🔐 Setting proper permissions..."
+# 3. Ensure proper permissions and install dependencies
+echo "🔐 Setting proper permissions and installing dependencies..."
 sudo chown -R ec2-user:ec2-user /var/www/foodme
 sudo chmod -R 755 /var/www/foodme
+
+# Install dependencies in the server directory
+if [ -d "/var/www/foodme/server" ] && [ -f "/var/www/foodme/server/package.json" ]; then
+    echo "Installing Node.js dependencies in server directory..."
+    cd /var/www/foodme/server && npm install --production
+elif [ -f "/var/www/foodme/package.json" ]; then
+    echo "Installing Node.js dependencies in root directory..."
+    cd /var/www/foodme && npm install --production
+else
+    echo "⚠️ No package.json found for dependency installation"
+fi
 
 # 4. Create a simple index.html for the root
 echo "📄 Creating index.html..."
