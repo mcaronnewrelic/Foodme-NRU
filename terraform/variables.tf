@@ -31,7 +31,7 @@ variable "allowed_cidr_blocks" {
   description = "CIDR blocks allowed to access the instance"
   type        = list(string)
   default     = ["0.0.0.0/0"]
-  
+
   validation {
     condition = alltrue([
       for cidr in var.allowed_cidr_blocks : can(cidrhost(cidr, 0))
