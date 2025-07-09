@@ -179,6 +179,14 @@ jobs:
           name: foodme-dist-${{ github.sha }}
           path: ./dist-download
 
+      - name: List downloaded files for debugging
+        run: |
+          echo "📂 Contents of dist-download directory:"
+          find ./dist-download -type f | head -20
+          echo ""
+          echo "📁 Directory structure:"
+          ls -la ./dist-download/
+
       - name: Check SSH key availability
         id: check_ssh
         run: |
@@ -256,19 +264,66 @@ jobs:
           # SSH options for better reliability
           SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60"
           
+          # Clean up any previous deployment files on server
+          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo rm -rf /tmp/foodme-deploy && mkdir -p /tmp/foodme-deploy"
+          
           # Create deployment directory
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
 
-          # Upload dist files
-          scp $SSH_OPTS -r dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/
+          # Check what files we have to upload
+          echo "📂 Files to upload:"
+          if [ -d "./dist-download/dist" ]; then
+            echo "✅ Using dist-download/dist/ directory"
+            find ./dist-download/dist -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
+            # Upload dist files from the correct path
+            scp $SSH_OPTS -r ./dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
+          elif [ -d "./dist-download" ] && [ "$(find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -1)" ]; then
+            echo "✅ Using dist-download/ directory directly"
+            find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
+            # Upload files directly from dist-download
+            scp $SSH_OPTS -r ./dist-download/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
+          else
+            echo "❌ No web files found to upload"
+            echo "Contents of current directory:"
+            ls -la
+            echo "Contents of dist-download:"
+            ls -la ./dist-download/ || echo "dist-download directory not found"
+            echo "Searching for any files in dist-download:"
+            find ./dist-download -type f | head -20 || echo "No files found"
+            exit 1
+          fi
 
           # Move files to web directory and set permissions
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "
-            sudo cp -r /tmp/* /var/www/foodme/
+            # Stop services first
+            sudo systemctl stop foodme || true
+            sudo systemctl stop nginx || true
+            
+            # Clear old deployment
+            sudo rm -rf /var/www/foodme/*
+            
+            # Copy new files
+            sudo cp -r /tmp/foodme-deploy/* /var/www/foodme/
+            
+            # Set proper permissions
             sudo chown -R nginx:nginx /var/www/foodme
             sudo chmod -R 755 /var/www/foodme
-            sudo systemctl restart nginx
-            sudo systemctl restart foodme
+            
+            # Create logs directory if it doesn't exist
+            sudo mkdir -p /var/log/foodme
+            sudo chown ec2-user:ec2-user /var/log/foodme
+            
+            # Start services
+            sudo systemctl start nginx
+            sudo systemctl start foodme
+            
+            # Check service status
+            echo 'Service status:'
+            sudo systemctl is-active nginx || echo 'nginx failed to start'
+            sudo systemctl is-active foodme || echo 'foodme failed to start'
+            
+            # Clean up temp files
+            rm -rf /tmp/foodme-deploy
           "
 
       - name: Alternative deployment notice
