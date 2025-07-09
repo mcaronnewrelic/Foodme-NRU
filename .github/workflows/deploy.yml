@@ -179,20 +179,53 @@ jobs:
           name: foodme-dist-${{ github.sha }}
           path: ./dist-download
 
-      - name: Setup SSH key
+      - name: Check SSH key availability
+        id: check_ssh
         run: |
+          if [ -n "${{ secrets.EC2_PRIVATE_KEY }}" ]; then
+            echo "ssh_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "ssh_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup SSH key
+        if: steps.check_ssh.outputs.ssh_available == 'true'
+        run: |
+          # Create SSH directory
           mkdir -p ~/.ssh
+          
+          # Create private key file
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          
+          # Verify the key was written correctly
+          if [ ! -s ~/.ssh/id_rsa ]; then
+            echo "❌ Failed to create SSH private key file"
+            exit 1
+          fi
+          
+          # Set correct permissions
           chmod 600 ~/.ssh/id_rsa
+          
+          # Verify instance IP is available
+          if [ -z "${{ steps.instance.outputs.ip }}" ]; then
+            echo "❌ Instance IP is not available"
+            exit 1
+          fi
+          
+          # Add host to known_hosts
           ssh-keyscan -H ${{ steps.instance.outputs.ip }} >> ~/.ssh/known_hosts
+          
+          echo "✅ SSH key setup completed"
 
       - name: Wait for instance to be ready
+        if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           echo "Waiting for instance to be ready..."
           timeout 300 bash -c 'until nc -z ${{ steps.instance.outputs.ip }} 22; do sleep 5; done'
           sleep 30  # Additional wait for services to start
 
       - name: Deploy application
+        if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           # Create deployment directory
           ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
@@ -209,9 +242,29 @@ jobs:
             sudo systemctl restart foodme
           "
 
+      - name: Alternative deployment notice
+        if: steps.check_ssh.outputs.ssh_available == 'false'
+        run: |
+          echo "🔄 SSH deployment skipped - no EC2_PRIVATE_KEY provided"
+          echo "📝 To enable SSH deployment:"
+          echo "   1. Run: cd terraform && ./create-keypair.sh"
+          echo "   2. Add EC2_KEY_NAME and EC2_PRIVATE_KEY secrets to GitHub"
+          echo "   3. Re-run the workflow"
+          echo ""
+          echo "💡 Alternative: Use AWS Systems Manager Session Manager for deployment"
+          echo "   This would require modifying the deployment strategy"
+
       - name: Health check
         run: |
           echo "Performing health check..."
+          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
+          
+          # Wait a bit for services to start if SSH deployment was skipped
+          if [ "${{ steps.check_ssh.outputs.ssh_available }}" == "false" ]; then
+            echo "ℹ️  SSH deployment was skipped, waiting longer for user_data script to complete..."
+            sleep 120
+          fi
+          
           for i in {1..10}; do
             if curl -f http://${{ steps.instance.outputs.ip }}/health; then
               echo "✅ Health check passed"
@@ -221,6 +274,7 @@ jobs:
             sleep 30
           done
           echo "❌ Health check failed"
+          echo "💡 Check the EC2 instance logs or SSH into the instance to debug"
           exit 1
 
       - name: Send New Relic deployment marker
