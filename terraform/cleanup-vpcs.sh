@@ -214,6 +214,31 @@ delete_vpc_with_dependencies() {
         --query 'RouteTables[?Associations[0].Main!=`true`].RouteTableId' --output text | \
     while read rt_id; do
         if [ -n "$rt_id" ] && [ "$rt_id" != "None" ]; then
+            # First disassociate from subnets
+            echo "    Disassociating route table: $rt_id"
+            aws ec2 describe-route-tables --region "$REGION" --route-table-ids "$rt_id" \
+                --query 'RouteTables[0].Associations[?Main!=`true`].RouteTableAssociationId' --output text | \
+            while read assoc_id; do
+                if [ -n "$assoc_id" ] && [ "$assoc_id" != "None" ]; then
+                    echo "      Disassociating: $assoc_id"
+                    aws ec2 disassociate-route-table --region "$REGION" --association-id "$assoc_id" 2>/dev/null || true
+                fi
+            done
+            
+            # Then remove all routes except local
+            echo "    Removing routes from route table: $rt_id"
+            aws ec2 describe-route-tables --region "$REGION" --route-table-ids "$rt_id" \
+                --query 'RouteTables[0].Routes[?GatewayId!=`local`]' --output json | \
+            jq -c '.[]?' 2>/dev/null | \
+            while read route; do
+                if [ -n "$route" ] && [ "$route" != "null" ]; then
+                    DEST_CIDR=$(echo "$route" | jq -r '.DestinationCidrBlock // empty')
+                    if [ -n "$DEST_CIDR" ]; then
+                        aws ec2 delete-route --region "$REGION" --route-table-id "$rt_id" --destination-cidr-block "$DEST_CIDR" 2>/dev/null || true
+                    fi
+                fi
+            done
+            
             echo "    Deleting route table: $rt_id"
             aws ec2 delete-route-table --region "$REGION" --route-table-id "$rt_id" 2>/dev/null || true
         fi
