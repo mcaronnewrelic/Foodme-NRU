@@ -48,9 +48,9 @@ resource "aws_vpc" "foodme" {
 
 # Local values to reference the correct VPC and subnets
 locals {
-  vpc_id             = var.use_existing_vpc ? data.aws_vpc.existing[0].id : aws_vpc.foodme[0].id
-  public_subnet_id   = var.use_existing_vpc ? data.aws_subnet.existing_public[0].id : aws_subnet.foodme_public[0].id
-  private_subnet_id  = var.use_existing_vpc && var.existing_private_subnet_id != "" ? data.aws_subnet.existing_private[0].id : (var.use_existing_vpc ? "" : aws_subnet.foodme_private[0].id)
+  vpc_id            = var.use_existing_vpc ? data.aws_vpc.existing[0].id : aws_vpc.foodme[0].id
+  public_subnet_id  = var.use_existing_vpc ? data.aws_subnet.existing_public[0].id : aws_subnet.foodme_public[0].id
+  private_subnet_id = var.use_existing_vpc && var.existing_private_subnet_id != "" ? data.aws_subnet.existing_private[0].id : (var.use_existing_vpc ? "" : aws_subnet.foodme_private[0].id)
 }
 
 # Internet Gateway
