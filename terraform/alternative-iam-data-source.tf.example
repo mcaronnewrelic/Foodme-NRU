@@ -1,0 +1,8 @@
+# Alternative: Use data source for existing IAM role
+# Replace the resource block with this if the role is managed elsewhere
+
+data "aws_iam_role" "foodme_ec2" {
+  name = "foodme-${var.environment}-ec2-role"
+}
+
+# Then update references from aws_iam_role.foodme_ec2 to data.aws_iam_role.foodme_ec2
