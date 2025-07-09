@@ -156,7 +156,7 @@ base_url="http://localhost:3000"
 
 for endpoint in "$${endpoints[@]}"; do
     echo "Checking $base_url$endpoint..."
-    response=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "$base_url$endpoint" 2>/dev/null)
+    response=$(curl -s -o /dev/null -w "%%{http_code}" --connect-timeout 5 --max-time 10 "$base_url$endpoint" 2>/dev/null)
     
     if [ "$response" = "200" ]; then
         echo "✅ Health check passed on $endpoint (HTTP $response)"
