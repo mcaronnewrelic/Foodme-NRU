@@ -159,7 +159,7 @@ resource "aws_iam_role" "foodme_ec2" {
 
   lifecycle {
     # Prevent destruction if role already exists
-    prevent_destroy = true
+    # prevent_destroy = true
     # Ignore changes to name if it already exists
     ignore_changes = [name]
   }
