@@ -25,7 +25,7 @@ var MemoryStorage = require('./storage').Memory;
 const DatabaseService = require('./database');
 
 var API_URL = '/api/restaurant';
-var API_URL_ID = API_URL + '/:id';
+var API_URL_ID = '/api/restaurant/:id';
 var API_URL_ORDER = '/api/order';
 
 // Global variables for data access
