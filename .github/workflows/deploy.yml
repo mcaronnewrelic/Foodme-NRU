@@ -1,6 +1,6 @@
 name: Deploy to EC2 with Terraform
 
-on:
+"on":
   push:
     branches: [main, master]
   pull_request:
@@ -407,34 +407,34 @@ jobs:
                 echo "🔧 Attempting to restart backend service via SSH..."
                 
                 # Create a temporary script for service restart
-                cat > restart_service.sh << 'EOF'
-#!/bin/bash
-echo "Checking service status..."
-sudo systemctl status foodme --no-pager || true
-
-echo "Checking if Node.js process is running..."
-ps aux | grep node || true
-
-echo "Checking if port 3000 is in use..."
-sudo netstat -tlnp | grep :3000 || true
-
-echo "Restarting foodme service..."
-sudo systemctl restart foodme
-
-echo "Waiting for service to start..."
-sleep 10
-
-echo "Checking service status after restart..."
-sudo systemctl status foodme --no-pager || true
-
-echo "Testing local health endpoint..."
-curl -f http://localhost:3000/health || curl -s http://localhost:3000/health || echo "Local health check failed"
-EOF
+                {
+                  echo '#!/bin/bash'
+                  echo 'echo "Checking service status..."'
+                  echo 'sudo systemctl status foodme --no-pager || true'
+                  echo ''
+                  echo 'echo "Checking if Node.js process is running..."'
+                  echo 'ps aux | grep node || true'
+                  echo ''
+                  echo 'echo "Checking if port 3000 is in use..."'
+                  echo 'sudo netstat -tlnp | grep :3000 || true'
+                  echo ''
+                  echo 'echo "Restarting foodme service..."'
+                  echo 'sudo systemctl restart foodme'
+                  echo ''
+                  echo 'echo "Waiting for service to start..."'
+                  echo 'sleep 10'
+                  echo ''
+                  echo 'echo "Checking service status after restart..."'
+                  echo 'sudo systemctl status foodme --no-pager || true'
+                  echo ''
+                  echo 'echo "Testing local health endpoint..."'
+                  echo 'curl -f http://localhost:3000/health || curl -s http://localhost:3000/health || echo "Local health check failed"'
+                } > restart_service.sh
 
                 # Execute the restart script
                 if scp -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null restart_service.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/restart_service.sh; then
                   ssh -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/restart_service.sh && /tmp/restart_service.sh" || true
-                  echo "� Service restart attempted, waiting 30 seconds..."
+                  echo "🔧 Service restart attempted, waiting 30 seconds..."
                   sleep 30
                   consecutive_502_count=0  # Reset counter after intervention
                   continue
@@ -462,7 +462,7 @@ EOF
             
             # Provide specific guidance based on error pattern
             if [ $consecutive_502_count -ge 2 ]; then
-              echo "� Consistent 502 errors suggest backend service issues:"
+              echo "🔍 Consistent 502 errors suggest backend service issues:"
               echo "   - Node.js app may have crashed or failed to start"
               echo "   - Dependencies might be missing"
               echo "   - Port 3000 may not be listening"
