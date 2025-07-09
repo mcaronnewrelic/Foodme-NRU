@@ -5,19 +5,19 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.1"
-    }
   }
 
-  # Configure this backend for remote state storage
-  # Uncomment and configure when ready for production
-  # backend "s3" {
-  #   bucket = "your-terraform-state-bucket"
-  #   key    = "foodme/terraform.tfstate"
-  #   region = "us-east-1"
-  # }
+  # Using S3 backend for remote state storage
+  # This ensures state consistency across GitHub Actions runs
+  backend "s3" {
+    bucket = "foodme-terraform-state-bucket"
+    key    = "foodme/terraform.tfstate"
+    region = "us-west-2"
+    
+    # Enable state locking with DynamoDB
+    dynamodb_table = "foodme-terraform-locks"
+    encrypt        = true
+  }
 }
 
 provider "aws" {

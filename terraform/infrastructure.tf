@@ -42,7 +42,7 @@ resource "aws_vpc" "foodme" {
   enable_dns_support   = true
 
   tags = {
-    Name = "foodme-${var.environment}-vpc-${random_id.suffix.hex}"
+    Name = "foodme-${var.environment}-vpc"
   }
 }
 
@@ -59,7 +59,7 @@ resource "aws_internet_gateway" "foodme" {
   vpc_id = local.vpc_id
 
   tags = {
-    Name = "foodme-${var.environment}-igw-${random_id.suffix.hex}"
+    Name = "foodme-${var.environment}-igw"
   }
 }
 
@@ -72,7 +72,7 @@ resource "aws_subnet" "foodme_public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "foodme-${var.environment}-public-subnet-${random_id.suffix.hex}"
+    Name = "foodme-${var.environment}-public-subnet"
   }
 }
 
@@ -84,7 +84,7 @@ resource "aws_subnet" "foodme_private" {
   availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
-    Name = "foodme-${var.environment}-private-subnet-${random_id.suffix.hex}"
+    Name = "foodme-${var.environment}-private-subnet"
   }
 }
 
@@ -99,7 +99,7 @@ resource "aws_route_table" "foodme_public" {
   }
 
   tags = {
-    Name = "foodme-${var.environment}-public-rt-${random_id.suffix.hex}"
+    Name = "foodme-${var.environment}-public-rt"
   }
 }
 
@@ -112,7 +112,7 @@ resource "aws_route_table_association" "foodme_public" {
 
 # Security Group
 resource "aws_security_group" "foodme" {
-  name        = "foodme-${var.environment}-sg-${random_id.suffix.hex}"
+  name        = "foodme-${var.environment}-sg"
   description = "Security group for FoodMe application"
   vpc_id      = local.vpc_id
 
@@ -178,14 +178,9 @@ resource "aws_security_group" "foodme" {
   }
 }
 
-# Random suffix for resource names to avoid conflicts
-resource "random_id" "suffix" {
-  byte_length = 4
-}
-
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-role-${random_id.suffix.hex}"
+  name = "foodme-${var.environment}-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -203,7 +198,7 @@ resource "aws_iam_role" "foodme_ec2" {
 
 # IAM Policy for EC2 Instance
 resource "aws_iam_role_policy" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-policy-${random_id.suffix.hex}"
+  name = "foodme-${var.environment}-ec2-policy"
   role = aws_iam_role.foodme_ec2.id
 
   policy = jsonencode({
@@ -228,7 +223,7 @@ resource "aws_iam_role_policy" "foodme_ec2" {
 
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "foodme_ec2" {
-  name = "foodme-${var.environment}-ec2-profile-${random_id.suffix.hex}"
+  name = "foodme-${var.environment}-ec2-profile"
   role = aws_iam_role.foodme_ec2.name
 }
 
