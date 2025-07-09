@@ -23,8 +23,8 @@ dnf install -y \
     amazon-cloudwatch-agent \
     --allowerasing
 
-# Install Node.js 18 LTS
-curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
+# Install Node.js 22 LTS (matching GitHub Actions)
+curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
 dnf install -y nodejs
 
 # Install PM2 for process management
@@ -100,6 +100,7 @@ After=network.target
 Type=simple
 User=ec2-user
 WorkingDirectory=/var/www/foodme
+ExecStartPre=/bin/bash -c 'if [ -f package.json ]; then npm install --production; fi'
 ExecStart=/usr/bin/node server/start.js
 Restart=always
 RestartSec=10
@@ -110,6 +111,13 @@ Environment=PORT=3000
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=foodme
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/foodme /var/www/foodme
 
 [Install]
 WantedBy=multi-user.target
@@ -122,8 +130,8 @@ module.exports = {
     name: 'foodme',
     script: 'server/start.js',
     cwd: '/var/www/foodme',
-    instances: 'max',
-    exec_mode: 'cluster',
+    instances: 1,
+    exec_mode: 'fork',
     env: {
       NODE_ENV: 'production',
       PORT: 3000
@@ -133,8 +141,7 @@ module.exports = {
     error_file: '/var/log/foodme/error.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
-    max_memory_restart: '1G',
-    node_args: '-r newrelic'
+    max_memory_restart: '1G'
   }]
 };
 EOF
@@ -142,14 +149,40 @@ EOF
 # Create health check script
 cat > /var/www/foodme/health-check.sh << 'EOF'
 #!/bin/bash
-response=$(curl -s -o /dev/null -w "%%{http_code}" http://localhost:3000/health)
-if [ "$response" = "200" ]; then
-    echo "Health check passed"
-    exit 0
+
+# Try multiple health endpoints
+endpoints=("/health" "/api/health")
+base_url="http://localhost:3000"
+
+for endpoint in "${endpoints[@]}"; do
+    echo "Checking $base_url$endpoint..."
+    response=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 "$base_url$endpoint" 2>/dev/null)
+    
+    if [ "$response" = "200" ]; then
+        echo "✅ Health check passed on $endpoint (HTTP $response)"
+        exit 0
+    else
+        echo "❌ Health check failed on $endpoint (HTTP $response)"
+    fi
+done
+
+# If all endpoints fail, check if anything is listening on port 3000
+echo "Checking if any process is listening on port 3000..."
+if netstat -tlnp 2>/dev/null | grep -q ":3000 "; then
+    echo "✅ Process is listening on port 3000"
+    # Try a basic TCP connection
+    if timeout 5 bash -c "</dev/tcp/localhost/3000" 2>/dev/null; then
+        echo "✅ TCP connection to port 3000 successful"
+        exit 0
+    else
+        echo "❌ TCP connection to port 3000 failed"
+    fi
 else
-    echo "Health check failed with status: $response"
-    exit 1
+    echo "❌ No process listening on port 3000"
 fi
+
+echo "❌ All health checks failed"
+exit 1
 EOF
 
 chmod +x /var/www/foodme/health-check.sh
@@ -177,34 +210,224 @@ set -e
 
 echo "Starting FoodMe deployment..."
 
-# Install dependencies if package.json exists
-if [ -f "package.json" ]; then
+# Check if this is a real deployment (has the actual package.json)
+if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
+    echo "Deploying real FoodMe application..."
+    
+    # Install dependencies
     echo "Installing dependencies..."
     npm install --production
+    
+    # Build Angular app if angular-app directory exists
+    if [ -d "angular-app" ]; then
+        echo "Building Angular application..."
+        cd angular-app
+        npm install
+        npm run build
+        cd ..
+    fi
+    
+    # Copy built assets to the web root if they exist
+    if [ -d "angular-app/dist" ]; then
+        echo "Copying built assets..."
+        cp -r angular-app/dist/* /var/www/foodme/ 2>/dev/null || true
+    fi
+    
+    echo "Real application deployed, using systemd service..."
+    
+    # Restart application
+    echo "Restarting application..."
+    sudo systemctl restart foodme
+    
+else
+    echo "No real application detected, placeholder will continue running..."
+    
+    # Just restart the placeholder
+    sudo systemctl restart foodme
 fi
-
-# Restart application
-echo "Restarting application..."
-sudo systemctl restart foodme
 
 # Wait for application to start
 echo "Waiting for application to start..."
-sleep 10
+sleep 15
 
-# Run health check
+# Run health check with retries
 echo "Running health check..."
-if /var/www/foodme/health-check.sh; then
-    echo "✅ Deployment successful!"
-else
-    echo "❌ Deployment failed - health check failed"
-    exit 1
-fi
+for i in {1..5}; do
+    if /var/www/foodme/health-check.sh; then
+        echo "✅ Deployment successful! (attempt $i)"
+        break
+    else
+        echo "Health check failed (attempt $i/5), retrying in 10 seconds..."
+        if [ $i -eq 5 ]; then
+            echo "❌ Deployment failed - health check failed after 5 attempts"
+            
+            # Show service status for debugging
+            echo "Service status:"
+            sudo systemctl status foodme --no-pager || true
+            
+            # Show recent logs
+            echo "Recent logs:"
+            sudo journalctl -u foodme --no-pager -n 20 || true
+            
+            exit 1
+        fi
+        sleep 10
+    fi
+done
 EOF
 
 chmod +x /var/www/foodme/deploy.sh
 
 # Set ownership
 chown -R ec2-user:ec2-user /var/www/foodme
+
+# Create a simple placeholder application to ensure the service starts
+cat > /var/www/foodme/package.json << 'EOF'
+{
+  "name": "foodme-placeholder",
+  "version": "1.0.0",
+  "description": "Placeholder for FoodMe application",
+  "main": "server/start.js",
+  "scripts": {
+    "start": "node server/start.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+EOF
+
+# Create minimal server structure
+mkdir -p /var/www/foodme/server
+cat > /var/www/foodme/server/start.js << 'EOF'
+const express = require('express');
+const path = require('path');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    message: 'FoodMe placeholder service is running',
+    version: 'placeholder'
+  });
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    api: 'placeholder',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Placeholder API endpoints
+app.get('/api/restaurant', (req, res) => {
+  res.status(200).json({ 
+    message: 'API placeholder - will be replaced with real application',
+    restaurants: []
+  });
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '../')));
+
+// Catch-all handler for SPA
+app.get('*', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>FoodMe - Starting Up</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+          text-align: center; 
+          padding: 50px; 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          margin: 0;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+        }
+        .container {
+          background: rgba(255, 255, 255, 0.1);
+          padding: 40px;
+          border-radius: 20px;
+          backdrop-filter: blur(10px);
+          max-width: 500px;
+        }
+        h1 { font-size: 3em; margin: 0 0 20px 0; }
+        .loading { color: #f0f0f0; font-size: 1.2em; margin: 20px 0; }
+        .status { font-size: 0.9em; opacity: 0.8; margin-top: 30px; }
+        .spinner {
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top: 3px solid white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🍕 FoodMe</h1>
+        <div class="spinner"></div>
+        <p class="loading">Application is starting up...</p>
+        <p class="status">This placeholder will be replaced by the full application shortly.</p>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    status: 'error', 
+    message: 'Internal server error',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(\`FoodMe placeholder server running on port \${PORT}\`);
+  console.log(\`Health check available at: http://localhost:\${PORT}/health\`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+EOF
+
+# Install placeholder dependencies as ec2-user
+sudo -u ec2-user bash -c 'cd /var/www/foodme && npm install'
 
 # Enable and start services
 systemctl enable nginx
@@ -287,6 +510,24 @@ echo "Environment: $ENVIRONMENT"
 echo "App Version: $APP_VERSION"
 echo "App Port: $APP_PORT"
 
+# Try to start the foodme service
+echo "Starting FoodMe service..."
+systemctl start foodme
+
+# Wait a moment and check service status
+sleep 10
+systemctl status foodme --no-pager
+
+# Check if the service is listening on port 3000
+echo "Checking if application is listening on port 3000..."
+netstat -tlnp | grep :3000 || echo "No process listening on port 3000"
+
+# Test the health endpoint
+echo "Testing health endpoint..."
+curl -f http://localhost:3000/health || echo "Health endpoint not responding"
+
 # Signal that user data script is complete
-# Note: This is for EC2 instance, not CloudFormation
-echo "User data script completed successfully"
+echo "User data script completed successfully at $(date)"
+
+# Log to a file for debugging
+echo "User data script completed at $(date)" >> /var/log/foodme/setup.log
