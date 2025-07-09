@@ -135,6 +135,7 @@ npm run docker:run
 | **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** | Complete deployment workflows and environment management |
 | **[Terraform Deployment](./terraform/README.md)** | AWS EC2 deployment using Terraform and GitHub Actions |
 | **[Load Testing](./LOAD_TESTING.md)** | Performance testing with Locust, metrics, and analysis |
+| **[Cleanup Guide](./.github/CLEANUP_GUIDE.md)** | AWS resource cleanup procedures for failed deployments |
 
 ### 💡 Quick Reference
 - **Setup Guide**: Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for complete project setup
@@ -146,6 +147,7 @@ npm run docker:run
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow
 - **Environment Setup**: Copy `.env.example` to `.env` and configure your settings
+- **AWS Cleanup**: Use [Cleanup Guide](./.github/CLEANUP_GUIDE.md) for removing failed deployments
 
 ## 🛠️ Development
 

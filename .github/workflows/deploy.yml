@@ -339,6 +339,7 @@ jobs:
           echo "   This would require modifying the deployment strategy"
 
       - name: Health check
+        id: health_check
         run: |
           echo "Performing health check..."
           echo "Instance IP: ${{ steps.instance.outputs.ip }}"
@@ -352,14 +353,23 @@ jobs:
           for i in {1..10}; do
             if curl -f http://${{ steps.instance.outputs.ip }}/health; then
               echo "✅ Health check passed"
+              echo "health_passed=true" >> $GITHUB_OUTPUT
               exit 0
             fi
             echo "⏳ Attempt $i failed, waiting 30 seconds..."
             sleep 30
           done
           echo "❌ Health check failed"
+          echo "health_passed=false" >> $GITHUB_OUTPUT
           echo "💡 Check the EC2 instance logs or SSH into the instance to debug"
           exit 1
+
+      - name: Deployment failure cleanup
+        if: failure() && steps.health_check.outputs.health_passed == 'false'
+        run: |
+          echo "🚨 Deployment failed during health check. Consider cleaning up AWS resources."
+          echo "health_check_failed=true" >> $GITHUB_ENV
+        continue-on-error: true
 
       - name: Send New Relic deployment marker
         if: success()
@@ -396,10 +406,58 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
-  cleanup:
-    name: Cleanup Artifacts
+  cleanup-on-failure:
+    name: Cleanup AWS Resources on Failure
     runs-on: ubuntu-latest
     needs: [deploy]
+    if: failure() && needs.deploy.result == 'failure'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+        continue-on-error: true
+
+      - name: Terraform Destroy
+        run: |
+          echo "🧹 Cleaning up AWS resources due to deployment failure..."
+          terraform destroy -auto-approve \
+            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+            -var="app_version=${{ github.sha }}" || echo "⚠️ Some resources may have failed to destroy"
+        working-directory: ./terraform
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+        continue-on-error: true
+
+      - name: Cleanup summary
+        run: |
+          echo "## 🧹 Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: Deployment failed, cleaned up AWS resources" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action**: Terraform destroy executed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Please verify in AWS console that all resources were removed" >> $GITHUB_STEP_SUMMARY
+
+  cleanup-artifacts:
+    name: Cleanup Build Artifacts
+    runs-on: ubuntu-latest
+    needs: [deploy, cleanup-on-failure]
     if: always()
 
     steps:

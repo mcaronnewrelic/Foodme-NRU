@@ -1,0 +1,159 @@
+name: Manual AWS Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to clean up"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      confirm_cleanup:
+        description: "Type 'DESTROY' to confirm resource deletion"
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-west-2
+  TF_VERSION: 1.6.0
+
+jobs:
+  cleanup:
+    name: Cleanup AWS Resources
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    if: github.event.inputs.confirm_cleanup == 'DESTROY'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate cleanup confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm_cleanup }}" != "DESTROY" ]; then
+            echo "❌ Cleanup not confirmed. You must type 'DESTROY' to proceed."
+            exit 1
+          fi
+          echo "✅ Cleanup confirmed for environment: ${{ github.event.inputs.environment }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+        continue-on-error: true
+
+      - name: List current resources
+        run: |
+          echo "📊 Current AWS resources before cleanup:"
+          
+          echo "EC2 Instances:"
+          aws ec2 describe-instances \
+            --filters "Name=tag:Application,Values=FoodMe" \
+                      "Name=tag:Environment,Values=${{ github.event.inputs.environment }}" \
+            --query "Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
+            --output table || echo "None found"
+          
+          echo -e "\nSecurity Groups:"
+          aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \
+            --query "SecurityGroups[].[GroupId,GroupName]" \
+            --output table || echo "None found"
+
+      - name: Terraform Destroy
+        run: |
+          echo "🧹 Destroying AWS resources with Terraform..."
+          terraform destroy -auto-approve \
+            -var="environment=${{ github.event.inputs.environment }}" \
+            -var="app_version=manual-cleanup" || echo "⚠️ Some resources may have failed to destroy"
+        working-directory: ./terraform
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+        continue-on-error: true
+
+      - name: Manual cleanup of remaining resources
+        run: |
+          echo "🔧 Performing manual cleanup of any remaining resources..."
+          
+          # Terminate any remaining EC2 instances
+          INSTANCES=$(aws ec2 describe-instances \
+            --filters "Name=tag:Application,Values=FoodMe" \
+                      "Name=tag:Environment,Values=${{ github.event.inputs.environment }}" \
+                      "Name=instance-state-name,Values=running,pending,stopping,stopped" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$INSTANCES" ]; then
+            echo "🛑 Terminating remaining instances: $INSTANCES"
+            aws ec2 terminate-instances --instance-ids $INSTANCES
+          fi
+          
+          # Wait a bit for instances to terminate
+          sleep 30
+          
+          # Clean up security groups
+          SECURITY_GROUPS=$(aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \
+            --query "SecurityGroups[?GroupName!='default'].GroupId" \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$SECURITY_GROUPS" ]; then
+            for sg in $SECURITY_GROUPS; do
+              echo "🗑️ Attempting to delete security group: $sg"
+              aws ec2 delete-security-group --group-id "$sg" 2>/dev/null || echo "⚠️ Could not delete $sg (may have dependencies)"
+            done
+          fi
+        continue-on-error: true
+
+      - name: Verify cleanup
+        run: |
+          echo "🔍 Verifying cleanup completion..."
+          
+          echo "Remaining EC2 Instances:"
+          aws ec2 describe-instances \
+            --filters "Name=tag:Application,Values=FoodMe" \
+                      "Name=tag:Environment,Values=${{ github.event.inputs.environment }}" \
+            --query "Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
+            --output table || echo "✅ None found"
+          
+          echo -e "\nRemaining Security Groups:"
+          aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \
+            --query "SecurityGroups[].[GroupId,GroupName]" \
+            --output table || echo "✅ None found"
+
+      - name: Cleanup summary
+        run: |
+          echo "## 🧹 Manual Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cleanup method**: Terraform destroy + manual cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Completed (check logs for any remaining resources)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next steps**: Verify in AWS console that all resources are removed" >> $GITHUB_STEP_SUMMARY
+
+  cleanup-denied:
+    name: Cleanup Not Confirmed
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_cleanup != 'DESTROY'
+
+    steps:
+      - name: Cleanup denied
+        run: |
+          echo "❌ Cleanup was not confirmed"
+          echo "To proceed with cleanup, you must type 'DESTROY' in the confirmation field"
+          echo "This is a safety measure to prevent accidental resource deletion"
+          exit 1
