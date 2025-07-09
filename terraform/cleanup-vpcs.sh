@@ -83,7 +83,7 @@ delete_vpc_with_dependencies() {
     # 2. Delete NAT Gateways
     echo "  🌉 Cleaning up NAT Gateways..."
     aws ec2 describe-nat-gateways --region "$REGION" \
-        --filters "Name=vpc-id,Values=$vpc_id" \
+        --filter "Name=vpc-id,Values=$vpc_id" \
         --query 'NatGateways[?State!=`deleted`].NatGatewayId' --output text | \
     while read nat_id; do
         if [ -n "$nat_id" ] && [ "$nat_id" != "None" ]; then
