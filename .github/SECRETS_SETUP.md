@@ -60,6 +60,7 @@ Create an IAM user with the following permissions:
 
 ### 2. Create EC2 Key Pair
 
+#### Option A: Using AWS CLI
 ```bash
 # Create a new key pair
 aws ec2 create-key-pair --key-name my-foodme-keypair --output text --query 'KeyMaterial' > my-foodme-keypair.pem
@@ -67,6 +68,32 @@ aws ec2 create-key-pair --key-name my-foodme-keypair --output text --query 'KeyM
 # Set proper permissions
 chmod 600 my-foodme-keypair.pem
 ```
+
+#### Option B: Using our helper script (Recommended)
+```bash
+cd terraform
+./create-keypair.sh
+```
+
+**⚠️ Important: EC2_PRIVATE_KEY Format**
+
+When copying the private key to GitHub Secrets, ensure it's in this exact format:
+
+```
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7...
+(multiple lines of base64-encoded key data)
+...
+-----END PRIVATE KEY-----
+```
+
+**Common Issues to Avoid:**
+- ❌ No extra blank lines at the beginning or end
+- ❌ No spaces or tabs before the key content
+- ❌ No Windows line endings (CRLF) - use Unix line endings (LF)
+- ❌ No additional text or comments
+- ✅ Copy the entire key including BEGIN and END lines
+- ✅ Ensure each line ends properly without extra characters
 
 ### 3. Configure GitHub Secrets
 

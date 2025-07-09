@@ -193,48 +193,77 @@ jobs:
         run: |
           # Create SSH directory
           mkdir -p ~/.ssh
-
-          # Create private key file
+          
+          # Create private key file with proper formatting
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-
+          
           # Verify the key was written correctly
           if [ ! -s ~/.ssh/id_rsa ]; then
             echo "❌ Failed to create SSH private key file"
             exit 1
           fi
-
-          # Set correct permissions
-          chmod 600 ~/.ssh/id_rsa
-
-          # Verify instance IP is available
-          if [ -z "${{ steps.instance.outputs.ip }}" ]; then
-            echo "❌ Instance IP is not available"
+          
+          # Check key format
+          if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
+            echo "❌ Private key does not appear to be in correct format"
+            echo "Expected format should start with '-----BEGIN PRIVATE KEY-----' or '-----BEGIN RSA PRIVATE KEY-----'"
             exit 1
           fi
-
-          # Add host to known_hosts
-          ssh-keyscan -H ${{ steps.instance.outputs.ip }} >> ~/.ssh/known_hosts
-
+          
+          if ! grep -q "END.*PRIVATE KEY" ~/.ssh/id_rsa; then
+            echo "❌ Private key does not appear to be complete"
+            echo "Expected format should end with '-----END PRIVATE KEY-----' or '-----END RSA PRIVATE KEY-----'"
+            exit 1
+          fi
+          
+          # Set correct permissions
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Verify key file with ssh-keygen (with better error handling)
+          if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+            echo "❌ SSH private key appears to be invalid or corrupted"
+            echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
+            echo "Key file lines: $(wc -l < ~/.ssh/id_rsa) lines"
+            exit 1
+          fi
+          
           echo "✅ SSH key setup completed"
+          echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa | cut -d' ' -f2)"
 
       - name: Wait for instance to be ready
         if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           echo "Waiting for instance to be ready..."
-          timeout 300 bash -c 'until nc -z ${{ steps.instance.outputs.ip }} 22; do sleep 5; done'
-          sleep 30  # Additional wait for services to start
+          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
+          
+          # Wait for SSH port to be open
+          for i in {1..60}; do
+            if nc -z ${{ steps.instance.outputs.ip }} 22 2>/dev/null; then
+              echo "✅ SSH port is open"
+              break
+            fi
+            echo "⏳ Waiting for SSH (attempt $i/60)..."
+            sleep 5
+          done
+          
+          # Additional wait for services to start
+          echo "Waiting additional 30 seconds for services to start..."
+          sleep 30
 
       - name: Deploy application
         if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
+          # SSH options for better reliability
+          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60"
+          
           # Create deployment directory
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
+          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
 
           # Upload dist files
-          scp -i ~/.ssh/id_rsa -r dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/
+          scp $SSH_OPTS -r dist-download/dist/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/
 
           # Move files to web directory and set permissions
-          ssh -i ~/.ssh/id_rsa ec2-user@${{ steps.instance.outputs.ip }} "
+          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "
             sudo cp -r /tmp/* /var/www/foodme/
             sudo chown -R nginx:nginx /var/www/foodme
             sudo chmod -R 755 /var/www/foodme
