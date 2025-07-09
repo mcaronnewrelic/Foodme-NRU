@@ -82,3 +82,27 @@ variable "desired_capacity" {
   type        = number
   default     = 1
 }
+
+variable "use_existing_vpc" {
+  description = "Whether to use an existing VPC instead of creating a new one"
+  type        = bool
+  default     = false
+}
+
+variable "existing_vpc_id" {
+  description = "ID of existing VPC to use (required if use_existing_vpc is true)"
+  type        = string
+  default     = ""
+}
+
+variable "existing_public_subnet_id" {
+  description = "ID of existing public subnet to use (required if use_existing_vpc is true)"
+  type        = string
+  default     = ""
+}
+
+variable "existing_private_subnet_id" {
+  description = "ID of existing private subnet to use (optional if use_existing_vpc is true)"
+  type        = string
+  default     = ""
+}

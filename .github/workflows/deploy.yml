@@ -17,7 +17,7 @@ on:
           - production
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-west-2
   TF_VERSION: 1.6.0
   NODE_VERSION: 22
 
@@ -193,28 +193,28 @@ jobs:
         run: |
           # Create SSH directory
           mkdir -p ~/.ssh
-          
+
           # Create private key file
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          
+
           # Verify the key was written correctly
           if [ ! -s ~/.ssh/id_rsa ]; then
             echo "❌ Failed to create SSH private key file"
             exit 1
           fi
-          
+
           # Set correct permissions
           chmod 600 ~/.ssh/id_rsa
-          
+
           # Verify instance IP is available
           if [ -z "${{ steps.instance.outputs.ip }}" ]; then
             echo "❌ Instance IP is not available"
             exit 1
           fi
-          
+
           # Add host to known_hosts
           ssh-keyscan -H ${{ steps.instance.outputs.ip }} >> ~/.ssh/known_hosts
-          
+
           echo "✅ SSH key setup completed"
 
       - name: Wait for instance to be ready
@@ -258,13 +258,13 @@ jobs:
         run: |
           echo "Performing health check..."
           echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-          
+
           # Wait a bit for services to start if SSH deployment was skipped
           if [ "${{ steps.check_ssh.outputs.ssh_available }}" == "false" ]; then
             echo "ℹ️  SSH deployment was skipped, waiting longer for user_data script to complete..."
             sleep 120
           fi
-          
+
           for i in {1..10}; do
             if curl -f http://${{ steps.instance.outputs.ip }}/health; then
               echo "✅ Health check passed"
