@@ -1,45 +1,37 @@
 #!/bin/bash
 
-# FoodMe EC2 Instance User Data Script
-# This script sets up the EC2 instance for the FoodMe application
+# FoodMe EC2 Instance Setup Script - Manual Run
+# This script completes the setup that failed in the original user_data
 
 set -e
 
-# Variables passed from Terraform
-APP_PORT="${app_port}"
-ENVIRONMENT="${environment}"
-APP_VERSION="${app_version}"
+echo "🚀 Starting FoodMe manual setup..."
 
-# Update system
-dnf update -y
+# Variables
+APP_PORT="3000"
+ENVIRONMENT="staging"
+APP_VERSION="latest"
 
-# Install required packages
-dnf install -y \
-    git \
-    wget \
-    nginx \
-    htop \
-    unzip \
-    amazon-cloudwatch-agent \
-    --allowerasing
+echo "📦 Installing required packages with conflict resolution..."
+sudo dnf update -y
+sudo dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent --allowerasing
 
-# Install Node.js 18 LTS
-curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash -
-dnf install -y nodejs
+echo "📦 Installing Node.js 22 LTS..."
+curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
+sudo dnf install -y nodejs
 
-# Install PM2 for process management
-npm install -g pm2
+echo "📦 Installing PM2 for process management..."
+sudo npm install -g pm2
 
-# Create application directory
-mkdir -p /var/www/foodme
-chown ec2-user:ec2-user /var/www/foodme
+echo "📁 Setting up application directories..."
+sudo mkdir -p /var/www/foodme
+sudo chown ec2-user:ec2-user /var/www/foodme
 
-# Create logs directory
-mkdir -p /var/log/foodme
-chown ec2-user:ec2-user /var/log/foodme
+sudo mkdir -p /var/log/foodme
+sudo chown ec2-user:ec2-user /var/log/foodme
 
-# Configure Nginx
-cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
+echo "⚙️ Configuring Nginx..."
+sudo tee /etc/nginx/conf.d/foodme.conf > /dev/null << 'EOF'
 server {
     listen 80;
     server_name _;
@@ -90,8 +82,8 @@ server {
 }
 EOF
 
-# Create systemd service for FoodMe
-cat > /etc/systemd/system/foodme.service << 'EOF'
+echo "🔧 Creating systemd service for FoodMe..."
+sudo tee /etc/systemd/system/foodme.service > /dev/null << 'EOF'
 [Unit]
 Description=FoodMe Node.js Application
 After=network.target
@@ -115,7 +107,7 @@ SyslogIdentifier=foodme
 WantedBy=multi-user.target
 EOF
 
-# Create PM2 ecosystem file
+echo "🔧 Creating PM2 ecosystem file..."
 cat > /var/www/foodme/ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
@@ -139,10 +131,10 @@ module.exports = {
 };
 EOF
 
-# Create health check script
+echo "🔧 Creating health check script..."
 cat > /var/www/foodme/health-check.sh << 'EOF'
 #!/bin/bash
-response=$(curl -s -o /dev/null -w "%%{http_code}" http://localhost:3000/health)
+response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
 if [ "$response" = "200" ]; then
     echo "Health check passed"
     exit 0
@@ -154,23 +146,7 @@ EOF
 
 chmod +x /var/www/foodme/health-check.sh
 
-# Configure log rotation
-cat > /etc/logrotate.d/foodme << 'EOF'
-/var/log/foodme/*.log {
-    daily
-    missingok
-    rotate 52
-    compress
-    delaycompress
-    notifempty
-    create 0644 ec2-user ec2-user
-    postrotate
-        /bin/systemctl reload foodme > /dev/null 2>&1 || true
-    endscript
-}
-EOF
-
-# Create deployment script
+echo "🔧 Creating deployment script..."
 cat > /var/www/foodme/deploy.sh << 'EOF'
 #!/bin/bash
 set -e
@@ -203,16 +179,32 @@ EOF
 
 chmod +x /var/www/foodme/deploy.sh
 
-# Set ownership
-chown -R ec2-user:ec2-user /var/www/foodme
+echo "🔧 Setting up log rotation..."
+sudo tee /etc/logrotate.d/foodme > /dev/null << 'EOF'
+/var/log/foodme/*.log {
+    daily
+    missingok
+    rotate 52
+    compress
+    delaycompress
+    notifempty
+    create 0644 ec2-user ec2-user
+    postrotate
+        /bin/systemctl reload foodme > /dev/null 2>&1 || true
+    endscript
+}
+EOF
 
-# Enable and start services
-systemctl enable nginx
-systemctl start nginx
-systemctl enable foodme
+echo "👤 Setting ownership..."
+sudo chown -R ec2-user:ec2-user /var/www/foodme
 
-# Create CloudWatch agent configuration
-cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
+echo "🚀 Enabling and starting services..."
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl enable foodme
+
+echo "☁️ Creating CloudWatch agent configuration..."
+sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null << 'EOF'
 {
     "metrics": {
         "namespace": "FoodMe",
@@ -238,13 +230,6 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
             "mem": {
                 "measurement": [
                     "mem_used_percent"
-                ],
-                "metrics_collection_interval": 60
-            },
-            "netstat": {
-                "measurement": [
-                    "tcp_established",
-                    "tcp_time_wait"
                 ],
                 "metrics_collection_interval": 60
             }
@@ -279,14 +264,22 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
 }
 EOF
 
-# Start CloudWatch agent
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+echo "☁️ Starting CloudWatch agent..."
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 
-echo "EC2 instance setup completed!"
+echo "✅ Manual setup completed!"
 echo "Environment: $ENVIRONMENT"
 echo "App Version: $APP_VERSION"
 echo "App Port: $APP_PORT"
 
-# Signal that user data script is complete
-# Note: This is for EC2 instance, not CloudFormation
-echo "User data script completed successfully"
+echo ""
+echo "🔍 Service Status:"
+sudo systemctl status nginx --no-pager -l
+echo ""
+sudo systemctl status foodme --no-pager -l
+
+echo ""
+echo "📋 Next Steps:"
+echo "1. Deploy your application files to /var/www/foodme/"
+echo "2. Test with: curl http://localhost/health"
+echo "3. View logs with: sudo journalctl -u foodme -f"

@@ -19,3 +19,4 @@ __pycache__/
 # Database secrets
 db/password.txt
 db/*.txt
+terraform.tfstate*
