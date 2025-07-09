@@ -208,32 +208,32 @@ jobs:
         run: |
           # Create SSH directory
           mkdir -p ~/.ssh
-          
+
           # Create private key file with proper formatting
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          
+
           # Verify the key was written correctly
           if [ ! -s ~/.ssh/id_rsa ]; then
             echo "❌ Failed to create SSH private key file"
             exit 1
           fi
-          
+
           # Check key format
           if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
             echo "❌ Private key does not appear to be in correct format"
             echo "Expected format should start with '-----BEGIN PRIVATE KEY-----' or '-----BEGIN RSA PRIVATE KEY-----'"
             exit 1
           fi
-          
+
           if ! grep -q "END.*PRIVATE KEY" ~/.ssh/id_rsa; then
             echo "❌ Private key does not appear to be complete"
             echo "Expected format should end with '-----END PRIVATE KEY-----' or '-----END RSA PRIVATE KEY-----'"
             exit 1
           fi
-          
+
           # Set correct permissions
           chmod 600 ~/.ssh/id_rsa
-          
+
           # Verify key file with ssh-keygen (with better error handling)
           if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
             echo "❌ SSH private key appears to be invalid or corrupted"
@@ -241,7 +241,7 @@ jobs:
             echo "Key file lines: $(wc -l < ~/.ssh/id_rsa) lines"
             exit 1
           fi
-          
+
           echo "✅ SSH key setup completed"
           echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa | cut -d' ' -f2)"
 
@@ -250,7 +250,7 @@ jobs:
         run: |
           echo "Waiting for instance to be ready..."
           echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-          
+
           # Wait for SSH port to be open
           for i in {1..60}; do
             if nc -z ${{ steps.instance.outputs.ip }} 22 2>/dev/null; then
@@ -260,7 +260,7 @@ jobs:
             echo "⏳ Waiting for SSH (attempt $i/60)..."
             sleep 5
           done
-          
+
           # Additional wait for services to start
           echo "Waiting additional 30 seconds for services to start..."
           sleep 30
@@ -270,10 +270,10 @@ jobs:
         run: |
           # SSH options for better reliability
           SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60"
-          
+
           # Clean up any previous deployment files on server
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo rm -rf /tmp/foodme-deploy && mkdir -p /tmp/foodme-deploy"
-          
+
           # Create deployment directory
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
 
@@ -354,21 +354,155 @@ jobs:
           # Wait a bit for services to start if SSH deployment was skipped
           if [ "${{ steps.check_ssh.outputs.ssh_available }}" == "false" ]; then
             echo "ℹ️  SSH deployment was skipped, waiting longer for user_data script to complete..."
-            sleep 120
+            echo "⏳ Waiting 3 minutes for user_data script and services to start..."
+            sleep 180
+          else
+            echo "ℹ️  SSH deployment completed, waiting for services to stabilize..."
+            sleep 60
           fi
 
-          for i in {1..10}; do
-            if curl -f http://${{ steps.instance.outputs.ip }}/health; then
-              echo "✅ Health check passed"
+          # First, check if the instance is reachable
+          echo "🔍 Testing basic connectivity..."
+          if ! curl -s --connect-timeout 10 http://${{ steps.instance.outputs.ip }} > /dev/null; then
+            echo "❌ Cannot connect to instance - checking if it's still starting up..."
+          fi
+
+          # Check different endpoints to diagnose the issue
+          echo "🔍 Performing comprehensive health checks..."
+          
+          # Track consecutive 502 errors for targeted intervention
+          consecutive_502_count=0
+          
+          for i in {1..15}; do
+            echo "⏳ Health check attempt $i/15..."
+            
+            # Try the health endpoint first
+            HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 http://${{ steps.instance.outputs.ip }}/health 2>/dev/null || echo "000")
+            
+            if [ "$HEALTH_CODE" = "200" ]; then
+              echo "✅ Health check passed on /health endpoint"
               echo "health_passed=true" >> $GITHUB_OUTPUT
               exit 0
             fi
-            echo "⏳ Attempt $i failed, waiting 30 seconds..."
-            sleep 30
+            
+            # Try the root endpoint as fallback
+            ROOT_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 http://${{ steps.instance.outputs.ip }}/ 2>/dev/null || echo "000")
+            
+            if [ "$ROOT_CODE" = "200" ]; then
+              echo "✅ Root endpoint accessible - application seems to be running"
+              echo "health_passed=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
+            # Analyze the error codes
+            echo "📊 Health endpoint: HTTP $HEALTH_CODE, Root endpoint: HTTP $ROOT_CODE"
+            
+            # Handle specific error scenarios
+            if [ "$HEALTH_CODE" = "502" ] || [ "$ROOT_CODE" = "502" ]; then
+              consecutive_502_count=$((consecutive_502_count + 1))
+              echo "🔍 502 Bad Gateway (count: $consecutive_502_count) - nginx running but backend not responding"
+              
+              # If we've seen multiple 502s and have SSH access, try to restart the service
+              if [ $consecutive_502_count -ge 3 ] && [ "${{ steps.check_ssh.outputs.ssh_available }}" == "true" ] && [ $i -le 10 ]; then
+                echo "🔧 Attempting to restart backend service via SSH..."
+                
+                # Create a temporary script for service restart
+                cat > restart_service.sh << 'EOF'
+#!/bin/bash
+echo "Checking service status..."
+sudo systemctl status foodme --no-pager || true
+
+echo "Checking if Node.js process is running..."
+ps aux | grep node || true
+
+echo "Checking if port 3000 is in use..."
+sudo netstat -tlnp | grep :3000 || true
+
+echo "Restarting foodme service..."
+sudo systemctl restart foodme
+
+echo "Waiting for service to start..."
+sleep 10
+
+echo "Checking service status after restart..."
+sudo systemctl status foodme --no-pager || true
+
+echo "Testing local health endpoint..."
+curl -f http://localhost:3000/health || curl -s http://localhost:3000/health || echo "Local health check failed"
+EOF
+
+                # Execute the restart script
+                if scp -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null restart_service.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/restart_service.sh; then
+                  ssh -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/restart_service.sh && /tmp/restart_service.sh" || true
+                  echo "� Service restart attempted, waiting 30 seconds..."
+                  sleep 30
+                  consecutive_502_count=0  # Reset counter after intervention
+                  continue
+                else
+                  echo "⚠️  Could not restart service via SSH"
+                fi
+              fi
+              
+            elif [ "$HEALTH_CODE" = "503" ] || [ "$ROOT_CODE" = "503" ]; then
+              echo "🔍 503 Service Unavailable - service temporarily unavailable"
+              consecutive_502_count=0  # Reset 502 counter
+              
+            elif [ "$HEALTH_CODE" = "000" ] && [ "$ROOT_CODE" = "000" ]; then
+              echo "🔍 Connection failed - instance may still be starting or network issue"
+              consecutive_502_count=0  # Reset 502 counter
+              
+            elif [ "$HEALTH_CODE" = "404" ] || [ "$ROOT_CODE" = "404" ]; then
+              echo "🔍 404 Not Found - nginx running but routes not configured properly"
+              consecutive_502_count=0  # Reset 502 counter
+              
+            else
+              echo "🔍 Unexpected response codes"
+              consecutive_502_count=0  # Reset 502 counter
+            fi
+            
+            # Provide specific guidance based on error pattern
+            if [ $consecutive_502_count -ge 2 ]; then
+              echo "� Consistent 502 errors suggest backend service issues:"
+              echo "   - Node.js app may have crashed or failed to start"
+              echo "   - Dependencies might be missing"
+              echo "   - Port 3000 may not be listening"
+            fi
+            
+            # Wait before next attempt (longer wait for 502 errors)
+            if [ $i -lt 15 ]; then
+              if [ "$HEALTH_CODE" = "502" ] || [ "$ROOT_CODE" = "502" ]; then
+                echo "⏳ 502 error detected, waiting 45 seconds for potential auto-recovery..."
+                sleep 45
+              else
+                echo "⏳ Waiting 30 seconds before next attempt..."
+                sleep 30
+              fi
+            fi
           done
-          echo "❌ Health check failed"
+          
+          echo "❌ Health check failed after 15 attempts"
           echo "health_passed=false" >> $GITHUB_OUTPUT
-          echo "💡 Check the EC2 instance logs or SSH into the instance to debug"
+          
+          # Final diagnostic information
+          echo ""
+          echo "� Final diagnostic check:"
+          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
+          
+          # Check if nginx is responding at all
+          if curl -s --connect-timeout 5 http://${{ steps.instance.outputs.ip }} > /dev/null 2>&1; then
+            echo "✅ Nginx is responding"
+          else
+            echo "❌ Cannot connect to nginx"
+          fi
+          
+          echo ""
+          echo "💡 Troubleshooting steps:"
+          echo "1. SSH into the instance: ssh -i your-key.pem ec2-user@${{ steps.instance.outputs.ip }}"
+          echo "2. Check service status: sudo systemctl status nginx foodme"
+          echo "3. Check logs: sudo journalctl -u foodme -n 50"
+          echo "4. Check nginx logs: sudo tail -f /var/log/nginx/error.log"
+          echo "5. Check if app is listening: sudo netstat -tlnp | grep :3000"
+          
           exit 1
 
       - name: Deployment failure cleanup

@@ -65,14 +65,14 @@ jobs:
       - name: List current resources
         run: |
           echo "📊 Current AWS resources before cleanup:"
-          
+
           echo "EC2 Instances:"
           aws ec2 describe-instances \
             --filters "Name=tag:Application,Values=FoodMe" \
                       "Name=tag:Environment,Values=${{ github.event.inputs.environment }}" \
             --query "Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
             --output table || echo "None found"
-          
+
           echo -e "\nSecurity Groups:"
           aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \
@@ -94,7 +94,7 @@ jobs:
       - name: Manual cleanup of remaining resources
         run: |
           echo "🔧 Performing manual cleanup of any remaining resources..."
-          
+
           # Terminate any remaining EC2 instances
           INSTANCES=$(aws ec2 describe-instances \
             --filters "Name=tag:Application,Values=FoodMe" \
@@ -102,21 +102,21 @@ jobs:
                       "Name=instance-state-name,Values=running,pending,stopping,stopped" \
             --query "Reservations[].Instances[].InstanceId" \
             --output text 2>/dev/null || echo "")
-          
+
           if [ -n "$INSTANCES" ]; then
             echo "🛑 Terminating remaining instances: $INSTANCES"
             aws ec2 terminate-instances --instance-ids $INSTANCES
           fi
-          
+
           # Wait a bit for instances to terminate
           sleep 30
-          
+
           # Clean up security groups
           SECURITY_GROUPS=$(aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \
             --query "SecurityGroups[?GroupName!='default'].GroupId" \
             --output text 2>/dev/null || echo "")
-          
+
           if [ -n "$SECURITY_GROUPS" ]; then
             for sg in $SECURITY_GROUPS; do
               echo "🗑️ Attempting to delete security group: $sg"
@@ -128,14 +128,14 @@ jobs:
       - name: Verify cleanup
         run: |
           echo "🔍 Verifying cleanup completion..."
-          
+
           echo "Remaining EC2 Instances:"
           aws ec2 describe-instances \
             --filters "Name=tag:Application,Values=FoodMe" \
                       "Name=tag:Environment,Values=${{ github.event.inputs.environment }}" \
             --query "Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key=='Name'].Value|[0]]" \
             --output table || echo "✅ None found"
-          
+
           echo -e "\nRemaining Security Groups:"
           aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=foodme-${{ github.event.inputs.environment }}-*" \

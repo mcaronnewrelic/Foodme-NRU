@@ -219,6 +219,91 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       res.send('Attempting to trigger an uncaught exception...');
   });
 
+  // Health check endpoint
+  app.get('/health', async function(req, res) {
+    try {
+      const healthStatus = {
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        pid: process.pid,
+        version: process.version,
+        environment: process.env.NODE_ENV || 'development',
+        dataSource: useDatabase ? 'PostgreSQL' : 'JSON file'
+      };
+
+      // Test database connection if using database
+      if (useDatabase && dbService) {
+        try {
+          const isDbHealthy = await dbService.isAvailable();
+          healthStatus.database = {
+            status: isDbHealthy ? 'connected' : 'disconnected',
+            type: 'PostgreSQL'
+          };
+          
+          if (!isDbHealthy) {
+            healthStatus.status = 'degraded';
+          }
+        } catch (dbError) {
+          healthStatus.database = {
+            status: 'error',
+            error: dbError.message,
+            type: 'PostgreSQL'
+          };
+          healthStatus.status = 'degraded';
+        }
+      } else {
+        healthStatus.database = {
+          status: 'not_applicable',
+          type: 'JSON file'
+        };
+      }
+
+      // Test data availability
+      try {
+        let restaurantCount = 0;
+        if (useDatabase) {
+          // Quick count query to test database
+          const restaurants = await dbService.getAllRestaurants();
+          restaurantCount = restaurants.length;
+        } else {
+          restaurantCount = storage.getAll().length;
+        }
+        
+        healthStatus.data = {
+          restaurants_loaded: restaurantCount,
+          status: restaurantCount > 0 ? 'available' : 'empty'
+        };
+        
+        if (restaurantCount === 0) {
+          healthStatus.status = 'degraded';
+        }
+      } catch (dataError) {
+        healthStatus.data = {
+          status: 'error',
+          error: dataError.message
+        };
+        healthStatus.status = 'unhealthy';
+      }
+
+      // Set appropriate HTTP status code based on health
+      const statusCode = healthStatus.status === 'healthy' ? 200 : 
+                        healthStatus.status === 'degraded' ? 200 : 503;
+      
+      res.status(statusCode).json(healthStatus);
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(503).json({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error.message,
+        uptime: process.uptime(),
+        pid: process.pid
+      });
+    }
+  });
+
   /*
   Hit the Simulation Endpoints: Use curl or a web browser to access the simulation routes:
   http://localhost:3000/simulate/error/sync
