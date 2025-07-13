@@ -155,7 +155,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Logging middleware
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+    console.log(new Date().toISOString() + ' ' + req.method + ' ' + req.url);
     next();
 });
 
@@ -186,47 +186,47 @@ app.get('/api/restaurant', (req, res) => {
 // This handles Angular routing and serves the app
 app.get('*', (req, res) => {
     try {
-        const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoodMe - Starting</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        h1 { font-size: 3rem; margin-bottom: 1rem; }
-        p { font-size: 1.2rem; opacity: 0.9; }
-        .status { 
-            background: rgba(255,255,255,0.1); 
-            padding: 20px; 
-            border-radius: 10px; 
-            margin-top: 30px; 
-        }
-    </style>
-</head>
-<body>
-    <h1>🍕 FoodMe</h1>
-    <p>Application placeholder is running</p>
-    <p>The real application will be deployed shortly...</p>
-    <div class="status">
-        <p><strong>Status:</strong> Ready for deployment</p>
-        <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-        <p><strong>Path:</strong> ${req.path}</p>
-    </div>
-</body>
-</html>`;
+        const html = '<!DOCTYPE html>' +
+'<html lang="en">' +
+'<head>' +
+'    <meta charset="UTF-8">' +
+'    <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+'    <title>FoodMe - Starting</title>' +
+'    <style>' +
+'        body {' +
+'            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' +
+'            margin: 0;' +
+'            padding: 50px;' +
+'            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);' +
+'            color: white;' +
+'            text-align: center;' +
+'            min-height: 100vh;' +
+'            display: flex;' +
+'            flex-direction: column;' +
+'            justify-content: center;' +
+'            align-items: center;' +
+'        }' +
+'        h1 { font-size: 3rem; margin-bottom: 1rem; }' +
+'        p { font-size: 1.2rem; opacity: 0.9; }' +
+'        .status { ' +
+'            background: rgba(255,255,255,0.1); ' +
+'            padding: 20px; ' +
+'            border-radius: 10px; ' +
+'            margin-top: 30px; ' +
+'        }' +
+'    </style>' +
+'</head>' +
+'<body>' +
+'    <h1>🍕 FoodMe</h1>' +
+'    <p>Application placeholder is running</p>' +
+'    <p>The real application will be deployed shortly...</p>' +
+'    <div class="status">' +
+'        <p><strong>Status:</strong> Ready for deployment</p>' +
+'        <p><strong>Time:</strong> ' + new Date().toISOString() + '</p>' +
+'        <p><strong>Path:</strong> ' + req.path + '</p>' +
+'    </div>' +
+'</body>' +
+'</html>';
         
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.status(200).send(html);
@@ -253,9 +253,9 @@ app.use((error, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`FoodMe placeholder running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`Started at: ${new Date().toISOString()}`);
+    console.log("FoodMe placeholder running on port " + PORT);
+    console.log("Environment: " + (process.env.NODE_ENV || "development"));
+    console.log("Started at: " + new Date().toISOString());
 });
 EOF
 
