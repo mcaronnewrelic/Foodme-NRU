@@ -149,7 +149,7 @@ set -e
 echo "Starting FoodMe deployment..."
 if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
     echo "Deploying FoodMe application..."
-    cd /var/www/foodme/server
+    cd /var/www/foodme/dist/server
     npm install --production
     if [ -d "server" ]; then
         echo "✅ Server directory found"

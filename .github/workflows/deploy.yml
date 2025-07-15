@@ -356,11 +356,7 @@ jobs:
             
             # Check if server directory exists in the deployed files
             if [ -d '/var/www/foodme/dist/server' ]; then
-              echo '✅ Server directory found in dist/'
-              # Copy server files to root level for the systemd service
-              sudo cp -r /var/www/foodme/dist/server /var/www/foodme/
-            elif [ -d '/var/www/foodme/server' ]; then
-              echo '✅ Server directory found at root level'
+              echo '✅ Server directory found in dist/server'
             else
               echo '❌ No server directory found! Listing contents:'
               find /var/www/foodme -type d -name '*server*' || echo 'No server directories found'
@@ -373,8 +369,8 @@ jobs:
             
             # Check if package.json exists
             if [ ! -f '/var/www/foodme/serverpackage.json' ]; then
-              echo '❌ package.json not found in /var/www/foodme/server!'
-              ls -la /var/www/foodme/server
+              echo '❌ package.json not found in /var/www/foodme/dist/server!'
+              ls -la /var/www/foodme/dist/server
             else
               echo '✅ package.json found'
             fi
@@ -391,14 +387,14 @@ jobs:
               echo 'No deployment script found, manually starting services...'
               
               # Install Node.js dependencies in server directory
-              if [ -d '/var/www/foodme/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
+              if [ -d '/var/www/foodme/dist/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
                 echo 'Installing Node.js dependencies in server directory...'
                 echo 'Node.js version:' && node --version
                 echo 'npm version:' && npm --version
                 echo 'Current directory:' && pwd
                 echo 'Directory permissions:' && ls -la
                 cd /var/www/foodme/server && npm install --production --unsafe-perm --verbose
-              elif [ -f '/var/www/foodme/package.json' ]; then
+              elif [ -f '/var/www/foodme/dist/package.json' ]; then
                 echo 'Installing Node.js dependencies in root directory...'
                 echo 'Node.js version:' && node --version
                 echo 'npm version:' && npm --version
@@ -429,7 +425,7 @@ jobs:
                 
                 # Additional debugging for server directory
                 echo 'Checking server directory structure:'
-                ls -la /var/www/foodme/server/ || echo 'Server directory not found'
+                ls -la /var/www/foodme/dist/server/ || echo 'Server directory not found'
                 echo 'Checking if start.js exists:'
                 ls -la /var/www/foodme/server/start.js || echo 'start.js not found'
                 echo 'Checking package.json in server:'
