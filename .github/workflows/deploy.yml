@@ -48,17 +48,14 @@ jobs:
       - name: Install dependencies
         run: npm run install:all
 
-      - name: Build Angular app
-        run: npm run build:angular
-
-      - name: Build complete application
+      - name: Build complete application - also build Angular app
         run: npm run build
 
       - name: List dist contents
         run: |
           echo "Contents of dist directory:"
           ls -la dist/
-          find dist/ -type f -name "*.js" -o -name "*.html" -o -name "*.css" | head -20
+          find dist/ -type f -name "*.js" -o -name "*.html" -o -name "*.css" -o -name "*.json" | head -20
 
       - name: Upload dist artifact
         id: upload
@@ -67,8 +64,6 @@ jobs:
           name: foodme-dist-${{ github.sha }}
           path: |
             dist/
-            package.json
-            package-lock.json
             newrelic.js
             !dist/**/*.map
             !dist/**/test/**
@@ -337,6 +332,22 @@ jobs:
             # Stop services first
             sudo systemctl stop foodme || true
             
+            # Update systemd service environment variables using sed
+            sudo sed -i 's/Environment=NEW_RELIC_LICENSE_KEY=.*/Environment=NEW_RELIC_LICENSE_KEY=${{ secrets.NEW_RELIC_LICENSE_KEY }}/' /etc/systemd/system/foodme.service
+            sudo sed -i 's/Environment=NEW_RELIC_APP_NAME=.*/Environment=NEW_RELIC_APP_NAME=FoodMe-${{ github.event.inputs.environment || 'staging' }}/' /etc/systemd/system/foodme.service
+            sudo sed -i 's/Environment=DB_PORT=.*/Environment=DB_PORT=${{ secrets.DB_PORT || '5432' }}/' /etc/systemd/system/foodme.service
+            sudo sed -i 's/Environment=DB_NAME=.*/Environment=DB_NAME=${{ secrets.DB_NAME || 'foodme' }}/' /etc/systemd/system/foodme.service
+            sudo sed -i 's/Environment=DB_USER=.*/Environment=DB_USER=${{ secrets.DB_USER || 'foodme_user' }}/' /etc/systemd/system/foodme.service
+            sudo sed -i 's/Environment=DB_PASSWORD=.*/Environment=DB_PASSWORD=${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}/' /etc/systemd/system/foodme.service
+            
+            # Reload systemd configuration after updating environment
+            sudo systemctl daemon-reload
+            
+            # Verify the systemd service configuration
+            echo 'Verifying systemd service environment variables:'
+            grep 'Environment=NEW_RELIC' /etc/systemd/system/foodme.service || echo 'NEW_RELIC environment not found'
+            grep 'Environment=DB_' /etc/systemd/system/foodme.service || echo 'DB environment not found'
+            
             # Clear old deployment
             sudo rm -rf /var/www/foodme/dist /var/www/foodme/server /var/www/foodme/package*.json
             
@@ -361,9 +372,9 @@ jobs:
             fi
             
             # Check if package.json exists
-            if [ ! -f '/var/www/foodme/package.json' ]; then
-              echo '❌ package.json not found in /var/www/foodme!'
-              ls -la /var/www/foodme/
+            if [ ! -f '/var/www/foodme/serverpackage.json' ]; then
+              echo '❌ package.json not found in /var/www/foodme/server!'
+              ls -la /var/www/foodme/server
             else
               echo '✅ package.json found'
             fi
@@ -382,16 +393,28 @@ jobs:
               # Install Node.js dependencies in server directory
               if [ -d '/var/www/foodme/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
                 echo 'Installing Node.js dependencies in server directory...'
-                cd /var/www/foodme/server && npm install --production
+                echo 'Node.js version:' && node --version
+                echo 'npm version:' && npm --version
+                echo 'Current directory:' && pwd
+                echo 'Directory permissions:' && ls -la
+                cd /var/www/foodme/server && npm install --production --unsafe-perm --verbose
               elif [ -f '/var/www/foodme/package.json' ]; then
                 echo 'Installing Node.js dependencies in root directory...'
-                cd /var/www/foodme && npm install --production
+                echo 'Node.js version:' && node --version
+                echo 'npm version:' && npm --version
+                echo 'Current directory:' && pwd
+                echo 'Directory permissions:' && ls -la
+                cd /var/www/foodme && npm install --production --unsafe-perm --verbose
               else
                 echo 'No package.json found - dependencies may have been installed during build'
               fi
               
               # Start services
               sudo systemctl start foodme
+              
+              # Verify environment variables are available to the service
+              echo 'Checking if New Relic environment is accessible to the service:'
+              sudo systemctl show foodme --property=Environment | grep NEW_RELIC || echo 'NEW_RELIC not found in service environment'
               
               # Check service status
               echo 'Service status:'

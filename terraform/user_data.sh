@@ -140,130 +140,7 @@ SyslogIdentifier=foodme
 WantedBy=multi-user.target
 EOF
 
-# Create minimal placeholder app
-cat > /var/www/foodme/package.json << 'EOF'
-{"name":"foodme","version":"1.0.0","main":"server/start.js","dependencies":{"express":"^4.18.2"}}
-EOF
 
-cat > /var/www/foodme/server/start.js << 'EOF'
-const express = require('express');
-const app = express();
-
-// Middleware for parsing JSON and handling errors
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Logging middleware
-app.use((req, res, next) => {
-    console.log(new Date().toISOString() + ' ' + req.method + ' ' + req.url);
-    next();
-});
-
-// Health check endpoints
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
-
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'ok', 
-        api: 'placeholder',
-        timestamp: new Date().toISOString()
-    });
-});
-
-// API endpoints
-app.get('/api/restaurant', (req, res) => {
-    res.json({restaurants: []});
-});
-
-// Serve a proper HTML document for all routes (including /index.html)
-// This handles Angular routing and serves the app
-app.get('*', (req, res) => {
-    try {
-        const html = '<!DOCTYPE html>' +
-'<html lang="en">' +
-'<head>' +
-'    <meta charset="UTF-8">' +
-'    <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-'    <title>FoodMe - Starting</title>' +
-'    <style>' +
-'        body {' +
-'            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' +
-'            margin: 0;' +
-'            padding: 50px;' +
-'            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);' +
-'            color: white;' +
-'            text-align: center;' +
-'            min-height: 100vh;' +
-'            display: flex;' +
-'            flex-direction: column;' +
-'            justify-content: center;' +
-'            align-items: center;' +
-'        }' +
-'        h1 { font-size: 3rem; margin-bottom: 1rem; }' +
-'        p { font-size: 1.2rem; opacity: 0.9; }' +
-'        .status { ' +
-'            background: rgba(255,255,255,0.1); ' +
-'            padding: 20px; ' +
-'            border-radius: 10px; ' +
-'            margin-top: 30px; ' +
-'        }' +
-'    </style>' +
-'</head>' +
-'<body>' +
-'    <h1>🍕 FoodMe</h1>' +
-'    <p>Application placeholder is running</p>' +
-'    <p>The real application will be deployed shortly...</p>' +
-'    <div class="status">' +
-'        <p><strong>Status:</strong> Ready for deployment</p>' +
-'        <p><strong>Time:</strong> ' + new Date().toISOString() + '</p>' +
-'        <p><strong>Path:</strong> ' + req.path + '</p>' +
-'    </div>' +
-'</body>' +
-'</html>';
-        
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.status(200).send(html);
-    } catch (error) {
-        console.error('Error serving HTML:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            message: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-    console.error('Application error:', error);
-    res.status(500).json({
-        error: 'Internal server error',
-        message: error.message,
-        timestamp: new Date().toISOString()
-    });
-});
-
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log("FoodMe placeholder running on port " + PORT);
-    console.log("Environment: " + (process.env.NODE_ENV || "development"));
-    console.log("Started at: " + new Date().toISOString());
-});
-EOF
-
-# Install placeholder and start services
-sudo -u ec2-user bash -c 'cd /var/www/foodme && npm install'
-systemctl daemon-reload
-systemctl enable nginx foodme
-systemctl start nginx foodme
 
 # Create deployment script for GitHub Actions
 cat > /var/www/foodme/deploy.sh << 'EOF'
@@ -271,7 +148,8 @@ cat > /var/www/foodme/deploy.sh << 'EOF'
 set -e
 echo "Starting FoodMe deployment..."
 if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
-    echo "Deploying real FoodMe application..."
+    echo "Deploying FoodMe application..."
+    cd /var/www/foodme/server
     npm install --production
     if [ -d "server" ]; then
         echo "✅ Server directory found"
@@ -289,5 +167,11 @@ EOF
 
 chmod +x /var/www/foodme/deploy.sh
 chown ec2-user:ec2-user /var/www/foodme/deploy.sh
+
+# Start services
+sudo -u ec2-user bash -c 'cd /var/www/foodme/server && npm install'
+systemctl daemon-reload
+systemctl enable nginx foodme
+systemctl start nginx foodme
 
 echo "EC2 setup completed at $(date)"
