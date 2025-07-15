@@ -380,9 +380,9 @@ jobs:
             sudo chmod -R 755 /var/www/foodme
             
             # Run the deployment script
-            if [ -x '/var/www/foodme/deploy.sh' ]; then
+            if [ -x '/home/ec2-user/foodme/config/deploy.sh' ]; then
               echo 'Running deployment script...'
-              cd /var/www/foodme && ./deploy.sh
+              cd /home/ec2-user/foodme/config && ./deploy.sh
             else
               echo 'No deployment script found, manually starting services...'
               
