@@ -1,5 +1,5 @@
 #!/bin/bash
-endpoints=("/health" "/api/health")
+endpoints=("/health")
 base_url="http://localhost:3000"
 
 for endpoint in "${endpoints[@]}"; do

@@ -1,26 +1,21 @@
 #!/bin/bash
 set -e
-
 echo "Starting FoodMe deployment..."
-
+cd /var/www/foodme/dist/server
 if [ -f "package.json" ] && grep -q '"name": "foodme"' package.json; then
-    echo "Deploying real application..."
+    echo "Deploying FoodMe application..."
+
     npm install --production
-    
-    if [ -d "angular-app" ]; then
-        cd angular-app && npm install && npm run build && cd ..
+    if [ -d "server" ]; then
+        echo "✅ Server directory found"
+    else
+        echo "❌ Server directory missing!"
+        exit 1
     fi
-    
-    if [ -d "angular-app/dist" ]; then
-        cp -r angular-app/dist/* /var/www/foodme/ 2>/dev/null || true
-    fi
-    
     sudo systemctl restart foodme
 else
-    echo "Placeholder deployment..."
-    sudo systemctl restart foodme
+    echo "No real application detected, placeholder continues..."
 fi
-
 sleep 15
 
 for i in {1..5}; do

@@ -608,7 +608,6 @@ jobs:
           echo "5. Check if app is listening: sudo netstat -tlnp | grep :3000"
 
           exit 1
-
       - name: Deployment failure cleanup
         if: failure() && steps.health_check.outputs.health_passed == 'false'
         run: |
@@ -616,28 +615,19 @@ jobs:
           echo "health_check_failed=true" >> $GITHUB_ENV
         continue-on-error: true
 
-      - name: Send New Relic deployment marker
-        if: success()
-        run: |
-          USER="${{ github.actor }}"
-          CHANGELOG="${{ github.event.head_commit.message }}"
-          COMMIT="${{ github.sha }}"
-          REVISION="${{ github.revision }}"
-          cat > /tmp/deployment_payload.json << EOF
-          {
-            "query": "mutation { changeTrackingCreateDeployment( deployment: {commit: \"$REVISION\", description: \"$CHANGELOG\", user: \"$USER\", changelog: \"$CHANGELOG\", deploymentType: BASIC, entityGuid: \"$ENTITY_GUID\"}) { deploymentId entityGuid } }",
-            "variables": {}
-          }
-          EOF
-
-          curl -X POST https://api.newrelic.com/graphql \
-            -H 'Content-Type: application/json' \
-            -H 'API-Key: ${{ secrets.NEW_RELIC_API_KEY }}' \
-            --data @/tmp/deployment_payload.json
-          
-          # Clean up temporary file
-          rm -f /tmp/deployment_payload.json
-        continue-on-error: true
+      - name: Set Release Version from Tag
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.5.1
+        with:
+          guid: ${{ secrets.NEW_RELIC_APP_ID }}
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          region: "US"
+          user: ${{ github.actor }}
+          commit: ${{ github.sha }}
+          changelog: ${{ github.event.head_commit.message }}
+          version: "${{ env.RELEASE_VERSION }}"
+          description: "Deployed FoodMe-${{ github.event.inputs.environment || 'staging' }} by ${{ github.actor }} to ${{ github.event.inputs.environment || 'staging' }}"
 
       - name: Deployment summary
         run: |

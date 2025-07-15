@@ -1,0 +1,20 @@
+integrations:
+  - name: nri-nginx
+    env:
+      # Nginx status endpoint (need to configure nginx status module)
+      STATUS_URL: http://localhost/nginx_status
+      STATUS_MODULE: discover
+      REMOTE_MONITORING: true
+      METRICS: true
+      INVENTORY: true
+      # Connection timeout
+      CONNECTION_TIMEOUT: 5
+      HTTP_TIMEOUT: 30
+      VALIDATE_CERTS: false
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","application":"foodme","instance_type":"ec2"}'
+    interval: 30s
+    labels:
+      role: reverse-proxy
+      service: nginx
+      deployment: ec2
+    inventory_source: config/nginx

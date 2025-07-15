@@ -1,24 +1,25 @@
 [Unit]
 Description=FoodMe Node.js Application
-After=network.target postgresql.service
-
+After=network.target postgresql-16.service
+Requires=postgresql-16.service
 [Service]
 Type=simple
 User=ec2-user
-WorkingDirectory=/var/www/foodme/server
+WorkingDirectory=/var/www/foodme/dist/server
 ExecStart=/usr/bin/node start.js
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
+Environment=NEW_RELIC_APP_NAME=FoodMe-${ENVIRONMENT}
+Environment=DB_HOST=localhost
+Environment=DB_PORT=${DB_PORT}
+Environment=DB_NAME=${DB_NAME}
+Environment=DB_USER=${DB_USER}
+Environment=DB_PASSWORD=${DB_PASSWORD}
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=foodme
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/log/foodme /var/www/foodme
-
 [Install]
 WantedBy=multi-user.target

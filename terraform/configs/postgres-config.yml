@@ -1,0 +1,16 @@
+integrations:
+  - name: nri-postgresql
+    env:
+      HOSTNAME: localhost
+      PORT: {{db_port}}
+      USERNAME: {{db_user}}
+      DATABASE: {{db_name}}
+      PASSWORD: {{db_password}}
+      METRICS: true
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","application":"foodme"}'
+    interval: 30s
+    labels:
+      role: database
+      service: postgresql
+      application: foodme
+      deployment: ec2
