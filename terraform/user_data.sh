@@ -44,19 +44,13 @@ integrations:
       # Nginx status endpoint (need to configure nginx status module)
       STATUS_URL: http://localhost/nginx_status
       STATUS_MODULE: discover
-      # Remote monitoring configuration
       REMOTE_MONITORING: true
-      # Nginx metrics configuration
       METRICS: true
-      # Nginx inventory configuration
       INVENTORY: true
       # Connection timeout
       CONNECTION_TIMEOUT: 5
-      # HTTP timeout
       HTTP_TIMEOUT: 30
-      # Validate SSL certificates
       VALIDATE_CERTS: false
-      # Custom attributes for easier filtering
       CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"'"${environment}"'","application":"foodme","instance_type":"ec2"}'
     interval: 30s
     labels:
@@ -112,8 +106,6 @@ maintenance_work_mem = 64MB
 checkpoint_completion_target = 0.9
 wal_buffers = 16MB
 default_statistics_target = 100
-
-# Logging configuration
 log_destination = 'stderr'
 logging_collector = on
 log_directory = '/var/log/postgresql'
@@ -126,8 +118,6 @@ log_checkpoints = on
 log_connections = on
 log_disconnections = on
 log_lock_waits = on
-
-# Security settings
 ssl = off
 password_encryption = scram-sha-256
 EOF
@@ -176,9 +166,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
     delivery_time VARCHAR(50),
     delivery_fee DECIMAL(10,2),
     min_order DECIMAL(10,2),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    is_active BOOLEAN DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS menu_items (
@@ -191,9 +179,7 @@ CREATE TABLE IF NOT EXISTS menu_items (
     category VARCHAR(100),
     is_available BOOLEAN DEFAULT true,
     ingredients TEXT[],
-    allergens TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    allergens TEXT[]
 );
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -201,9 +187,7 @@ CREATE TABLE IF NOT EXISTS customers (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(50),
-    address TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    address TEXT
 );
 
 CREATE TABLE IF NOT EXISTS orders (
@@ -213,13 +197,7 @@ CREATE TABLE IF NOT EXISTS orders (
     order_number VARCHAR(50) UNIQUE NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     total_amount DECIMAL(10,2) NOT NULL,
-    delivery_address TEXT,
-    delivery_fee DECIMAL(10,2) DEFAULT 0,
-    tax_amount DECIMAL(10,2) DEFAULT 0,
-    special_instructions TEXT,
-    estimated_delivery_time TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    delivery_address TEXT
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -239,28 +217,7 @@ CREATE INDEX IF NOT EXISTS idx_restaurants_is_active ON restaurants(is_active);
 CREATE INDEX IF NOT EXISTS idx_menu_items_restaurant_id ON menu_items(restaurant_id);
 CREATE INDEX IF NOT EXISTS idx_menu_items_category ON menu_items(category);
 CREATE INDEX IF NOT EXISTS idx_menu_items_is_available ON menu_items(is_available);
-CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
-CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
-CREATE INDEX IF NOT EXISTS idx_orders_restaurant_id ON orders(restaurant_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
-CREATE INDEX IF NOT EXISTS idx_order_items_menu_item_id ON order_items(menu_item_id);
-
 EOF
-
-# Test database connection
-echo "Testing database connection..."
-if sudo -u postgres psql -d $${DB_NAME} -c "SELECT version();" > /dev/null 2>&1; then
-    echo "✅ Database connection successful"
-    echo "Database: $${DB_NAME}"
-    echo "User: $${DB_USER}"
-    echo "Port: $${DB_PORT}"
-else
-    echo "❌ Database connection failed"
-    exit 1
-fi
-
 echo "PostgreSQL 16 setup completed successfully"
 
 # Create directories
@@ -278,7 +235,6 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     
-    # Gzip Compression
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
