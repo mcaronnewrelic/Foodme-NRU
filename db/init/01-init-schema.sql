@@ -102,14 +102,6 @@ CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON menu_items FOR EACH
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample data for development (optional)
-INSERT INTO restaurants (original_id, name, description, image_url, cuisine_type, rating, delivery_time, delivery_fee, min_order) VALUES
-('sample_thai', 'Tasty Thai', 'Authentic Thai cuisine with fresh ingredients', '/assets/img/restaurants/thai.jpg', 'Thai', 4.5, '25-40 min', 2.99, 15.00),
-('sample_pizza', 'Pizza Palace', 'Wood-fired pizzas and Italian classics', '/assets/img/restaurants/pizza.jpg', 'Italian', 4.2, '20-35 min', 3.50, 12.00),
-('sample_burger', 'Burger Barn', 'Gourmet burgers and crispy fries', '/assets/img/restaurants/burger.jpg', 'American', 4.0, '15-30 min', 2.50, 10.00),
-('sample_sushi', 'Sushi Zen', 'Fresh sushi and Japanese specialties', '/assets/img/restaurants/sushi.jpg', 'Japanese', 4.7, '30-45 min', 4.00, 20.00)
-ON CONFLICT DO NOTHING;
-
 -- Success message
 DO $$
 BEGIN

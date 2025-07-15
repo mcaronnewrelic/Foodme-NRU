@@ -622,23 +622,21 @@ jobs:
           USER="${{ github.actor }}"
           CHANGELOG="${{ github.event.head_commit.message }}"
           COMMIT="${{ github.sha }}"
+          REVISION="${{ github.revision }}"
+          cat > /tmp/deployment_payload.json << EOF
+          {
+            "query": "mutation { changeTrackingCreateDeployment( deployment: {commit: \"$REVISION\", description: \"$CHANGELOG\", user: \"$USER\", changelog: \"$CHANGELOG\", deploymentType: BASIC, entityGuid: \"$ENTITY_GUID\"}) { deploymentId entityGuid } }",
+            "variables": {}
+          }
+          EOF
 
           curl -X POST https://api.newrelic.com/graphql \
             -H 'Content-Type: application/json' \
             -H 'API-Key: ${{ secrets.NEW_RELIC_API_KEY }}' \
-            --data-raw '{
-              "query": "mutation { 
-                changeTrackingCreateDeployment(deployment: {
-                  description: \"FoodMe EC2 Deployment via GitHub Actions\",
-                  user: \"'$USER'\",
-                  changelog: \"'$CHANGELOG'\",
-                  commit: \"'$COMMIT'\",
-                  deploymentType: BASIC
-                }) { 
-                  deploymentId 
-                } 
-              }"
-            }'
+            --data @/tmp/deployment_payload.json
+          
+          # Clean up temporary file
+          rm -f /tmp/deployment_payload.json
         continue-on-error: true
 
       - name: Deployment summary
