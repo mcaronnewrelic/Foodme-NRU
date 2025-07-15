@@ -28,8 +28,8 @@ dnf install -y newrelic-infra
 
 # Configure New Relic Infrastructure Agent
 cat > /etc/newrelic-infra.yml << EOF
-license_key: ${NEW_RELIC_LICENSE_KEY}
-display_name: FoodMe-${ENVIRONMENT}-EC2
+license_key: ${new_relic_license_key}
+display_name: FoodMe-${environment}-EC2
 log_file: /var/log/newrelic-infra/newrelic-infra.log
 verbose: 0
 EOF
@@ -73,10 +73,10 @@ integrations:
       # Validate SSL certificates
       VALIDATE_CERTS: false
       # Custom attributes for easier filtering
-      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"'"${ENVIRONMENT}"'","application":"foodme","instance_type":"ec2"}'
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"'"${environment}"'","application":"foodme","instance_type":"ec2"}'
     interval: 30s
     labels:
-      env: ${ENVIRONMENT}
+      env: ${environment}
       role: reverse-proxy
       service: nginx
       deployment: ec2
@@ -90,10 +90,10 @@ integrations:
     env:
       # PostgreSQL connection details
       HOSTNAME: localhost
-      PORT: ${DB_PORT}
-      USERNAME: ${DB_USER}
-      DATABASE: ${DB_NAME}
-      PASSWORD: ${DB_PASSWORD}
+      PORT: ${db_port}
+      USERNAME: ${db_user}
+      DATABASE: ${db_name}
+      PASSWORD: ${db_password}
       # SSL configuration
       SSL_MODE: disable
       # Connection timeout
@@ -106,7 +106,7 @@ integrations:
       COLLECT_DB_LOCK_METRICS: true
       COLLECT_BLOAT_METRICS: true
       # Custom attributes for easier filtering
-      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"'"${ENVIRONMENT}"'","application":"foodme","deployment":"ec2"}'
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"'"${environment}"'","application":"foodme","deployment":"ec2"}'
       # Enable custom queries for FoodMe-specific metrics
       CUSTOM_METRICS_QUERY: |
         SELECT 
@@ -130,7 +130,7 @@ integrations:
         FROM customers;
     interval: 30s
     labels:
-      env: ${ENVIRONMENT}
+      env: ${environment}
       role: database
       service: postgresql
       application: foodme
@@ -159,7 +159,7 @@ cat >> /var/lib/pgsql/16/data/postgresql.conf << EOF
 
 # Custom FoodMe configuration
 listen_addresses = 'localhost'
-port = ${DB_PORT}
+port = ${db_port}
 max_connections = 100
 shared_buffers = 256MB
 effective_cache_size = 1GB
@@ -241,25 +241,25 @@ fi
 echo "Setting up FoodMe database and user..."
 sudo -u postgres psql << EOF
 -- Create database user
-CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
+CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 
 -- Create database
-CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};
+CREATE DATABASE ${db_name} OWNER ${db_user};
 
 -- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
+GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
 
 -- Connect to the foodme database and set up schema
-\c ${DB_NAME}
+\c ${db_name}
 
 -- Grant schema privileges
-GRANT ALL ON SCHEMA public TO ${DB_USER};
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DB_USER};
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER};
+GRANT ALL ON SCHEMA public TO ${db_user};
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${db_user};
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${db_user};
 
 -- Alter default privileges for future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER};
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${DB_USER};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${db_user};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${db_user};
 
 -- Create tables for the FoodMe application
 CREATE TABLE IF NOT EXISTS restaurants (
@@ -348,11 +348,11 @@ EOF
 
 # Test database connection
 echo "Testing database connection..."
-if sudo -u postgres psql -d ${DB_NAME} -c "SELECT version();" > /dev/null 2>&1; then
+if sudo -u postgres psql -d $${DB_NAME} -c "SELECT version();" > /dev/null 2>&1; then
     echo "✅ Database connection successful"
-    echo "Database: ${DB_NAME}"
-    echo "User: ${DB_USER}"
-    echo "Port: ${DB_PORT}"
+    echo "Database: $${DB_NAME}"
+    echo "User: $${DB_USER}"
+    echo "Port: $${DB_PORT}"
 else
     echo "❌ Database connection failed"
     exit 1
@@ -476,13 +476,13 @@ Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
 Environment=PORT=3000
-Environment=NEW_RELIC_LICENSE_KEY=$NEW_RELIC_LICENSE_KEY
-Environment=NEW_RELIC_APP_NAME=FoodMe-$ENVIRONMENT
+Environment=NEW_RELIC_LICENSE_KEY=$${NEW_RELIC_LICENSE_KEY}
+Environment=NEW_RELIC_APP_NAME=FoodMe-$${ENVIRONMENT}
 Environment=DB_HOST=localhost
-Environment=DB_PORT=$DB_PORT
-Environment=DB_NAME=$DB_NAME
-Environment=DB_USER=$DB_USER
-Environment=DB_PASSWORD=$DB_PASSWORD
+Environment=DB_PORT=$${DB_PORT}
+Environment=DB_NAME=$${DB_NAME}
+Environment=DB_USER=$${DB_USER}
+Environment=DB_PASSWORD=$${DB_PASSWORD}
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=foodme
@@ -539,9 +539,9 @@ systemctl is-active newrelic-infra && echo "✅ New Relic Infrastructure agent i
 
 # Final database connectivity test
 echo "Final database connectivity test:"
-if sudo -u postgres psql -d ${DB_NAME} -c "SELECT COUNT(*) FROM restaurants;" > /dev/null 2>&1; then
+if sudo -u postgres psql -d $${DB_NAME} -c "SELECT COUNT(*) FROM restaurants;" > /dev/null 2>&1; then
     echo "✅ Database connectivity confirmed"
-    RESTAURANT_COUNT=$(sudo -u postgres psql -d ${DB_NAME} -t -c "SELECT COUNT(*) FROM restaurants;" | xargs)
+    RESTAURANT_COUNT=$(sudo -u postgres psql -d $${DB_NAME} -t -c "SELECT COUNT(*) FROM restaurants;" | xargs)
     echo "📊 Database contains $RESTAURANT_COUNT restaurants"
 else
     echo "❌ Database connectivity test failed"
