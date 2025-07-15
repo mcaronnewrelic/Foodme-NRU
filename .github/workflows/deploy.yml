@@ -368,7 +368,7 @@ jobs:
             fi
             
             # Check if package.json exists
-            if [ ! -f '/var/www/foodme/serverpackage.json' ]; then
+            if [ ! -f '/var/www/foodme/dist/server/package.json' ]; then
               echo '❌ package.json not found in /var/www/foodme/dist/server!'
               ls -la /var/www/foodme/dist/server
             else
