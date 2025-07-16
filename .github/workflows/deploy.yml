@@ -316,7 +316,6 @@ jobs:
           if ssh_exec "cloud-init status --wait --long" | grep -q "done"; then
             echo "✅ Cloud-init completed successfully"
           else
-          else
             echo "⏳ Cloud-init still running or not responding, checking progress..."
             
             # Show last 30 lines of cloud-init output
@@ -530,7 +529,7 @@ jobs:
                 echo 'Checking if start.js exists:'
                 ls -la /var/www/foodme/dist/dist/server/start.js || echo 'start.js not found'
                 echo 'Checking package.json in server:'
-                ls -la /var/www/foodme/server/package.json || echo 'package.json not found in server'
+                ls -la /var/www/foodme/dist/server/package.json || echo 'package.json not found in server'
               fi
             fi
             
@@ -691,8 +690,8 @@ jobs:
                 } > restart_service.sh
 
                 # Execute the restart script
-                if scp -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null restart_service.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/restart_service.sh; then
-                  ssh -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/restart_service.sh && /tmp/restart_service.sh" || true
+                if scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null restart_service.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/restart_service.sh; then
+                  ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/restart_service.sh && /tmp/restart_service.sh" || true
                   echo "🔧 Service restart attempted, waiting 30 seconds..."
                   sleep 30
                   consecutive_502_count=0  # Reset counter after intervention

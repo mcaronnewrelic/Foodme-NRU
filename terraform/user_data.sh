@@ -204,11 +204,43 @@ echo "Downloading configuration files from GitHub..."
 
 # Configure Nginx
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
-    echo "⚠️ Failed to download nginx.conf"
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx-config.yml" "/etc/newrelic-infra/integrations.d/nginx-config.yml"; then
-    echo "⚠️ Failed to download nginx.conf"
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/postgres-config.yml" "/etc/newrelic-infra/integrations.d/postgres-config.yml"; then
-    echo "⚠️ Failed to download nginx.conf"
+    echo "⚠️ Failed to download nginx.conf, creating fallback..."
+    cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    location = /health { proxy_pass http://localhost:3000/health; }
+    location = /nginx_status { stub_status on; allow 127.0.0.1; deny all; }
+    location /api/ { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
+    location / { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
+}
+EOF
+fi
+
+# Configure New Relic integrations (basic setup)
+if [ -d "/etc/newrelic-infra/integrations.d" ]; then
+    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << 'EOF'
+integrations:
+  - name: nri-nginx
+    env:
+      STATUS_URL: http://localhost/nginx_status
+      METRICS: true
+    interval: 30s
+EOF
+    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << EOF
+integrations:
+  - name: nri-postgresql
+    env:
+      HOSTNAME: localhost
+      PORT: ${db_port}
+      USERNAME: ${db_user}
+      DATABASE: ${db_name}
+      PASSWORD: ${db_password}
+      METRICS: true
+    interval: 30s
+EOF
+    echo "✅ New Relic integrations configured"
+fi
 
 # Configure Systemd service
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/foodme.service" "/etc/systemd/system/foodme.service"; then
@@ -293,7 +325,18 @@ fi
 # Note: foodme service will be started by GitHub Actions deployment
 
 echo "✅ EC2 setup completed at $(date)"
-echo "📅 End timestamp: $(date)"
+echo "� Configuration summary:"
+echo "  - PostgreSQL 16: $(systemctl is-active postgresql-16 2>/dev/null || echo 'inactive')"
+echo "  - Nginx: $(systemctl is-active nginx 2>/dev/null || echo 'inactive')"
+if command -v newrelic-infra >/dev/null 2>&1; then
+    echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
+else
+    echo "  - New Relic: not installed (dependency conflicts)"
+fi
+echo "  - FoodMe app: Will be started by deployment process"
+echo ""
+echo "🏁 ===== FOODME USER_DATA SCRIPT COMPLETED ====="
+echo "�📅 End timestamp: $(date)"
 echo "⏱️  Total execution time: $SECONDS seconds"
 echo "📄 Full log available at: /var/log/user-data-execution.log"
 echo "=================================================="
