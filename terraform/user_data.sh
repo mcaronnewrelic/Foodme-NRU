@@ -41,7 +41,7 @@ timeout 120 dnf install -y nodejs || echo "⚠️ Node.js installation failed"
 log_progress "Package installation completed, starting New Relic setup"
 # Install New Relic Infrastructure Agent with compatibility fixes
 echo "📦 Installing New Relic Infrastructure Agent..."
-if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2/x86_64/newrelic-infra.repo; then
+if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
     if timeout 120 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
         # Install with --skip-broken to handle dependency issues
         if timeout 180 dnf install -y newrelic-infra nri-nginx nri-postgresql --skip-broken; then
@@ -77,7 +77,32 @@ dnf install -y postgresql16-server postgresql16 postgresql16-contrib
 
 # Initialize PostgreSQL database
 echo "Initializing PostgreSQL database..."
-postgresql-setup --initdb --unit postgresql-16
+# Use the correct initialization command for PostgreSQL 16 on Amazon Linux 2023
+if ! /usr/pgsql-16/bin/postgresql-16-setup initdb; then
+    echo "⚠️ First initdb attempt failed, trying alternative method..."
+    # Alternative: Initialize manually
+    sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/
+fi
+
+# Verify initialization was successful
+if [ ! -f "/var/lib/pgsql/16/data/postgresql.conf" ]; then
+    echo "❌ PostgreSQL initialization failed - data directory not created"
+    echo "⚠️ Attempting manual initialization..."
+    # Create the data directory and initialize manually
+    mkdir -p /var/lib/pgsql/16/data
+    chown postgres:postgres /var/lib/pgsql/16/data
+    chmod 700 /var/lib/pgsql/16/data
+    sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/ || {
+        echo "❌ Manual PostgreSQL initialization also failed"
+        echo "⚠️ Continuing without PostgreSQL..."
+        SKIP_POSTGRES=true
+    }
+else
+    echo "✅ PostgreSQL initialization successful"
+fi
+
+# Only configure PostgreSQL if initialization was successful
+if [ "$SKIP_POSTGRES" != "true" ]; then
 cat >> /var/lib/pgsql/16/data/postgresql.conf << EOF
 listen_addresses = 'localhost'
 port = ${db_port}
@@ -119,30 +144,40 @@ chown -R postgres:postgres /var/lib/pgsql/16/data/
 chmod 700 /var/lib/pgsql/16/data/
 chmod 600 /var/lib/pgsql/16/data/postgresql.conf /var/lib/pgsql/16/data/pg_hba.conf
 
-# Start PostgreSQL and create database
-echo "Starting PostgreSQL 16..."
-systemctl enable postgresql-16
+fi  # End of PostgreSQL configuration conditional
 
-if ! systemctl start postgresql-16; then
-    systemctl status postgresql-16 --no-pager || true
-    echo "⚠️ Continuing without PostgreSQL setup..."
-else
-    echo "✅ PostgreSQL started successfully"
-    
-    # Wait for PostgreSQL to be ready with timeout
-    echo "Waiting for PostgreSQL to be ready..."
-    for i in {1..30}; do
-        if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
-            echo "✅ PostgreSQL is ready"
-            break
-        fi
-        echo "⏳ Waiting for PostgreSQL to be ready (attempt $i/30)..."
-        sleep 2
-    done
-    
-    # Create database user and database with error handling
-    echo "Creating database and user..."
-    if sudo -u postgres psql << EOF
+# Start PostgreSQL and create database
+if [ "$SKIP_POSTGRES" != "true" ]; then
+    echo "Starting PostgreSQL 16..."
+    systemctl enable postgresql-16
+
+    # Ensure the data directory has correct ownership before starting
+    chown -R postgres:postgres /var/lib/pgsql/16/
+    chmod 700 /var/lib/pgsql/16/data/
+
+    if ! systemctl start postgresql-16; then
+        echo "❌ PostgreSQL failed to start, checking status..."
+        systemctl status postgresql-16 --no-pager || true
+        echo "Checking PostgreSQL logs..."
+        journalctl -u postgresql-16 -n 20 --no-pager || true
+        echo "⚠️ Continuing without PostgreSQL setup..."
+    else
+        echo "✅ PostgreSQL started successfully"
+        
+        # Wait for PostgreSQL to be ready with timeout
+        echo "Waiting for PostgreSQL to be ready..."
+        for i in {1..30}; do
+            if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
+                echo "✅ PostgreSQL is ready"
+                break
+            fi
+            echo "⏳ Waiting for PostgreSQL to be ready (attempt $i/30)..."
+            sleep 2
+        done
+        
+        # Create database user and database with error handling
+        echo "Creating database and user..."
+        if sudo -u postgres psql << EOF
 CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 CREATE DATABASE ${db_name} OWNER ${db_user};
 GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
@@ -155,13 +190,17 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${db_user};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${db_user};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${db_user};
 EOF
-    then
-        echo "✅ PostgreSQL database setup completed successfully"
-    else
-        echo "❌ Database setup failed, but continuing..."
+        then
+            echo "✅ PostgreSQL database setup completed successfully"
+        else
+            echo "❌ Database setup failed, but continuing..."
+        fi
     fi
+else
+    echo "⚠️ Skipping PostgreSQL service start due to initialization failure"
 fi
 
+# End of PostgreSQL conditional setup
 log_progress "PostgreSQL setup completed, creating directories and downloading configs"
 
 # Create directories
@@ -234,7 +273,7 @@ download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/te
     echo "⚠️ Failed to download deploy.sh"
 }
 # Download database schema files
-if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
+if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
     echo "Executing database schema initialization..."
     if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
@@ -242,16 +281,19 @@ if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main
         echo "❌ Failed to execute schema initialization (timeout or error)"
     fi
 else
-    echo "⚠️ Schema file not available"
+    echo "⚠️ Schema file not available or PostgreSQL not configured"
 fi
+
 # Download sample data
-if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
+if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
     echo "Importing sample restaurant data..."
     if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/02-import-restaurants-uuid.sql; then
         echo "✅ Sample data imported successfully"
     else
         echo "❌ Failed to import sample data (timeout or error), but continuing..."
     fi
+else
+    echo "⚠️ Sample data file not available or PostgreSQL not configured"
 fi
 
 # Make scripts executable and set proper ownership
