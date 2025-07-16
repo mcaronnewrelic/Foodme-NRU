@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Enhanced logging for GitHub Actions monitoring
+exec > >(tee -a /var/log/user-data-execution.log)
+exec 2>&1
+
+echo "🚀 ===== FOODME USER_DATA SCRIPT START ====="
+echo "📅 Timestamp: $(date)"
+echo "🔧 Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id || echo 'unknown')"
+echo "🌍 Region: $(curl -s http://169.254.169.254/latest/meta-data/placement/region || echo 'unknown')"
+echo "================================================"
+
 # Variables from Terraform
 APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
@@ -311,3 +321,9 @@ echo "  - PostgreSQL 16: $(systemctl is-active postgresql-16 2>/dev/null || echo
 echo "  - Nginx: $(systemctl is-active nginx 2>/dev/null || echo 'inactive')"
 echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
 echo "  - FoodMe app: Will be started by deployment process"
+echo ""
+echo "🏁 ===== FOODME USER_DATA SCRIPT COMPLETED ====="
+echo "📅 End timestamp: $(date)"
+echo "⏱️  Total execution time: $SECONDS seconds"
+echo "📄 Full log available at: /var/log/user-data-execution.log"
+echo "=================================================="
