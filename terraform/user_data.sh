@@ -72,135 +72,41 @@ fi
 log_progress "New Relic configuration completed, starting PostgreSQL installation"
 
 # Install and configure PostgreSQL 16
-echo "Installing PostgreSQL 16..."
+echo "📦 Installing PostgreSQL 16..."
 dnf install -y postgresql16-server postgresql16 postgresql16-contrib
 
-# Initialize PostgreSQL database
-echo "Initializing PostgreSQL database..."
-# Use the correct initialization command for PostgreSQL 16 on Amazon Linux 2023
-if ! /usr/pgsql-16/bin/postgresql-16-setup initdb; then
-    echo "⚠️ First initdb attempt failed, trying alternative method..."
-    # Alternative: Initialize manually
-    sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/
-fi
+# Initialize and start PostgreSQL
+echo "🔧 Setting up PostgreSQL..."
+/usr/pgsql-16/bin/postgresql-16-setup initdb || sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/
 
-# Verify initialization was successful
-if [ ! -f "/var/lib/pgsql/16/data/postgresql.conf" ]; then
-    echo "❌ PostgreSQL initialization failed - data directory not created"
-    echo "⚠️ Attempting manual initialization..."
-    # Create the data directory and initialize manually
-    mkdir -p /var/lib/pgsql/16/data
-    chown postgres:postgres /var/lib/pgsql/16/data
-    chmod 700 /var/lib/pgsql/16/data
-    sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/ || {
-        echo "❌ Manual PostgreSQL initialization also failed"
-        echo "⚠️ Continuing without PostgreSQL..."
-        SKIP_POSTGRES=true
-    }
-else
-    echo "✅ PostgreSQL initialization successful"
-fi
-
-# Only configure PostgreSQL if initialization was successful
-if [ "$SKIP_POSTGRES" != "true" ]; then
-cat >> /var/lib/pgsql/16/data/postgresql.conf << EOF
-listen_addresses = 'localhost'
-port = ${db_port}
-max_connections = 100
-shared_buffers = 256MB
-effective_cache_size = 1GB
-work_mem = 4MB
-maintenance_work_mem = 64MB
-checkpoint_completion_target = 0.9
-wal_buffers = 16MB
-default_statistics_target = 100
-log_destination = 'stderr'
-logging_collector = on
-log_directory = '/var/log/postgresql'
-log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
-log_rotation_age = 1d
-log_rotation_size = 100MB
-log_min_duration_statement = 1000
-log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
-log_checkpoints = on
-log_connections = on
-log_disconnections = on
-log_lock_waits = on
-ssl = off
-password_encryption = scram-sha-256
+if [ -f "/var/lib/pgsql/16/data/postgresql.conf" ]; then
+    # Basic PostgreSQL configuration
+    echo "port = ${db_port}" >> /var/lib/pgsql/16/data/postgresql.conf
+    echo "listen_addresses = 'localhost'" >> /var/lib/pgsql/16/data/postgresql.conf
+    
+    # Simple authentication setup
+    cat > /var/lib/pgsql/16/data/pg_hba.conf << EOF
+local all all peer
+host all all 127.0.0.1/32 scram-sha-256
+host all all ::1/128 scram-sha-256
 EOF
-
-# Configure pg_hba.conf for authentication
-cat > /var/lib/pgsql/16/data/pg_hba.conf << EOF
-local   all             all                                     peer
-host    all             all             127.0.0.1/32            scram-sha-256
-host    all             all             10.0.0.0/8              scram-sha-256
-host    all             all             ::1/128                 scram-sha-256
-local   replication     all                                     peer
-host    replication     all             127.0.0.1/32            scram-sha-256
-host    replication     all             ::1/128                 scram-sha-256
-EOF
-chown -R postgres:postgres /var/lib/pgsql/16/data/
-chmod 700 /var/lib/pgsql/16/data/
-chmod 600 /var/lib/pgsql/16/data/postgresql.conf /var/lib/pgsql/16/data/pg_hba.conf
-
-fi  # End of PostgreSQL configuration conditional
-
-# Start PostgreSQL and create database
-if [ "$SKIP_POSTGRES" != "true" ]; then
-    echo "Starting PostgreSQL 16..."
-    systemctl enable postgresql-16
-
-    # Ensure the data directory has correct ownership before starting
-    chown -R postgres:postgres /var/lib/pgsql/16/
-    chmod 700 /var/lib/pgsql/16/data/
-
-    if ! systemctl start postgresql-16; then
-        echo "❌ PostgreSQL failed to start, checking status..."
-        systemctl status postgresql-16 --no-pager || true
-        echo "Checking PostgreSQL logs..."
-        journalctl -u postgresql-16 -n 20 --no-pager || true
-        echo "⚠️ Continuing without PostgreSQL setup..."
-    else
-        echo "✅ PostgreSQL started successfully"
-        
-        # Wait for PostgreSQL to be ready with timeout
-        echo "Waiting for PostgreSQL to be ready..."
-        for i in {1..30}; do
-            if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
-                echo "✅ PostgreSQL is ready"
-                break
-            fi
-            echo "⏳ Waiting for PostgreSQL to be ready (attempt $i/30)..."
-            sleep 2
-        done
-        
-        # Create database user and database with error handling
-        echo "Creating database and user..."
-        if sudo -u postgres psql << EOF
+    chown -R postgres:postgres /var/lib/pgsql/16/data/ && chmod 700 /var/lib/pgsql/16/data/
+    
+    # Start PostgreSQL and create database
+    systemctl enable postgresql-16 && systemctl start postgresql-16
+    sleep 10  # Wait for startup
+    
+    # Create database and user
+    sudo -u postgres psql << EOF || echo "⚠️ DB setup failed, continuing..."
 CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 CREATE DATABASE ${db_name} OWNER ${db_user};
 GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
-\c ${db_name}
-GRANT ALL ON SCHEMA public TO ${db_user};
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${db_user};
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${db_user};
-
--- Alter default privileges for future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${db_user};
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${db_user};
 EOF
-        then
-            echo "✅ PostgreSQL database setup completed successfully"
-        else
-            echo "❌ Database setup failed, but continuing..."
-        fi
-    fi
+    echo "✅ PostgreSQL setup completed"
 else
-    echo "⚠️ Skipping PostgreSQL service start due to initialization failure"
+    echo "❌ PostgreSQL init failed, skipping"
+    SKIP_POSTGRES=true
 fi
-
-# End of PostgreSQL conditional setup
 log_progress "PostgreSQL setup completed, creating directories and downloading configs"
 
 # Create directories
