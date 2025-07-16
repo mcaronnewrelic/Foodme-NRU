@@ -631,8 +631,8 @@ jobs:
           # Track consecutive 502 errors for targeted intervention
           consecutive_502_count=0
 
-          for i in {1..15}; do
-            echo "⏳ Health check attempt $i/15..."
+          for i in {1..5}; do
+            echo "⏳ Health check attempt $i/5..."
             
             # Try the health endpoint first
             HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 http://${{ steps.instance.outputs.ip }}/health 2>/dev/null || echo "000")
