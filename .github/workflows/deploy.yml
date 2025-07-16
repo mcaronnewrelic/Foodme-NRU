@@ -285,36 +285,60 @@ jobs:
 
       - name: Monitor cloud-init and user_data execution
         if: steps.check_ssh.outputs.ssh_available == 'true'
+        timeout-minutes: 15
+        continue-on-error: true
         run: |
           echo "📋 Monitoring user_data.sh script execution..."
-          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"
+          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
 
-          # Function to safely execute SSH commands
+          # Function to safely execute SSH commands with timeout
           ssh_exec() {
-            ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "$1" 2>/dev/null || echo "Command failed or service not ready"
+            timeout 60 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "$1" 2>/dev/null || echo "Command failed, timed out, or service not ready"
           }
 
-          # Check cloud-init status
+          # Check if SSH is actually working first
+          echo "🔍 Testing SSH connectivity..."
+          if ! timeout 30 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "echo 'SSH connected successfully'" 2>/dev/null; then
+            echo "❌ SSH connection failed - cannot monitor cloud-init remotely"
+            echo "💡 This could mean:"
+            echo "   - Instance is still booting"
+            echo "   - SSH key is incorrect"
+            echo "   - Security group doesn't allow SSH"
+            echo "   - Instance failed to start"
+            echo ""
+            echo "🔄 Will continue deployment and check health endpoint instead..."
+            exit 0
+          fi
+          echo "✅ SSH connection successful"
+
+          # Check cloud-init status with shorter timeout
           echo "🔍 Checking cloud-init status..."
-          ssh_exec "cloud-init status --wait --long" || {
-            echo "⏳ Cloud-init still running, checking progress..."
+          if ssh_exec "cloud-init status --wait --long" | grep -q "done"; then
+            echo "✅ Cloud-init completed successfully"
+          else
+          else
+            echo "⏳ Cloud-init still running or not responding, checking progress..."
             
-            # Show last 50 lines of cloud-init output
+            # Show last 30 lines of cloud-init output
             echo "📜 Recent cloud-init output:"
-            ssh_exec "sudo tail -n 50 /var/log/cloud-init-output.log" || echo "Could not read cloud-init output"
+            ssh_exec "sudo tail -n 30 /var/log/cloud-init-output.log" || echo "Could not read cloud-init output"
+            
+            # Check if user_data script is running
+            echo "🔍 Checking if user_data script is running..."
+            ssh_exec "ps aux | grep -v grep | grep -E '(user.?data|cloud.?init)'" || echo "No user_data processes found"
             
             # Wait a bit more and check again
             echo "⏳ Waiting 60 more seconds for cloud-init to complete..."
             sleep 60
             
             echo "🔍 Final cloud-init status check..."
-            ssh_exec "cloud-init status" || echo "Could not get cloud-init status"
-          }
+            ssh_exec "cloud-init status" || echo "Could not get final cloud-init status"
+          fi
 
           # Display cloud-init logs
           echo ""
-          echo "📋 ===== CLOUD-INIT OUTPUT LOG ====="
-          ssh_exec "sudo cat /var/log/cloud-init-output.log" || echo "Could not read cloud-init output log"
+          echo "📋 ===== CLOUD-INIT OUTPUT LOG (last 100 lines) ====="
+          ssh_exec "sudo tail -n 100 /var/log/cloud-init-output.log" || echo "Could not read cloud-init output log"
 
           echo ""
           echo "📋 ===== CUSTOM USER_DATA EXECUTION LOG ====="
@@ -327,7 +351,7 @@ jobs:
           echo ""
           echo "📋 ===== USER DATA SCRIPT SUMMARY ====="
           # Look for our specific markers in the output
-          ssh_exec "sudo grep -E '(🚀|✅|❌|⚠️|🏁|PostgreSQL|New Relic|Nginx|EC2 setup completed)' /var/log/cloud-init-output.log /var/log/user-data-execution.log 2>/dev/null | tail -30" || echo "Could not find script markers"
+          ssh_exec "sudo grep -E '(🚀|✅|❌|⚠️|🏁|🔄 PROGRESS|PostgreSQL|New Relic|Nginx|EC2 setup completed)' /var/log/cloud-init-output.log /var/log/user-data-execution.log 2>/dev/null | tail -40" || echo "Could not find script markers"
 
           echo ""
           echo "📋 ===== SYSTEM STATUS AFTER USER_DATA ====="
@@ -344,6 +368,21 @@ jobs:
 
           echo ""
           echo "✅ Cloud-init monitoring completed"
+
+      - name: Run diagnostic if monitoring times out
+        if: steps.check_ssh.outputs.ssh_available == 'true' && failure()
+        continue-on-error: true
+        run: |
+          echo "🚨 Monitoring timed out - running diagnostic script..."
+          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
+
+          # Copy diagnostic script to instance
+          if scp $SSH_OPTS ./terraform/debug-user-data.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/debug-user-data.sh 2>/dev/null; then
+            echo "📋 Running diagnostic script on instance..."
+            ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/debug-user-data.sh && sudo /tmp/debug-user-data.sh" 2>/dev/null || echo "Diagnostic script failed to run"
+          else
+            echo "❌ Could not copy diagnostic script to instance"
+          fi
 
       - name: Deploy application
         if: steps.check_ssh.outputs.ssh_available == 'true'

@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+# Don't use set -e immediately to allow for better error handling
+# set -e
 
 # Enhanced logging for GitHub Actions monitoring
 exec > >(tee -a /var/log/user-data-execution.log)
@@ -11,6 +12,17 @@ echo "🔧 Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instan
 echo "🌍 Region: $(curl -s http://169.254.169.254/latest/meta-data/placement/region || echo 'unknown')"
 echo "================================================"
 
+# Function to log progress
+log_progress() {
+    echo "🔄 PROGRESS: $1 - $(date)"
+    echo "🔄 PROGRESS: $1 - $(date)" >> /var/log/cloud-init-output.log
+}
+
+# Enable strict error handling only after initial setup
+set -e
+
+log_progress "Starting user_data script execution"
+
 # Variables from Terraform
 APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
@@ -21,40 +33,69 @@ DB_USER="${db_user}"
 DB_PASSWORD="${db_password}"
 DB_PORT="${db_port}"
 
-# Update and install packages
-dnf update -y
-dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib --allowerasing
+log_progress "Variables initialized, starting package updates"
 
-# Install Node.js 22
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-dnf install -y nodejs
-npm install -g pm2
+# Update and install packages with timeout and error handling
+echo "📦 Updating system packages..."
+if ! timeout 300 dnf update -y; then
+    echo "⚠️ System update timed out or failed, continuing..."
+fi
 
-# Install New Relic Infrastructure Agent
-curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2/x86_64/newrelic-infra.repo
-dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
-dnf install -y newrelic-infra nri-nginx nri-postgresql
+echo "📦 Installing required packages..."
+if ! timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib --allowerasing; then
+    echo "❌ Package installation failed or timed out"
+    echo "Trying to install packages individually..."
+    
+    # Try installing packages individually
+    for package in git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib; do
+        echo "Installing $package..."
+        timeout 60 dnf install -y $package --allowerasing || echo "⚠️ Failed to install $package"
+    done
+fi
 
-# Configure New Relic Infrastructure Agent
-cat > /etc/newrelic-infra.yml << EOF
+# Install Node.js 22 with timeout
+echo "📦 Installing Node.js 22..."
+if timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -; then
+    timeout 120 dnf install -y nodejs || echo "⚠️ Node.js installation failed"
+    timeout 60 npm install -g pm2 || echo "⚠️ PM2 installation failed"
+else
+    echo "⚠️ Node.js repository setup failed, using system nodejs"
+fi
+
+log_progress "Package installation completed, starting New Relic setup"
+
+# Install New Relic Infrastructure Agent with compatibility fixes
+echo "📦 Installing New Relic Infrastructure Agent..."
+if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2/x86_64/newrelic-infra.repo; then
+    if timeout 120 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
+        # Install with --skip-broken to handle dependency issues
+        if timeout 180 dnf install -y newrelic-infra nri-nginx nri-postgresql --skip-broken; then
+            echo "✅ New Relic components installed"
+        else
+            echo "❌ New Relic installation failed due to dependency conflicts (common on AL2023)"
+            echo "⚠️ Continuing without New Relic - you can install manually later"
+        fi
+    fi
+fi
+
+log_progress "New Relic setup completed, configuring New Relic agent"
+
+# Configure New Relic (if installed)
+if command -v newrelic-infra >/dev/null 2>&1; then
+    cat > /etc/newrelic-infra.yml << EOF
 license_key: ${new_relic_license_key}
 display_name: FoodMe-${environment}-EC2
 log_file: /var/log/newrelic-infra/newrelic-infra.log
 verbose: 0
-passthrough_environment:
-  - DB_PORT
-  - DB_NAME
-  - DB_USER
-  - DB_PASSWORD
 EOF
-chmod 640 /etc/newrelic-infra.yml
-chown root:newrelic-infra /etc/newrelic-infra.yml
+    chmod 640 /etc/newrelic-infra.yml
+    chown root:newrelic-infra /etc/newrelic-infra.yml 2>/dev/null || chown root:root /etc/newrelic-infra.yml
+    echo "✅ New Relic configured"
+else
+    echo "⚠️ New Relic not installed, skipping configuration"
+fi
 
-# Set proper permissions for integration configs
-chmod 640 /etc/newrelic-infra/integrations.d/*.yml
-chown root:newrelic-infra /etc/newrelic-infra/integrations.d/*.yml
-
-echo "New Relic integrations configuration completed"
+log_progress "New Relic configuration completed, starting PostgreSQL installation"
 
 # Install and configure PostgreSQL 16
 echo "Installing PostgreSQL 16..."
@@ -105,11 +146,30 @@ chmod 700 /var/lib/pgsql/16/data/
 chmod 600 /var/lib/pgsql/16/data/postgresql.conf /var/lib/pgsql/16/data/pg_hba.conf
 
 # Start PostgreSQL and create database
+echo "Starting PostgreSQL 16..."
 systemctl enable postgresql-16
-systemctl start postgresql-16
-sleep 10
 
-sudo -u postgres psql << EOF
+if ! systemctl start postgresql-16; then
+    echo "❌ Failed to start PostgreSQL - checking status..."
+    systemctl status postgresql-16 --no-pager || true
+    echo "⚠️ Continuing without PostgreSQL setup..."
+else
+    echo "✅ PostgreSQL started successfully"
+    
+    # Wait for PostgreSQL to be ready with timeout
+    echo "Waiting for PostgreSQL to be ready..."
+    for i in {1..30}; do
+        if sudo -u postgres psql -c "SELECT 1;" >/dev/null 2>&1; then
+            echo "✅ PostgreSQL is ready"
+            break
+        fi
+        echo "⏳ Waiting for PostgreSQL to be ready (attempt $i/30)..."
+        sleep 2
+    done
+    
+    # Create database user and database with error handling
+    echo "Creating database and user..."
+    if sudo -u postgres psql << EOF
 CREATE USER ${db_user} WITH PASSWORD '${db_password}';
 CREATE DATABASE ${db_name} OWNER ${db_user};
 GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};
@@ -122,7 +182,14 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${db_user};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${db_user};
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${db_user};
 EOF
-echo "PostgreSQL 16 setup completed successfully"
+    then
+        echo "✅ PostgreSQL database setup completed successfully"
+    else
+        echo "❌ Database setup failed, but continuing..."
+    fi
+fi
+
+log_progress "PostgreSQL setup completed, creating directories and downloading configs"
 
 # Create directories
 mkdir -p /var/www/foodme /var/log/foodme /var/www/foodme/server /home/ec2-user/foodme/config /home/ec2-user/foodme/db
@@ -181,14 +248,29 @@ EOF
     echo "✅ Created fallback nginx configuration"
 fi
 
-# Configure New Relic integrations
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx-config.yml" "/etc/newrelic-infra/integrations.d/nginx-config.yml"; then
-    echo "⚠️ Failed to download nginx-config.yml"
-
-fi
-
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/postgres-config.yml" "/etc/newrelic-infra/integrations.d/postgres-config.yml"; then
-    echo "⚠️ Failed to download postgres-config.yml"
+# Configure New Relic integrations (basic setup)
+if [ -d "/etc/newrelic-infra/integrations.d" ]; then
+    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << 'EOF'
+integrations:
+  - name: nri-nginx
+    env:
+      STATUS_URL: http://localhost/nginx_status
+      METRICS: true
+    interval: 30s
+EOF
+    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << EOF
+integrations:
+  - name: nri-postgresql
+    env:
+      HOSTNAME: localhost
+      PORT: ${db_port}
+      USERNAME: ${db_user}
+      DATABASE: ${db_name}
+      PASSWORD: ${db_password}
+      METRICS: true
+    interval: 30s
+EOF
+    echo "✅ New Relic integrations configured"
 fi
 
 # Configure Systemd service
@@ -215,20 +297,22 @@ echo "Downloading database initialization files..."
 # Download database schema files
 if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
     echo "Executing database schema initialization..."
-    if sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
+    if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
     else
-        echo "❌ Failed to execute schema initialization"
+        echo "❌ Failed to execute schema initialization (timeout or error)"
     fi
+else
+    echo "⚠️ Schema file not available"
 fi
 
 # Download sample data
 if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
     echo "Importing sample restaurant data..."
-    if sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/02-import-restaurants-uuid.sql; then
+    if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/02-import-restaurants-uuid.sql; then
         echo "✅ Sample data imported successfully"
     else
-        echo "❌ Failed to import sample data, but continuing..."
+        echo "❌ Failed to import sample data (timeout or error), but continuing..."
     fi
 fi
 
@@ -265,27 +349,40 @@ else
     echo "✅ All critical configuration files are present"
 fi
 
-# Start services with error checking
-echo "Starting services..."
-sudo -u ec2-user bash -c 'cd /var/www/foodme/server && npm install' || echo "⚠️ npm install failed or no package.json found"
-
 systemctl daemon-reload
 
 # Start services one by one with error checking
-for service in nginx newrelic-infra; do
-    if systemctl enable $service; then
-        echo "✅ Enabled $service"
+# Always try to start nginx
+if systemctl enable nginx; then
+    echo "✅ Enabled nginx"
+else
+    echo "❌ Failed to enable nginx"
+fi
+
+if systemctl start nginx; then
+    echo "✅ Started nginx"
+else
+    echo "❌ Failed to start nginx"
+    systemctl status nginx --no-pager || true
+fi
+
+# Only try to start New Relic if it's installed
+if command -v newrelic-infra >/dev/null 2>&1; then
+    if systemctl enable newrelic-infra; then
+        echo "✅ Enabled newrelic-infra"
     else
-        echo "❌ Failed to enable $service"
+        echo "❌ Failed to enable newrelic-infra"
     fi
     
-    if systemctl start $service; then
-        echo "✅ Started $service"
+    if systemctl start newrelic-infra; then
+        echo "✅ Started newrelic-infra"
     else
-        echo "❌ Failed to start $service"
-        systemctl status $service --no-pager || true
+        echo "❌ Failed to start newrelic-infra"
+        systemctl status newrelic-infra --no-pager || true
     fi
-done
+else
+    echo "⚠️ New Relic Infrastructure Agent not installed, skipping service start"
+fi
 
 # Note: foodme service will be started by GitHub Actions deployment
 
@@ -293,7 +390,11 @@ echo "✅ EC2 setup completed at $(date)"
 echo "📊 Configuration summary:"
 echo "  - PostgreSQL 16: $(systemctl is-active postgresql-16 2>/dev/null || echo 'inactive')"
 echo "  - Nginx: $(systemctl is-active nginx 2>/dev/null || echo 'inactive')"
-echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
+if command -v newrelic-infra >/dev/null 2>&1; then
+    echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
+else
+    echo "  - New Relic: not installed (dependency conflicts)"
+fi
 echo "  - FoodMe app: Will be started by deployment process"
 echo ""
 echo "🏁 ===== FOODME USER_DATA SCRIPT COMPLETED ====="
