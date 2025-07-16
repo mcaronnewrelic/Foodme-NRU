@@ -168,34 +168,18 @@ log_progress "PostgreSQL setup completed, creating directories and downloading c
 mkdir -p /var/www/foodme /var/log/foodme /var/www/foodme/server /home/ec2-user/foodme/config /home/ec2-user/foodme/db
 chown -R ec2-user:ec2-user /var/www/foodme /var/log/foodme /home/ec2-user/foodme
 
-# Function to download files with retry and error handling
+# Function to download files with retry
 download_config_file() {
-    local url="$1"
-    local output_path="$2"
-    local max_retries=3
-    local retry_count=0
-    local wait_time=5
-    
-    echo "Downloading $url to $output_path..."
-    
-    while [ $retry_count -lt $max_retries ]; do
-        if wget --timeout=30 --tries=1 --no-check-certificate -O "$output_path" "$url" 2>/dev/null; then
-            if [ -f "$output_path" ] && [ -s "$output_path" ]; then
-                echo "✅ Successfully downloaded $(basename $output_path)"
-                return 0
-            fi
-        else
-            echo "❌ Failed to download $(basename $output_path) (attempt $((retry_count + 1))/$max_retries)"
+    local url="$1" output_path="$2" i=0
+    while [ $i -lt 3 ]; do
+        if wget -q --timeout=30 -O "$output_path" "$url" 2>/dev/null && [ -s "$output_path" ]; then
+            echo "✅ Downloaded $(basename $output_path)"
+            return 0
         fi
-        
-        retry_count=$((retry_count + 1))
-        if [ $retry_count -lt $max_retries ]; then
-            sleep $wait_time
-            wait_time=$((wait_time * 2))  # Exponential backoff
-        fi
+        i=$((i+1))
+        [ $i -lt 3 ] && sleep $((i*2))
     done
-    
-    echo "❌ Failed to download $url after $max_retries attempts"
+    echo "❌ Failed to download $(basename $output_path)"
     return 1
 }
 
@@ -204,17 +188,7 @@ echo "Downloading configuration files from GitHub..."
 
 # Configure Nginx
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
-    echo "⚠️ Failed to download nginx.conf, creating fallback..."
-    cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
-server {
-    listen 80;
-    server_name _;
-    location = /health { proxy_pass http://localhost:3000/health; }
-    location = /nginx_status { stub_status on; allow 127.0.0.1; deny all; }
-    location /api/ { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
-    location / { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
-}
-EOF
+    echo "⚠️ Failed to download nginx.conf"
 fi
 
 # Configure New Relic integrations (basic setup)
@@ -322,20 +296,7 @@ else
     echo "⚠️ New Relic Infrastructure Agent not installed, skipping service start"
 fi
 
-# Note: foodme service will be started by GitHub Actions deployment
-
 echo "✅ EC2 setup completed at $(date)"
-echo "� Configuration summary:"
-echo "  - PostgreSQL 16: $(systemctl is-active postgresql-16 2>/dev/null || echo 'inactive')"
-echo "  - Nginx: $(systemctl is-active nginx 2>/dev/null || echo 'inactive')"
-if command -v newrelic-infra >/dev/null 2>&1; then
-    echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
-else
-    echo "  - New Relic: not installed (dependency conflicts)"
-fi
-echo "  - FoodMe app: Will be started by deployment process"
-echo ""
-echo "🏁 ===== FOODME USER_DATA SCRIPT COMPLETED ====="
 echo "�📅 End timestamp: $(date)"
 echo "⏱️  Total execution time: $SECONDS seconds"
 echo "📄 Full log available at: /var/log/user-data-execution.log"
