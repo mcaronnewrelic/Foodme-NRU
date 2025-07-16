@@ -1,8 +1,4 @@
 #!/bin/bash
-# Don't use set -e immediately to allow for better error handling
-# set -e
-
-# Enhanced logging for GitHub Actions monitoring
 exec > >(tee -a /var/log/user-data-execution.log)
 exec 2>&1
 
@@ -20,9 +16,7 @@ log_progress() {
 
 # Enable strict error handling only after initial setup
 set -e
-
 log_progress "Starting user_data script execution"
-
 # Variables from Terraform
 APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
@@ -33,37 +27,18 @@ DB_USER="${db_user}"
 DB_PASSWORD="${db_password}"
 DB_PORT="${db_port}"
 
-log_progress "Variables initialized, starting package updates"
-
 # Update and install packages with timeout and error handling
 echo "📦 Updating system packages..."
-if ! timeout 300 dnf update -y; then
-    echo "⚠️ System update timed out or failed, continuing..."
-fi
+timeout 300 dnf update -y
 
 echo "📦 Installing required packages..."
-if ! timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib --allowerasing; then
-    echo "❌ Package installation failed or timed out"
-    echo "Trying to install packages individually..."
-    
-    # Try installing packages individually
-    for package in git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib; do
-        echo "Installing $package..."
-        timeout 60 dnf install -y $package --allowerasing || echo "⚠️ Failed to install $package"
-    done
-fi
+timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib --allowerasing 
 
 # Install Node.js 22 with timeout
 echo "📦 Installing Node.js 22..."
-if timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -; then
-    timeout 120 dnf install -y nodejs || echo "⚠️ Node.js installation failed"
-    timeout 60 npm install -g pm2 || echo "⚠️ PM2 installation failed"
-else
-    echo "⚠️ Node.js repository setup failed, using system nodejs"
-fi
-
+timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+timeout 120 dnf install -y nodejs || echo "⚠️ Node.js installation failed"
 log_progress "Package installation completed, starting New Relic setup"
-
 # Install New Relic Infrastructure Agent with compatibility fixes
 echo "📦 Installing New Relic Infrastructure Agent..."
 if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2/x86_64/newrelic-infra.repo; then
@@ -73,7 +48,6 @@ if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newr
             echo "✅ New Relic components installed"
         else
             echo "❌ New Relic installation failed due to dependency conflicts (common on AL2023)"
-            echo "⚠️ Continuing without New Relic - you can install manually later"
         fi
     fi
 fi
@@ -150,7 +124,6 @@ echo "Starting PostgreSQL 16..."
 systemctl enable postgresql-16
 
 if ! systemctl start postgresql-16; then
-    echo "❌ Failed to start PostgreSQL - checking status..."
     systemctl status postgresql-16 --no-pager || true
     echo "⚠️ Continuing without PostgreSQL setup..."
 else
@@ -210,8 +183,6 @@ download_config_file() {
             if [ -f "$output_path" ] && [ -s "$output_path" ]; then
                 echo "✅ Successfully downloaded $(basename $output_path)"
                 return 0
-            else
-                echo "⚠️ Downloaded file is empty: $(basename $output_path)"
             fi
         else
             echo "❌ Failed to download $(basename $output_path) (attempt $((retry_count + 1))/$max_retries)"
@@ -219,7 +190,6 @@ download_config_file() {
         
         retry_count=$((retry_count + 1))
         if [ $retry_count -lt $max_retries ]; then
-            echo "Retrying in $wait_time seconds..."
             sleep $wait_time
             wait_time=$((wait_time * 2))  # Exponential backoff
         fi
@@ -234,44 +204,11 @@ echo "Downloading configuration files from GitHub..."
 
 # Configure Nginx
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
-    echo "⚠️ Failed to download nginx.conf, creating fallback configuration..."
-    cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
-server {
-    listen 80;
-    server_name _;
-    location = /health { proxy_pass http://localhost:3000/health; }
-    location = /nginx_status { stub_status on; allow 127.0.0.1; deny all; }
-    location /api/ { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
-    location / { proxy_pass http://localhost:3000; proxy_set_header Host $host; }
-}
-EOF
-    echo "✅ Created fallback nginx configuration"
-fi
-
-# Configure New Relic integrations (basic setup)
-if [ -d "/etc/newrelic-infra/integrations.d" ]; then
-    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << 'EOF'
-integrations:
-  - name: nri-nginx
-    env:
-      STATUS_URL: http://localhost/nginx_status
-      METRICS: true
-    interval: 30s
-EOF
-    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << EOF
-integrations:
-  - name: nri-postgresql
-    env:
-      HOSTNAME: localhost
-      PORT: ${db_port}
-      USERNAME: ${db_user}
-      DATABASE: ${db_name}
-      PASSWORD: ${db_password}
-      METRICS: true
-    interval: 30s
-EOF
-    echo "✅ New Relic integrations configured"
-fi
+    echo "⚠️ Failed to download nginx.conf"
+if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx-config.yml" "/etc/newrelic-infra/integrations.d/nginx-config.yml"; then
+    echo "⚠️ Failed to download nginx.conf"
+if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/postgres-config.yml" "/etc/newrelic-infra/integrations.d/postgres-config.yml"; then
+    echo "⚠️ Failed to download nginx.conf"
 
 # Configure Systemd service
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/foodme.service" "/etc/systemd/system/foodme.service"; then
@@ -290,10 +227,6 @@ EOF
 download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/deploy.sh" "/home/ec2-user/foodme/config/deploy.sh" || {
     echo "⚠️ Failed to download deploy.sh"
 }
-
-# Initialize database with downloaded SQL files
-echo "Downloading database initialization files..."
-
 # Download database schema files
 if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
     echo "Executing database schema initialization..."
@@ -305,7 +238,6 @@ if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main
 else
     echo "⚠️ Schema file not available"
 fi
-
 # Download sample data
 if download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
     echo "Importing sample restaurant data..."
@@ -324,35 +256,9 @@ chown -R ec2-user:ec2-user /home/ec2-user/foodme/
 chmod 640 /etc/newrelic-infra/integrations.d/*.yml 2>/dev/null || echo "No New Relic integration files to set permissions"
 chown root:newrelic-infra /etc/newrelic-infra/integrations.d/*.yml 2>/dev/null || echo "No New Relic integration files to change ownership"
 
-# Verify critical files exist before starting services
-echo "Verifying configuration files..."
-MISSING_FILES=0
-
-if [ ! -f "/etc/nginx/conf.d/foodme.conf" ]; then
-    echo "❌ Missing nginx configuration"
-    MISSING_FILES=$((MISSING_FILES + 1))
-else
-    echo "✅ Nginx configuration found"
-fi
-
-if [ ! -f "/etc/systemd/system/foodme.service" ]; then
-    echo "❌ Missing systemd service file"
-    MISSING_FILES=$((MISSING_FILES + 1))
-else
-    echo "✅ Systemd service file found"
-fi
-
-if [ $MISSING_FILES -gt 0 ]; then
-    echo "⚠️ $MISSING_FILES critical configuration files are missing"
-    echo "Deployment may have issues, but continuing..."
-else
-    echo "✅ All critical configuration files are present"
-fi
-
 systemctl daemon-reload
 
 # Start services one by one with error checking
-# Always try to start nginx
 if systemctl enable nginx; then
     echo "✅ Enabled nginx"
 else
@@ -387,17 +293,6 @@ fi
 # Note: foodme service will be started by GitHub Actions deployment
 
 echo "✅ EC2 setup completed at $(date)"
-echo "📊 Configuration summary:"
-echo "  - PostgreSQL 16: $(systemctl is-active postgresql-16 2>/dev/null || echo 'inactive')"
-echo "  - Nginx: $(systemctl is-active nginx 2>/dev/null || echo 'inactive')"
-if command -v newrelic-infra >/dev/null 2>&1; then
-    echo "  - New Relic: $(systemctl is-active newrelic-infra 2>/dev/null || echo 'inactive')"
-else
-    echo "  - New Relic: not installed (dependency conflicts)"
-fi
-echo "  - FoodMe app: Will be started by deployment process"
-echo ""
-echo "🏁 ===== FOODME USER_DATA SCRIPT COMPLETED ====="
 echo "📅 End timestamp: $(date)"
 echo "⏱️  Total execution time: $SECONDS seconds"
 echo "📄 Full log available at: /var/log/user-data-execution.log"
