@@ -183,31 +183,12 @@ fi
 
 # Configure New Relic integrations
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx-config.yml" "/etc/newrelic-infra/integrations.d/nginx-config.yml"; then
-    echo "⚠️ Failed to download nginx-config.yml, creating fallback..."
-    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << 'EOF'
-integrations:
-  - name: nri-nginx
-    env:
-      STATUS_URL: http://localhost/nginx_status
-      METRICS: true
-    interval: 30s
-EOF
+    echo "⚠️ Failed to download nginx-config.yml"
+
 fi
 
 if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/postgres-config.yml" "/etc/newrelic-infra/integrations.d/postgres-config.yml"; then
-    echo "⚠️ Failed to download postgres-config.yml, creating fallback..."
-    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << 'EOF'
-integrations:
-  - name: nri-postgresql
-    env:
-      HOSTNAME: localhost
-      PORT: ${db_port}
-      USERNAME: ${db_user}
-      DATABASE: ${db_name}
-      PASSWORD: ${db_password}
-      METRICS: true
-    interval: 30s
-EOF
+    echo "⚠️ Failed to download postgres-config.yml"
 fi
 
 # Configure Systemd service
@@ -225,14 +206,7 @@ EOF
 }
 
 download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/deploy.sh" "/home/ec2-user/foodme/config/deploy.sh" || {
-    echo "⚠️ Failed to download deploy.sh, creating basic version..."
-    cat > /home/ec2-user/foodme/config/deploy.sh << 'EOF'
-#!/bin/bash
-set -e
-cd /var/www/foodme/dist/server
-npm install --production
-sudo systemctl restart foodme
-EOF
+    echo "⚠️ Failed to download deploy.sh"
 }
 
 # Initialize database with downloaded SQL files
