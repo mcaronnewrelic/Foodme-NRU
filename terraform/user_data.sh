@@ -75,13 +75,9 @@ fi
 
 log_progress "New Relic configuration completed, starting PostgreSQL installation"
 
-# Install and configure PostgreSQL 16
-echo "📦 Installing PostgreSQL 16..."
-dnf install -y postgresql16-server postgresql16 postgresql16-contrib
-
 # Initialize and start PostgreSQL
 echo "🔧 Setting up PostgreSQL..."
-/usr/bin/postgresql-16-setup initdb || sudo -u postgres /usr/bin/initdb -D "${pgdata_path}"
+sudo -u postgres /usr/bin/initdb -D "${pgdata_path}"
 
 if [ -f "${pgdata_path}/postgresql.conf" ]; then
     # Basic PostgreSQL configuration
@@ -136,7 +132,7 @@ download_config_file() {
 echo "Downloading configuration files from GitHub..."
 
 # Configure Nginx
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
+if ! download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
     echo "⚠️ Failed to download nginx.conf"
 fi
 
@@ -166,12 +162,12 @@ EOF
 fi
 
 # Configure Systemd service
-if ! download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/foodme.service" "/etc/systemd/system/foodme.service"; then
+if ! download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service" "/etc/systemd/system/foodme.service"; then
     echo "⚠️ Failed to download foodme.service"
 fi
 
 # Get health check and deploy scripts
-download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/health-check.sh" "/home/ec2-user/foodme/config/health-check.sh" || {
+download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/health-check.sh" "/home/ec2-user/foodme/config/health-check.sh" || {
     echo "⚠️ Failed to download health-check.sh, creating basic version..."
     cat > /home/ec2-user/foodme/config/health-check.sh << 'EOF'
 #!/bin/bash
@@ -179,11 +175,11 @@ curl -f http://localhost:3000/health || exit 1
 EOF
 }
 
-download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/terraform/configs/deploy.sh" "/home/ec2-user/foodme/config/deploy.sh" || {
+download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/deploy.sh" "/home/ec2-user/foodme/config/deploy.sh" || {
     echo "⚠️ Failed to download deploy.sh"
 }
 # Download database schema files
-if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
+if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
     echo "Executing database schema initialization..."
     if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
@@ -195,7 +191,7 @@ else
 fi
 
 # Download sample data
-if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/your-repo/foodme/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
+if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql"; then
     echo "Importing sample restaurant data..."
     if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/02-import-restaurants-uuid.sql; then
         echo "✅ Sample data imported successfully"
