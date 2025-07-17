@@ -138,3 +138,9 @@ variable "db_port" {
   type        = number
   default     = 5432
 }
+
+variable "PGDATA_PATH" {
+  description = "PostgreSQL data dir"
+  type        = string
+  default     = "/var/lib/pgsql/data"
+}

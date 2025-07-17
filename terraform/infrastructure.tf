@@ -241,7 +241,7 @@ resource "aws_instance" "foodme" {
     environment           = var.environment
     app_version           = var.app_version
     new_relic_license_key = var.new_relic_license_key
-    db_name               = var.db_name
+    DB_NAME               = var.db_name
     db_user               = var.db_user
     db_password           = var.db_password
     db_port               = var.db_port

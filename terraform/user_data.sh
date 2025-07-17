@@ -22,7 +22,7 @@ APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
 APP_VERSION="${app_version}"
 NEW_RELIC_LICENSE_KEY="${new_relic_license_key}"
-DB_NAME="${db_name}"
+# DB_NAME="${db_name}"
 DB_USER="${db_user}"
 DB_PASSWORD="${db_password}"
 DB_PORT="${db_port}"
@@ -73,7 +73,6 @@ log_progress "New Relic configuration completed, starting PostgreSQL installatio
 
 # Install and configure PostgreSQL 16
 echo "📦 Installing PostgreSQL 16..."
-PGDATA_PATH="/var/lib/pgsql/data"
 dnf install -y postgresql16-server postgresql16 postgresql16-contrib
 
 # Initialize and start PostgreSQL
