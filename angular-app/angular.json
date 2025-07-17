@@ -54,7 +54,8 @@
                 },
                 "fonts": true
               },
-              "aot": true
+              "aot": true,
+              "sourceMap": true
             },
             "development": {
               "optimization": false,

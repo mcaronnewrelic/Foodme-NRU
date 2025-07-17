@@ -37,14 +37,14 @@ timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nod
 # Install Node.js 22 with timeout
 echo "📦 Installing Node.js 22..."
 timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-timeout 120 dnf install -y nodejs || echo "⚠️ Node.js installation failed"
+timeout 120 dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
 log_progress "Package installation completed, starting New Relic setup"
 # Install New Relic Infrastructure Agent with compatibility fixes
 echo "📦 Installing New Relic Infrastructure Agent..."
 if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
     if timeout 120 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
         # Install with --skip-broken to handle dependency issues
-        if timeout 180 dnf install -y newrelic-infra nri-nginx nri-postgresql --skip-broken; then
+        if timeout 180 dnf install -y td-agent-bit newrelic-infra nri-nginx nri-postgresql --skip-broken; then
             echo "✅ New Relic components installed"
         else
             echo "❌ New Relic installation failed due to dependency conflicts (common on AL2023)"
@@ -73,24 +73,25 @@ log_progress "New Relic configuration completed, starting PostgreSQL installatio
 
 # Install and configure PostgreSQL 16
 echo "📦 Installing PostgreSQL 16..."
+PGDATA_PATH="/var/lib/pgsql/data"
 dnf install -y postgresql16-server postgresql16 postgresql16-contrib
 
 # Initialize and start PostgreSQL
 echo "🔧 Setting up PostgreSQL..."
-/usr/pgsql-16/bin/postgresql-16-setup initdb || sudo -u postgres /usr/pgsql-16/bin/initdb -D /var/lib/pgsql/16/data/
+/usr/bin/postgresql-16-setup initdb || sudo -u postgres /usr/bin/initdb -D "${PGDATA_PATH}"
 
-if [ -f "/var/lib/pgsql/16/data/postgresql.conf" ]; then
+if [ -f "${PGDATA_PATH}/postgresql.conf" ]; then
     # Basic PostgreSQL configuration
-    echo "port = ${db_port}" >> /var/lib/pgsql/16/data/postgresql.conf
-    echo "listen_addresses = 'localhost'" >> /var/lib/pgsql/16/data/postgresql.conf
+    tee "port = ${db_port}" >> ${PGDATA_PATH}/postgresql.conf
+    tee "listen_addresses = 'localhost'" >> ${PGDATA_PATH}/postgresql.conf
     
     # Simple authentication setup
-    cat > /var/lib/pgsql/16/data/pg_hba.conf << EOF
+    tee ${PGDATA_PATH}/pg_hba.conf << EOF
 local all all peer
 host all all 127.0.0.1/32 scram-sha-256
 host all all ::1/128 scram-sha-256
 EOF
-    chown -R postgres:postgres /var/lib/pgsql/16/data/ && chmod 700 /var/lib/pgsql/16/data/
+    chown -R postgres:postgres ${PGDATA_PATH} && chmod 700 ${PGDATA_PATH}
     
     # Start PostgreSQL and create database
     systemctl enable postgresql-16 && systemctl start postgresql-16
