@@ -18,15 +18,18 @@ log_progress() {
 set -e
 log_progress "Starting user_data script execution"
 # Variables from Terraform
-APP_PORT="${app_port}"
-ENVIRONMENT="${environment}"
-APP_VERSION="${app_version}"
-NEW_RELIC_LICENSE_KEY="${new_relic_license_key}"
-DB_NAME="${db_name}"
-DB_USER="${db_user}"
-DB_PASSWORD="${db_password}"
-DB_PORT="${db_port}"
-PGDATA_PATH="${pgdata_path}"
+tee "/etc/profile.d/my-custom-vars.sh" > /dev/null << 'EOF'
+export APP_PORT="${app_port}"
+export ENVIRONMENT="${environment}"
+export APP_VERSION="${app_version}"
+export NEW_RELIC_LICENSE_KEY="${new_relic_license_key}"
+export DB_NAME="${db_name}"
+export DB_USER="${db_user}"
+export DB_PASSWORD="${db_password}"
+export DB_PORT="${db_port}"
+export PGDATA_PATH="${pgdata_path}"
+EOF
+sudo chmod +x "/etc/profile.d/my-custom-vars.sh"
 
 # Update and install packages with timeout and error handling
 echo "📦 Updating system packages..."
@@ -78,20 +81,20 @@ dnf install -y postgresql16-server postgresql16 postgresql16-contrib
 
 # Initialize and start PostgreSQL
 echo "🔧 Setting up PostgreSQL..."
-/usr/bin/postgresql-16-setup initdb || sudo -u postgres /usr/bin/initdb -D "${PGDATA_PATH}"
+/usr/bin/postgresql-16-setup initdb || sudo -u postgres /usr/bin/initdb -D "${pgdata_path}"
 
-if [ -f "${PGDATA_PATH}/postgresql.conf" ]; then
+if [ -f "${pgdata_path}/postgresql.conf" ]; then
     # Basic PostgreSQL configuration
-    tee "port = ${db_port}" >> ${PGDATA_PATH}/postgresql.conf
-    tee "listen_addresses = 'localhost'" >> ${PGDATA_PATH}/postgresql.conf
+    tee "port = ${db_port}" >> ${pgdata_path}/postgresql.conf
+    tee "listen_addresses = 'localhost'" >> ${pgdata_path}/postgresql.conf
     
     # Simple authentication setup
-    tee ${PGDATA_PATH}/pg_hba.conf << EOF
+    tee ${pgdata_path}/pg_hba.conf << EOF
 local all all peer
 host all all 127.0.0.1/32 scram-sha-256
 host all all ::1/128 scram-sha-256
 EOF
-    chown -R postgres:postgres ${PGDATA_PATH} && chmod 700 ${PGDATA_PATH}
+    chown -R postgres:postgres ${pgdata_path} && chmod 700 ${pgdata_path}
     
     # Start PostgreSQL and create database
     systemctl enable postgresql-16 && systemctl start postgresql-16
