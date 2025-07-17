@@ -22,10 +22,11 @@ APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
 APP_VERSION="${app_version}"
 NEW_RELIC_LICENSE_KEY="${new_relic_license_key}"
-# DB_NAME="${db_name}"
+DB_NAME="${db_name}"
 DB_USER="${db_user}"
 DB_PASSWORD="${db_password}"
 DB_PORT="${db_port}"
+PGDATA_PATH="${pgdata_path}"
 
 # Update and install packages with timeout and error handling
 echo "📦 Updating system packages..."
