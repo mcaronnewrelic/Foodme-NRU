@@ -42,7 +42,9 @@ timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nod
 echo "📦 Installing Node.js 22..."
 timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
 timeout 120 dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
+timeout 120 alternatives --set node /usr/bin/node-22
 log_progress "Package installation completed, starting New Relic setup"
+
 # Install New Relic Infrastructure Agent with compatibility fixes
 echo "📦 Installing New Relic Infrastructure Agent..."
 if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
@@ -83,7 +85,20 @@ if [ -f "${pgdata_path}/postgresql.conf" ]; then
     # Basic PostgreSQL configuration
     tee "port = ${db_port}" >> ${pgdata_path}/postgresql.conf
     tee "listen_addresses = 'localhost'" >> ${pgdata_path}/postgresql.conf
-    
+    sudo -u postgres sed -i "s/^#log_destination = 'stderr'/log_destination = 'csvlog'/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_directory = 'log'/log_directory = 'log'/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_file_mode = 0600/log_file_mode = 0640/" "${pgdata_path}/postgresql.conf" # Readable by group
+    sudo -u postgres sed -i "s/^#log_rotation_size = 10MB/log_rotation_size = 10MB/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_checkpoints = off/log_checkpoints = on/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_connections = off/log_connections = on/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_disconnections = off/log_disconnections = on/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_duration = off/log_duration = on/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_error_verbosity = default/log_error_verbosity = verbose/" "${pgdata_path}/postgresql.conf" # 'verbose' includes SQLSTATE
+    sudo -u postgres sed -i "s/^#log_lock_waits = off/log_lock_waits = on/" "${pgdata_path}/postgresql.conf"
+    sudo -u postgres sed -i "s/^#log_temp_files = -1/log_temp_files = 0/" "${pgdata_path}/postgresql.conf" # Log temp files larger than 0KB
+    sudo -u postgres sed -i "s/^#log_autovacuum_min_duration = -1/log_autovacuum_min_duration = 0/" "${pgdata_path}/postgresql.conf" # Log all autovacuum actions
+    sudo -u postgres sed -i "s/^#log_min_duration_statement = -1/log_min_duration_statement = 0/" "${pgdata_path}/postgresql.conf" # Log all statements with their duration
+
     # Simple authentication setup
     tee ${pgdata_path}/pg_hba.conf << EOF
 local all all peer
@@ -93,7 +108,7 @@ EOF
     chown -R postgres:postgres ${pgdata_path} && chmod 700 ${pgdata_path}
     
     # Start PostgreSQL and create database
-    systemctl enable postgresql-16 && systemctl start postgresql-16
+    systemctl enable postgresql && systemctl start postgresql
     sleep 10  # Wait for startup
     
     # Create database and user
@@ -113,73 +128,42 @@ log_progress "PostgreSQL setup completed, creating directories and downloading c
 mkdir -p /var/www/foodme /var/log/foodme /var/www/foodme/server /home/ec2-user/foodme/config /home/ec2-user/foodme/db
 chown -R ec2-user:ec2-user /var/www/foodme /var/log/foodme /home/ec2-user/foodme
 
-# Function to download files with retry
-download_config_file() {
-    local url="$1" output_path="$2" i=0
-    while [ $i -lt 3 ]; do
-        if wget -q --timeout=30 -O "$output_path" "$url" 2>/dev/null && [ -s "$output_path" ]; then
-            echo "✅ Downloaded $(basename $output_path)"
-            return 0
-        fi
-        i=$((i+1))
-        [ $i -lt 3 ] && sleep $((i*2))
-    done
-    echo "❌ Failed to download $(basename $output_path)"
-    return 1
-}
-
-# Download configuration files with error handling
+# Download configuration files
 echo "Downloading configuration files from GitHub..."
 
 # Configure Nginx
-if ! download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx.conf" "/etc/nginx/conf.d/foodme.conf"; then
+if ! sudo -u ec2-user wget -O "/etc/nginx/conf.d/foodme.conf" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx.conf" ; then
     echo "⚠️ Failed to download nginx.conf"
 fi
 
 # Configure New Relic integrations (basic setup)
-if [ -d "/etc/newrelic-infra/integrations.d" ]; then
-    cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << 'EOF'
-integrations:
-  - name: nri-nginx
-    env:
-      STATUS_URL: http://localhost/nginx_status
-      METRICS: true
-    interval: 30s
-EOF
-    cat > /etc/newrelic-infra/integrations.d/postgres-config.yml << EOF
-integrations:
-  - name: nri-postgresql
-    env:
-      HOSTNAME: localhost
-      PORT: ${db_port}
-      USERNAME: ${db_user}
-      DATABASE: ${db_name}
-      PASSWORD: ${db_password}
-      METRICS: true
-    interval: 30s
-EOF
-    echo "✅ New Relic integrations configured"
+if ! sudo -u ec2-user wget -O "/etc/newrelic-infra/integrations.d/nginx-config.yml" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx-config.yml" ; then
+    echo "⚠️ Failed to download nginx.conf"
 fi
 
+if ! sudo -u ec2-user wget -O "/etc/newrelic-infra/integrations.d/postgres-config.yml" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/postgres-config.yml" ; then
+    echo "⚠️ Failed to download postgres-config.yml"
+fi
+
+sudo -u newrelic-infra cp /etc/newrelic-infra/logging.dnginx-log.yml.example /etc/newrelic-infra/logging.d/nginx-log.yml
+sudo -u newrelic-infra cp /etc/newrelic-infra/logging.dpostgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
+tee "    file: /var/lib/pgsql/data/log/postgresql*.log/" "/etc/newrelic-infra/logging.d/postgresql-log.yml" # Log all statements with their duration
+
 # Configure Systemd service
-if ! download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service" "/etc/systemd/system/foodme.service"; then
+if ! sudo -u ec2-user wget -O "/etc/systemd/system/foodme.service" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service"; then
     echo "⚠️ Failed to download foodme.service"
 fi
 
 # Get health check and deploy scripts
-download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/health-check.sh" "/home/ec2-user/foodme/config/health-check.sh" || {
-    echo "⚠️ Failed to download health-check.sh, creating basic version..."
-    cat > /home/ec2-user/foodme/config/health-check.sh << 'EOF'
-#!/bin/bash
-curl -f http://localhost:3000/health || exit 1
-EOF
-}
+if ! sudo -u ec2-user wget -O "/home/ec2-user/foodme/config/health-check.sh"  "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/health-check.sh"; then
+    echo "⚠️ Failed to download health-check.sh"
+fi
 
-download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/deploy.sh" "/home/ec2-user/foodme/config/deploy.sh" || {
+if ! sudo -u ec2-user wget -O "/home/ec2-user/foodme/config/deploy.sh" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/deploy.sh"; then
     echo "⚠️ Failed to download deploy.sh"
-}
+fi
 # Download database schema files
-if [ "$SKIP_POSTGRES" != "true" ] && download_config_file "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" "/home/ec2-user/foodme/db/01-init-schema.sql"; then
+if [ "$SKIP_POSTGRES" != "true" ] && wget -O "/home/ec2-user/foodme/db/01-init-schema.sql" "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql"; then
     echo "Executing database schema initialization..."
     if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
