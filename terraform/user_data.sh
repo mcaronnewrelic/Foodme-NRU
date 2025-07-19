@@ -45,12 +45,13 @@ timeout 120 dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
 timeout 120 alternatives --set node /usr/bin/node-22
 log_progress "Package installation completed, starting New Relic setup"
 
-# Install New Relic Infrastructure Agent with compatibility fixes
+# Install New Relic Infrastructure Agent in privileged mode
+export NRIA_MODE="PRIVILEGED" 
 echo "📦 Installing New Relic Infrastructure Agent..."
 if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
     if timeout 120 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
         # Install with --skip-broken to handle dependency issues
-        if timeout 180 NRIA_MODE="PRIVILEGED" dnf install -y td-agent-bit newrelic-infra nri-nginx nri-postgresql --skip-broken; then
+        if timeout 180 dnf install -y td-agent-bit newrelic-infra nri-nginx nri-postgresql --skip-broken; then
             echo "✅ New Relic components installed"
         else
             echo "❌ New Relic installation failed due to dependency conflicts (common on AL2023)"
