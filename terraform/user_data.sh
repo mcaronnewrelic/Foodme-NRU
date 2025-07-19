@@ -125,7 +125,7 @@ fi
 log_progress "PostgreSQL setup completed, creating directories and downloading configs"
 
 # Create directories
-mkdir -p /var/www/foodme /var/log/foodme /var/www/foodme/server /home/ec2-user/foodme/config /home/ec2-user/foodme/db
+mkdir -p /var/www/foodme /var/log/foodme /var/www/foodme/server /home/ec2-user/foodme/config 
 chown -R ec2-user:ec2-user /var/www/foodme /var/log/foodme /home/ec2-user/foodme
 
 # Download configuration files
@@ -143,27 +143,22 @@ sudo -u newrelic-infra cp /etc/newrelic-infra/logging.dnginx-log.yml.example /et
 sudo -u newrelic-infra cp /etc/newrelic-infra/logging.d/postgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
 echo "    file: /var/lib/pgsql/data/log/postgresql*.log/" | sudo tee -a  "/etc/newrelic-infra/logging.d/postgresql-log.yml" > /dev/null
 
-# Configure Systemd service
-sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service" | sudo tee "/etc/systemd/system/foodme.service" > /dev/null
-
 # Get health check and deploy scripts
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/health-check.sh" | sudo tee "/home/ec2-user/foodme/config/health-check.sh" > /dev/null
-
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/deploy.sh" | sudo tee "/home/ec2-user/foodme/config/deploy.sh" > /dev/null
 
-# Download database schema files
-
-sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" | sudo tee "/home/ec2-user/foodme/db/01-init-schema.sql" > /dev/null
-    if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/01-init-schema.sql; then
+# Download database schema file
+sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" | sudo tee "/var/lib/pgsql/data/01-init-schema.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
+    if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
     else
         echo "❌ Failed to execute schema initialization (timeout or error)"
     fi
 
 # Download sample data
-sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" | sudo tee "/home/ec2-user/foodme/db/02-import-restaurants-uuid.sql" > /dev/null
+sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" | sudo tee "/var/lib/pgsql/data/02-import-restaurants-uuid.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
     echo "Importing sample restaurant data..."
-    if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /home/ec2-user/foodme/db/02-import-restaurants-uuid.sql; then
+    if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql; then
         echo "✅ Sample data imported successfully"
     else
         echo "❌ Failed to import sample data (timeout or error), but continuing..."
@@ -180,6 +175,7 @@ chown root:newrelic /etc/newrelic-infra/integrations.d/*.yml 2>/dev/null || echo
 chown root:newrelic /etc/newrelic-infra/logging.d/*.yml 2>/dev/null || echo "No New Relic integration files to change ownership"
 sudo chmod g+rX /var/lib/pgsql/data/log
 sudo usermod -a -G postgres newrelic
+sudo usermod -a -G nginx newrelic
 
 systemctl daemon-reload
 
