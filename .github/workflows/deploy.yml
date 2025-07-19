@@ -194,7 +194,6 @@ jobs:
           name: foodme-dist-${{ github.sha }}
           path: ./dist-download
       - name: Setup SSH key
-        if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           # Create SSH directory
           mkdir -p ~/.ssh
@@ -236,7 +235,6 @@ jobs:
           echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa | cut -d' ' -f2)"
 
       - name: Wait for instance to be ready
-        if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           echo "Waiting for instance to be ready..."
           echo "Instance IP: ${{ steps.instance.outputs.ip }}"
@@ -256,7 +254,6 @@ jobs:
           sleep 30
 
       - name: Monitor cloud-init and user_data execution
-        if: steps.check_ssh.outputs.ssh_available == 'true'
         timeout-minutes: 15
         continue-on-error: true
         run: |
@@ -341,7 +338,6 @@ jobs:
           echo "✅ Cloud-init monitoring completed"
 
       - name: Deploy application
-        if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
           # SSH options for better reliability
           SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60"
