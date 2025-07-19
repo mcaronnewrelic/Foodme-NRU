@@ -11,11 +11,10 @@ echo "================================================"
 # Function to log progress
 log_progress() {
     echo "🔄 PROGRESS: $1 - $(date)"
-    echo "🔄 PROGRESS: $1 - $(date)" >> /var/log/cloud-init-output.log
 }
-export NRIA_MODE="PRIVILEGED" 
+# export NRIA_MODE="PRIVILEGED" 
 # Enable strict error handling only after initial setup
-set -e
+# set -e
 log_progress "Starting user_data script execution"
 # Variables from Terraform
 tee "/etc/profile.d/my-custom-vars.sh" > /dev/null << 'EOF'
@@ -45,9 +44,8 @@ dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
 alternatives --set node /usr/bin/node-22
 log_progress "Package installation completed, starting New Relic setup"
 
-# Install New Relic Infrastructure Agent in privileged mode
-
-log_progress "Privileged mode set for New Relic Infrastructure Agent installation"
+# Install New Relic Infrastructure Agent
+log_progress "New Relic Infrastructure Agent installation"
 echo "📦 Installing New Relic Infrastructure Agent..."
 if curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
     if dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
@@ -59,7 +57,6 @@ if curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/in
         fi
     fi
 fi
-
 log_progress "New Relic setup completed, configuring New Relic agent"
 
 # Configure New Relic (if installed)
@@ -76,11 +73,10 @@ EOF
 else
     echo "⚠️ New Relic not installed, skipping configuration"
 fi
-
 log_progress "New Relic configuration completed, starting PostgreSQL installation"
 
 # Initialize and start PostgreSQL
-echo "🔧 Setting up PostgreSQL..."
+log_progress "🔧 Setting up PostgreSQL..."
 sudo -u postgres /usr/bin/initdb -D "${pgdata_path}"
 
 if [ -f "${pgdata_path}/postgresql.conf" ]; then
@@ -137,34 +133,35 @@ echo "Downloading configuration files from GitHub..."
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx.conf" | sudo tee "/etc/nginx/conf.d/foodme.conf" > /dev/null
 # Configure New Relic integrations (basic setup)
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx-config.yml" | sudo tee "/etc/newrelic-infra/integrations.d/nginx-config.yml" > /dev/null
-log_progress "nginx-config completed"
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/postgres-config.yml" | sudo tee "/etc/newrelic-infra/integrations.d/postgres-config.yml" > /dev/null
-
+log_progress "Configure New Relic integrations completed"
 
 # Configure New Relic Infrastructure Logging (Nginx and PostgreSQL)
-sudo -u newrelic cp /etc/newrelic-infra/logging.d/nginx-log.yml.example /etc/newrelic-infra/logging.d/nginx-log.yml
-sudo -u newrelic cp /etc/newrelic-infra/logging.d/postgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
-echo "    file: /var/lib/pgsql/data/log/postgresql*.log/" | sudo tee -a  "/etc/newrelic-infra/logging.d/postgresql-log.yml" > /dev/null
+cp /etc/newrelic-infra/logging.d/nginx-log.yml.example /etc/newrelic-infra/logging.d/nginx-log.yml
+cp /etc/newrelic-infra/logging.d/postgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
+echo "    file: /var/lib/pgsql/data/log/postgresql*.log/" | tee -a  "/etc/newrelic-infra/logging.d/postgresql-log.yml" > /dev/null
+log_progress "New Relic Infrastructure Logging completed"
 
 # Get health check and deploy scripts
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/health-check.sh" | sudo tee "/home/ec2-user/foodme/config/health-check.sh" > /dev/null
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/deploy.sh" | sudo tee "/home/ec2-user/foodme/config/deploy.sh" > /dev/null
+log_progress "health check and deploy scripts completed"
 
 # Download database schema file
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" | sudo tee "/var/lib/pgsql/data/01-init-schema.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
     if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql; then
-        echo "✅ Database schema initialized successfully"
+        log_progress "✅ Database schema initialized successfully"
     else
-        echo "❌ Failed to execute schema initialization"
+        log_progress "❌ Failed to execute schema initialization"
     fi
 
 # Download sample data
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" | sudo tee "/var/lib/pgsql/data/02-import-restaurants-uuid.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
-    echo "Importing sample restaurant data..."
+    log_progress "Importing sample restaurant data..."
     if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql; then
-        echo "✅ Sample data imported successfully"
+        log_progress "✅ Sample data imported successfully"
     else
-        echo "❌ Failed to import sample data, but continuing..."
+        log_progress "❌ Failed to import sample data, but continuing..."
     fi
 
 # Make scripts executable and set proper ownership
@@ -177,8 +174,8 @@ chmod 640 /etc/newrelic-infra/logging.d/*.yml 2>/dev/null || echo "No New Relic 
 chown root:newrelic /etc/newrelic-infra/integrations.d/*.yml 2>/dev/null || echo "No New Relic integration files to change ownership"
 chown root:newrelic /etc/newrelic-infra/logging.d/*.yml 2>/dev/null || echo "No New Relic integration files to change ownership"
 sudo chmod g+rX /var/lib/pgsql/data/log
-sudo usermod -a -G postgres newrelic
-sudo usermod -a -G nginx newrelic
+#sudo usermod -a -G postgres newrelic
+#sudo usermod -a -G nginx newrelic
 
 systemctl daemon-reload
 

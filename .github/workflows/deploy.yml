@@ -456,7 +456,7 @@ jobs:
           "
       - name: Set Release Version from Tag
         id: set_release_version
-        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
       - name: New Relic Application Deployment Marker
         uses: newrelic/deployment-marker-action@v2.5.1
         with:
