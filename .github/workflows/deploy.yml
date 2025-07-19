@@ -455,6 +455,7 @@ jobs:
             rm -rf /tmp/foodme-deploy
           "
       - name: Set Release Version from Tag
+        id: set_release_version
         run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
       - name: New Relic Application Deployment Marker
         uses: newrelic/deployment-marker-action@v2.5.1
@@ -465,7 +466,7 @@ jobs:
           user: ${{ github.actor }}
           commit: ${{ github.sha }}
           changelog: ${{ github.event.head_commit.message }}
-          version: "${{ env.RELEASE_VERSION }}"
+          version: "${{ steps.set_release_version.outputs.RELEASE_VERSION }}"
           description: "Deployed FoodMe-${{ github.event.inputs.environment || 'staging' }} by ${{ github.actor }} to ${{ github.event.inputs.environment || 'staging' }}"
 
       - name: Deployment summary
@@ -478,12 +479,6 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
-          # Add health check status
-          if [ "${{ steps.health_check.outputs.health_passed }}" == "true" ]; then
-            echo "- **Health Check**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Health Check**: ⚠️ Failed (check logs for details)" >> $GITHUB_STEP_SUMMARY
-          fi
 
   cleanup-on-failure:
     name: Cleanup AWS Resources on Failure

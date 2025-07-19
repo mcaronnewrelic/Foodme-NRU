@@ -31,27 +31,28 @@ export PGDATA_PATH="${pgdata_path}"
 EOF
 sudo chmod +x "/etc/profile.d/my-custom-vars.sh"
 
-# Update and install packages with timeout and error handling
+# Update and install packages and error handling
 echo "📦 Updating system packages..."
-timeout 300 dnf update -y
+dnf update -y
 
 echo "📦 Installing required packages..."
-timeout 300 dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent npm postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing 
+dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent npm postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing 
 
-# Install Node.js 22 with timeout
+# Install Node.js 22 
 echo "📦 Installing Node.js 22..."
-timeout 120 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-timeout 120 dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
-timeout 120 alternatives --set node /usr/bin/node-22
+curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
+alternatives --set node /usr/bin/node-22
 log_progress "Package installation completed, starting New Relic setup"
 
 # Install New Relic Infrastructure Agent in privileged mode
 export NRIA_MODE="PRIVILEGED" 
+log_progress "Privileged mode set for New Relic Infrastructure Agent installation"
 echo "📦 Installing New Relic Infrastructure Agent..."
-if timeout 60 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
-    if timeout 120 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
+if curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
+    if dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'; then
         # Install with --skip-broken to handle dependency issues
-        if timeout 180 dnf install -y td-agent-bit newrelic-infra nri-nginx nri-postgresql --skip-broken; then
+        if dnf install -y fluent-bit newrelic-infra nri-nginx nri-postgresql --skip-broken; then
             echo "✅ New Relic components installed"
         else
             echo "❌ New Relic installation failed due to dependency conflicts (common on AL2023)"
@@ -136,12 +137,13 @@ echo "Downloading configuration files from GitHub..."
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx.conf" | sudo tee "/etc/nginx/conf.d/foodme.conf" > /dev/null
 # Configure New Relic integrations (basic setup)
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/nginx-config.yml" | sudo tee "/etc/newrelic-infra/integrations.d/nginx-config.yml" > /dev/null
+log_progress "nginx-config completed"
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/postgres-config.yml" | sudo tee "/etc/newrelic-infra/integrations.d/postgres-config.yml" > /dev/null
 
 
-# Configure New Relic Infrstucture Logging (Nginx and PostgreSQL)
-sudo -u newrelic-infra cp /etc/newrelic-infra/logging.dnginx-log.yml.example /etc/newrelic-infra/logging.d/nginx-log.yml
-sudo -u newrelic-infra cp /etc/newrelic-infra/logging.d/postgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
+# Configure New Relic Infrastructure Logging (Nginx and PostgreSQL)
+sudo -u newrelic cp /etc/newrelic-infra/logging.d/nginx-log.yml.example /etc/newrelic-infra/logging.d/nginx-log.yml
+sudo -u newrelic cp /etc/newrelic-infra/logging.d/postgresql-log.yml.example /etc/newrelic-infra/logging.d/postgresql-log.yml
 echo "    file: /var/lib/pgsql/data/log/postgresql*.log/" | sudo tee -a  "/etc/newrelic-infra/logging.d/postgresql-log.yml" > /dev/null
 
 # Get health check and deploy scripts
@@ -150,19 +152,19 @@ sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main
 
 # Download database schema file
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" | sudo tee "/var/lib/pgsql/data/01-init-schema.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
-    if timeout 120 sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql; then
+    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql; then
         echo "✅ Database schema initialized successfully"
     else
-        echo "❌ Failed to execute schema initialization (timeout or error)"
+        echo "❌ Failed to execute schema initialization"
     fi
 
 # Download sample data
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" | sudo tee "/var/lib/pgsql/data/02-import-restaurants-uuid.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
     echo "Importing sample restaurant data..."
-    if timeout 60 sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql; then
+    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql; then
         echo "✅ Sample data imported successfully"
     else
-        echo "❌ Failed to import sample data (timeout or error), but continuing..."
+        echo "❌ Failed to import sample data, but continuing..."
     fi
 
 # Make scripts executable and set proper ownership
