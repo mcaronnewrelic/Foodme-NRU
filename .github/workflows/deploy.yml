@@ -193,34 +193,6 @@ jobs:
         with:
           name: foodme-dist-${{ github.sha }}
           path: ./dist-download
-
-      - name: List downloaded files for debugging
-        run: |
-          echo "📂 Contents of dist-download directory:"
-          find ./dist-download -type f | head -20
-          echo ""
-          echo "📁 Directory structure:"
-          ls -la ./dist-download/
-          echo ""
-          echo "🔍 Looking for server files:"
-          find ./dist-download -name "server" -type d || echo "No server directory found"
-          find ./dist-download -name "*.js" -path "*/server/*" | head -10 || echo "No server JS files found"
-          echo ""
-          echo "🔍 Looking for package.json:"
-          find ./dist-download -name "package.json" || echo "No package.json found"
-          echo ""
-          echo "🔍 Looking for frontend files:"
-          find ./dist-download -name "*.html" -o -name "*.js" -o -name "*.css" | grep -v server | head -10 || echo "No frontend files found"
-
-      - name: Check SSH key availability
-        id: check_ssh
-        run: |
-          if [ -n "${{ secrets.EC2_PRIVATE_KEY }}" ]; then
-            echo "ssh_available=true" >> $GITHUB_OUTPUT
-          else
-            echo "ssh_available=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Setup SSH key
         if: steps.check_ssh.outputs.ssh_available == 'true'
         run: |
@@ -354,12 +326,12 @@ jobs:
 
           echo ""
           echo "📋 ===== SYSTEM STATUS AFTER USER_DATA ====="
-          ssh_exec "sudo systemctl is-active postgresql-16 nginx newrelic-infra | xargs -I {} echo 'Service {}: {}'" || echo "Could not check service status"
+          ssh_exec "sudo systemctl is-active postgresql nginx newrelic-infra | xargs -I {} echo 'Service {}: {}'" || echo "Could not check service status"
 
           # Check if our config files were created
           echo ""
           echo "📋 ===== CONFIGURATION FILES STATUS ====="
-          ssh_exec "ls -la /etc/nginx/conf.d/foodme.conf /etc/systemd/system/foodme.service /etc/newrelic-infra.yml 2>/dev/null | sed 's/^/  /' || echo 'Some config files missing'"
+          ssh_exec "ls -la /etc/nginx/conf.d/foodme.conf /etc/newrelic-infra.yml 2>/dev/null | sed 's/^/  /' || echo 'Some config files missing'"
 
           echo ""
           echo "📋 ===== DOWNLOADED CONFIG FILES ====="
@@ -367,21 +339,6 @@ jobs:
 
           echo ""
           echo "✅ Cloud-init monitoring completed"
-
-      - name: Run diagnostic if monitoring times out
-        if: steps.check_ssh.outputs.ssh_available == 'true' && failure()
-        continue-on-error: true
-        run: |
-          echo "🚨 Monitoring timed out - running diagnostic script..."
-          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
-
-          # Copy diagnostic script to instance
-          if scp $SSH_OPTS ./terraform/debug-user-data.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/debug-user-data.sh 2>/dev/null; then
-            echo "📋 Running diagnostic script on instance..."
-            ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/debug-user-data.sh && sudo /tmp/debug-user-data.sh" 2>/dev/null || echo "Diagnostic script failed to run"
-          else
-            echo "❌ Could not copy diagnostic script to instance"
-          fi
 
       - name: Deploy application
         if: steps.check_ssh.outputs.ssh_available == 'true'
@@ -418,36 +375,9 @@ jobs:
             exit 1
           fi
 
-          # Upload database initialization files
-          echo "📂 Uploading database initialization files..."
-          if [ -d "./db" ]; then
-            scp $SSH_OPTS -r ./db ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
-            echo "✅ Database files uploaded"
-          else
-            echo "⚠️ No database directory found"
-          fi
-
           # Move files to web directory and set permissions
           ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "
-            # Stop services first
-            sudo systemctl stop foodme || true
-            
-            # Update systemd service environment variables using sed
-            sudo sed -i 's/Environment=NEW_RELIC_LICENSE_KEY=.*/Environment=NEW_RELIC_LICENSE_KEY=${{ secrets.NEW_RELIC_LICENSE_KEY }}/' /etc/systemd/system/foodme.service
-            sudo sed -i 's/Environment=NEW_RELIC_APP_NAME=.*/Environment=NEW_RELIC_APP_NAME=FoodMe-${{ github.event.inputs.environment || 'staging' }}/' /etc/systemd/system/foodme.service
-            sudo sed -i 's/Environment=DB_PORT=.*/Environment=DB_PORT=${{ secrets.DB_PORT || '5432' }}/' /etc/systemd/system/foodme.service
-            sudo sed -i 's/Environment=DB_NAME=.*/Environment=DB_NAME=${{ secrets.DB_NAME || 'foodme' }}/' /etc/systemd/system/foodme.service
-            sudo sed -i 's/Environment=DB_USER=.*/Environment=DB_USER=${{ secrets.DB_USER || 'foodme_user' }}/' /etc/systemd/system/foodme.service
-            sudo sed -i 's/Environment=DB_PASSWORD=.*/Environment=DB_PASSWORD=${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}/' /etc/systemd/system/foodme.service
-            
-            # Reload systemd configuration after updating environment
-            sudo systemctl daemon-reload
-            
-            # Verify the systemd service configuration
-            echo 'Verifying systemd service environment variables:'
-            grep 'Environment=NEW_RELIC' /etc/systemd/system/foodme.service || echo 'NEW_RELIC environment not found'
-            grep 'Environment=DB_' /etc/systemd/system/foodme.service || echo 'DB environment not found'
-            
+
             # Clear old deployment
             sudo rm -rf /var/www/foodme/dist /var/www/foodme/server /var/www/foodme/package*.json
             
@@ -489,22 +419,16 @@ jobs:
               # Install Node.js dependencies in server directory
               if [ -d '/var/www/foodme/dist/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
                 echo 'Installing Node.js dependencies in server directory...'
-                echo 'Node.js version:' && node --version
-                echo 'npm version:' && npm --version
-                echo 'Current directory:' && pwd
-                echo 'Directory permissions:' && ls -la
-                cd /var/www/foodme/server && npm install --production --unsafe-perm --verbose
-              elif [ -f '/var/www/foodme/dist/package.json' ]; then
-                echo 'Installing Node.js dependencies in root directory...'
-                echo 'Node.js version:' && node --version
-                echo 'npm version:' && npm --version
-                echo 'Current directory:' && pwd
-                echo 'Directory permissions:' && ls -la
-                cd /var/www/foodme && npm install --production --unsafe-perm --verbose
+                cd /var/www/foodme/server && npm install --omit=dev --unsafe-perm --verbose
               else
                 echo 'No package.json found - dependencies may have been installed during build'
               fi
-              
+
+              # Configure Systemd service
+              sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service" | sudo tee "/etc/systemd/system/foodme.service" > /dev/null
+              sudo systemctl enable foodme
+              sudo systemctl restart foodme
+
               # Start services
               sudo systemctl start foodme
               
@@ -526,8 +450,6 @@ jobs:
                 # Additional debugging for server directory
                 echo 'Checking server directory structure:'
                 ls -la /var/www/foodme/dist/server/ || echo 'Server directory not found'
-                echo 'Checking if start.js exists:'
-                ls -la /var/www/foodme/dist/dist/server/start.js || echo 'start.js not found'
                 echo 'Checking package.json in server:'
                 ls -la /var/www/foodme/dist/server/package.json || echo 'package.json not found in server'
               fi
@@ -536,240 +458,6 @@ jobs:
             # Clean up temp files
             rm -rf /tmp/foodme-deploy
           "
-
-      - name: Alternative deployment notice
-        if: steps.check_ssh.outputs.ssh_available == 'false'
-        run: |
-          echo "🔄 SSH deployment skipped - no EC2_PRIVATE_KEY provided"
-          echo "📝 To enable SSH deployment:"
-          echo "   1. Run: cd terraform && ./create-keypair.sh"
-          echo "   2. Add EC2_KEY_NAME and EC2_PRIVATE_KEY secrets to GitHub"
-          echo "   3. Re-run the workflow"
-          echo ""
-          echo "💡 Alternative: Use AWS Systems Manager Session Manager for deployment"
-          echo "   This would require modifying the deployment strategy"
-          echo ""
-          echo "📋 To manually check user_data.sh script execution:"
-          echo "   1. Connect to EC2 instance: aws ssm start-session --target ${{ steps.instance.outputs.id }}"
-          echo "   2. Check cloud-init status: cloud-init status --wait"
-          echo "   3. View logs: sudo cat /var/log/cloud-init-output.log"
-          echo "   4. Check errors: sudo tail -f /var/log/cloud-init.log"
-
-      - name: Monitor cloud-init without SSH (using AWS CLI)
-        if: steps.check_ssh.outputs.ssh_available == 'false'
-        run: |
-          echo "📋 Attempting to get cloud-init status via AWS Systems Manager..."
-          INSTANCE_ID="${{ steps.instance.outputs.id }}"
-
-          # Wait for the instance to be ready for SSM
-          echo "⏳ Waiting for instance to be ready for AWS Systems Manager..."
-          aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID || echo "Instance status check timed out"
-
-          # Try to run commands via SSM (this requires the instance to have SSM agent and proper IAM role)
-          echo "🔍 Attempting to check cloud-init status via SSM..."
-          COMMAND_ID=$(aws ssm send-command \
-            --instance-ids $INSTANCE_ID \
-            --document-name "AWS-RunShellScript" \
-            --parameters 'commands=["cloud-init status --wait --long", "sudo tail -n 20 /var/log/cloud-init-output.log"]' \
-            --query 'Command.CommandId' \
-            --output text 2>/dev/null || echo "failed")
-
-          if [ "$COMMAND_ID" != "failed" ]; then
-            echo "📋 Command ID: $COMMAND_ID"
-            echo "⏳ Waiting for command to complete..."
-            sleep 30
-            
-            echo "📋 Command output:"
-            aws ssm get-command-invocation \
-              --command-id $COMMAND_ID \
-              --instance-id $INSTANCE_ID \
-              --query 'StandardOutputContent' \
-              --output text 2>/dev/null || echo "Could not retrieve command output"
-              
-            echo "📋 Command errors (if any):"
-            aws ssm get-command-invocation \
-              --command-id $COMMAND_ID \
-              --instance-id $INSTANCE_ID \
-              --query 'StandardErrorContent' \
-              --output text 2>/dev/null || echo "Could not retrieve command errors"
-          else
-            echo "❌ Could not execute SSM commands. Instance may not have SSM agent or proper IAM role."
-            echo "💡 Manual steps to check user_data execution:"
-            echo "   Instance ID: $INSTANCE_ID"
-            echo "   1. Go to AWS Console → EC2 → Instances"
-            echo "   2. Select instance $INSTANCE_ID"
-            echo "   3. Actions → Monitor and troubleshoot → Get system log"
-            echo "   4. Or use Session Manager to connect and run:"
-            echo "      sudo cat /var/log/cloud-init-output.log"
-          fi
-
-      - name: Health check
-        id: health_check
-        continue-on-error: true
-        run: |
-          echo "Performing health check..."
-          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-
-          # Wait a bit for services to start if SSH deployment was skipped
-          if [ "${{ steps.check_ssh.outputs.ssh_available }}" == "false" ]; then
-            echo "ℹ️  SSH deployment was skipped, waiting longer for user_data script to complete..."
-            echo "⏳ Waiting 3 minutes for user_data script and services to start..."
-            sleep 180
-          else
-            echo "ℹ️  SSH deployment completed, waiting for services to stabilize..."
-            sleep 60
-          fi
-
-          # First, check if the instance is reachable
-          echo "🔍 Testing basic connectivity..."
-          if ! curl -s --connect-timeout 10 http://${{ steps.instance.outputs.ip }} > /dev/null; then
-            echo "❌ Cannot connect to instance - checking if it's still starting up..."
-          fi
-
-          # Check different endpoints to diagnose the issue
-          echo "🔍 Performing comprehensive health checks..."
-
-          # Track consecutive 502 errors for targeted intervention
-          consecutive_502_count=0
-
-          for i in {1..5}; do
-            echo "⏳ Health check attempt $i/5..."
-            
-            # Try the health endpoint first
-            HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 http://${{ steps.instance.outputs.ip }}/health 2>/dev/null || echo "000")
-            
-            if [ "$HEALTH_CODE" = "200" ]; then
-              echo "✅ Health check passed on /health endpoint"
-              echo "health_passed=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            
-            # Try the root endpoint as fallback
-            ROOT_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 http://${{ steps.instance.outputs.ip }}/ 2>/dev/null || echo "000")
-            
-            if [ "$ROOT_CODE" = "200" ]; then
-              echo "✅ Root endpoint accessible - application seems to be running"
-              echo "health_passed=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            
-            # Analyze the error codes
-            echo "📊 Health endpoint: HTTP $HEALTH_CODE, Root endpoint: HTTP $ROOT_CODE"
-            
-            # Handle specific error scenarios
-            if [ "$HEALTH_CODE" = "502" ] || [ "$ROOT_CODE" = "502" ]; then
-              consecutive_502_count=$((consecutive_502_count + 1))
-              echo "🔍 502 Bad Gateway (count: $consecutive_502_count) - nginx running but backend not responding"
-              
-              # If we've seen multiple 502s and have SSH access, try to restart the service
-              if [ $consecutive_502_count -ge 3 ] && [ "${{ steps.check_ssh.outputs.ssh_available }}" == "true" ] && [ $i -le 10 ]; then
-                echo "🔧 Attempting to restart backend service via SSH..."
-                
-                # Create a temporary script for service restart
-                {
-                  echo '#!/bin/bash'
-                  echo 'echo "Checking service status..."'
-                  echo 'sudo systemctl status foodme --no-pager || true'
-                  echo ''
-                  echo 'echo "Checking if Node.js process is running..."'
-                  echo 'ps aux | grep node || true'
-                  echo ''
-                  echo 'echo "Checking if port 3000 is in use..."'
-                  echo 'sudo netstat -tlnp | grep :3000 || true'
-                  echo ''
-                  echo 'echo "Restarting foodme service..."'
-                  echo 'sudo systemctl restart foodme'
-                  echo ''
-                  echo 'echo "Waiting for service to start..."'
-                  echo 'sleep 10'
-                  echo ''
-                  echo 'echo "Checking service status after restart..."'
-                  echo 'sudo systemctl status foodme --no-pager || true'
-                  echo ''
-                  echo 'echo "Testing local health endpoint..."'
-                  echo 'curl -f http://localhost:3000/health || curl -s http://localhost:3000/health || echo "Local health check failed"'
-                } > restart_service.sh
-
-                # Execute the restart script
-                if scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null restart_service.sh ec2-user@${{ steps.instance.outputs.ip }}:/tmp/restart_service.sh; then
-                  ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@${{ steps.instance.outputs.ip }} "chmod +x /tmp/restart_service.sh && /tmp/restart_service.sh" || true
-                  echo "🔧 Service restart attempted, waiting 30 seconds..."
-                  sleep 30
-                  consecutive_502_count=0  # Reset counter after intervention
-                  continue
-                else
-                  echo "⚠️  Could not restart service via SSH"
-                fi
-              fi
-              
-            elif [ "$HEALTH_CODE" = "503" ] || [ "$ROOT_CODE" = "503" ]; then
-              echo "🔍 503 Service Unavailable - service temporarily unavailable"
-              consecutive_502_count=0  # Reset 502 counter
-              
-            elif [ "$HEALTH_CODE" = "000" ] && [ "$ROOT_CODE" = "000" ]; then
-              echo "🔍 Connection failed - instance may still be starting or network issue"
-              consecutive_502_count=0  # Reset 502 counter
-              
-            elif [ "$HEALTH_CODE" = "404" ] || [ "$ROOT_CODE" = "404" ]; then
-              echo "🔍 404 Not Found - nginx running but routes not configured properly"
-              consecutive_502_count=0  # Reset 502 counter
-              
-            else
-              echo "🔍 Unexpected response codes"
-              consecutive_502_count=0  # Reset 502 counter
-            fi
-            
-            # Provide specific guidance based on error pattern
-            if [ $consecutive_502_count -ge 2 ]; then
-              echo "🔍 Consistent 502 errors suggest backend service issues:"
-              echo "   - Node.js app may have crashed or failed to start"
-              echo "   - Dependencies might be missing"
-              echo "   - Port 3000 may not be listening"
-            fi
-            
-            # Wait before next attempt (longer wait for 502 errors)
-            if [ $i -lt 15 ]; then
-              if [ "$HEALTH_CODE" = "502" ] || [ "$ROOT_CODE" = "502" ]; then
-                echo "⏳ 502 error detected, waiting 45 seconds for potential auto-recovery..."
-                sleep 45
-              else
-                echo "⏳ Waiting 30 seconds before next attempt..."
-                sleep 30
-              fi
-            fi
-          done
-
-          echo "❌ Health check failed after 15 attempts"
-          echo "health_passed=false" >> $GITHUB_OUTPUT
-
-          # Final diagnostic information
-          echo ""
-          echo "🔍 Final diagnostic check:"
-          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-
-          # Check if nginx is responding at all
-          if curl -s --connect-timeout 5 http://${{ steps.instance.outputs.ip }} > /dev/null 2>&1; then
-            echo "✅ Nginx is responding"
-          else
-            echo "❌ Cannot connect to nginx"
-          fi
-
-          echo ""
-          echo "💡 Troubleshooting steps:"
-          echo "1. SSH into the instance: ssh -i your-key.pem ec2-user@${{ steps.instance.outputs.ip }}"
-          echo "2. Check service status: sudo systemctl status nginx foodme"
-          echo "3. Check logs: sudo journalctl -u foodme -n 50"
-          echo "4. Check nginx logs: sudo tail -f /var/log/nginx/error.log"
-          echo "5. Check if app is listening: sudo netstat -tlnp | grep :3000"
-          echo ""
-          echo "⚠️ Health check failed, but deployment will continue..."
-      - name: Deployment failure cleanup
-        if: failure() && steps.health_check.outputs.health_passed == 'false'
-        run: |
-          echo "🚨 Deployment failed during health check. Consider cleaning up AWS resources."
-          echo "health_check_failed=true" >> $GITHUB_ENV
-        continue-on-error: true
-
       - name: Set Release Version from Tag
         run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
       - name: New Relic Application Deployment Marker
