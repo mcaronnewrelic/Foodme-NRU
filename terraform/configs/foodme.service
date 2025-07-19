@@ -1,7 +1,5 @@
 [Unit]
 Description=FoodMe Node.js Application
-After=network.target postgresql-16.service
-Requires=postgresql-16.service
 [Service]
 Type=simple
 User=ec2-user

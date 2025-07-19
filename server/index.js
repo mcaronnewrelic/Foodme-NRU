@@ -81,16 +81,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // In Docker: server runs from /foodme/app/server/, Angular build is in /foodme/app/browser/
   const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
   let ANGULAR_DIST_DIR;
-  
-  if (isDocker) {
-    ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
-  } else if (isProduction) {
-    ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Production: /dist/server/ -> /dist/browser/
-  } else {
-    ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser'); // Development: /server/ -> /dist/browser/
-  }
-  
-  console.log('Angular dist directory:', ANGULAR_DIST_DIR);
+  ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
   console.log('Directory exists:', fs.existsSync(ANGULAR_DIST_DIR));
   
   app.use((req, res, next) => {
@@ -488,16 +479,8 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     // Read Angular's built index.html and inject New Relic
     // Use the same logic as ANGULAR_DIST_DIR to determine the correct path
     let indexPath;
-    if (isDocker) {
-      indexPath = path.join(__dirname, '../browser/index.html'); // Docker: /foodme/app/server/ -> /foodme/app/browser/index.html
-    } else if (isProduction) {
-      indexPath = path.join(__dirname, '../browser/index.html'); // Production: /dist/server/ -> /dist/browser/index.html
-    } else {
-      indexPath = path.join(__dirname, '../dist/browser/index.html'); // Development: /server/ -> /dist/browser/index.html
-    }
-    
-    console.log('Looking for index.html at:', indexPath);
-    console.log('Index.html exists:', fs.existsSync(indexPath));
+    indexPath = path.join(__dirname, '../browser/index.html'); // Docker: /foodme/app/server/ -> /foodme/app/browser/index.html   
+    // console.log('Index.html exists:', fs.existsSync(indexPath));
     
     fs.readFile(indexPath, 'utf8', async function(err, htmlContent) {
       if (err) {
