@@ -13,7 +13,7 @@ log_progress() {
     echo "🔄 PROGRESS: $1 - $(date)"
     echo "🔄 PROGRESS: $1 - $(date)" >> /var/log/cloud-init-output.log
 }
-
+export NRIA_MODE="PRIVILEGED" 
 # Enable strict error handling only after initial setup
 set -e
 log_progress "Starting user_data script execution"
@@ -46,7 +46,7 @@ alternatives --set node /usr/bin/node-22
 log_progress "Package installation completed, starting New Relic setup"
 
 # Install New Relic Infrastructure Agent in privileged mode
-export NRIA_MODE="PRIVILEGED" 
+
 log_progress "Privileged mode set for New Relic Infrastructure Agent installation"
 echo "📦 Installing New Relic Infrastructure Agent..."
 if curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo; then
