@@ -4,8 +4,6 @@ exec 2>&1
 
 echo "🚀 ===== FOODME USER_DATA SCRIPT START ====="
 echo "📅 Timestamp: $(date)"
-echo "🔧 Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id || echo 'unknown')"
-echo "🌍 Region: $(curl -s http://169.254.169.254/latest/meta-data/placement/region || echo 'unknown')"
 echo "================================================"
 
 # Function to log progress
@@ -35,7 +33,7 @@ echo "📦 Updating system packages..."
 dnf update -y
 
 echo "📦 Installing required packages..."
-dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent npm postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing 
+dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent npm postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing > /dev/null
 
 # Install Node.js 22 
 echo "📦 Installing Node.js 22..."
@@ -149,7 +147,7 @@ log_progress "health check and deploy scripts completed"
 
 # Download database schema file
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/01-init-schema.sql" | sudo tee "/var/lib/pgsql/data/01-init-schema.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
-    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql; then
+    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/01-init-schema.sql > /dev/null; then
         log_progress "✅ Database schema initialized successfully"
     else
         log_progress "❌ Failed to execute schema initialization"
@@ -158,7 +156,7 @@ sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main
 # Download sample data
 sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/db/init/02-import-restaurants-uuid.sql" | sudo tee "/var/lib/pgsql/data/02-import-restaurants-uuid.sql" > /dev/null # do not use the ec2-user home directory for this file, it works better in the PGDATA directory
     log_progress "Importing sample restaurant data..."
-    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql; then
+    if sudo -u postgres psql -d ${db_name} -a -f /var/lib/pgsql/data/02-import-restaurants-uuid.sql > /dev/null; then
         log_progress "✅ Sample data imported successfully"
     else
         log_progress "❌ Failed to import sample data, but continuing..."

@@ -1,0 +1,364 @@
+name: Deploy to EC2 with Terraform
+
+"on":
+  push:
+    branches: [main, master]
+    paths:
+      - 'terraform/**'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+# Add explicit permissions for the workflow
+permissions:
+  contents: read
+  actions: write
+  deployments: write
+  id-token: write
+
+env:
+  AWS_REGION: us-west-2
+  TF_VERSION: 1.6.0
+  NODE_VERSION: 22
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: build
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    outputs:
+      tfplan: ${{ steps.plan.outputs.tfplan }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        working-directory: ./terraform
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+        env:
+          TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ./terraform
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+            -var="app_version=${{ github.sha }}" \
+            -out=tfplan
+          echo "tfplan=tfplan" >> $GITHUB_OUTPUT
+        working-directory: ./terraform
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME || 'foodme' }}
+          TF_VAR_db_user: ${{ secrets.DB_USER || 'foodme_user' }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT || '5432' }}
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.sha }}
+          path: terraform/tfplan
+          retention-days: 5
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [build, terraform-plan]
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ github.sha }}
+          path: terraform/
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+        env:
+          TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          TF_VAR_db_name: ${{ secrets.DB_NAME || 'foodme' }}
+          TF_VAR_db_user: ${{ secrets.DB_USER || 'foodme_user' }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}
+          TF_VAR_db_port: ${{ secrets.DB_PORT || '5432' }}
+
+      - name: Get EC2 instance details
+        id: instance
+        run: |
+          INSTANCE_IP=$(terraform output -raw instance_public_ip)
+          INSTANCE_ID=$(terraform output -raw instance_id)
+          echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
+          echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+        working-directory: ./terraform
+
+      - name: Setup SSH key
+        run: |
+          # Create SSH directory
+          mkdir -p ~/.ssh
+
+          # Create private key file with proper formatting
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+
+          # Verify the key was written correctly
+          if [ ! -s ~/.ssh/id_rsa ]; then
+            echo "❌ Failed to create SSH private key file"
+            exit 1
+          fi
+
+          # Check key format
+          if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
+            echo "❌ Private key does not appear to be in correct format"
+            echo "Expected format should start with '-----BEGIN PRIVATE KEY-----' or '-----BEGIN RSA PRIVATE KEY-----'"
+            exit 1
+          fi
+
+          if ! grep -q "END.*PRIVATE KEY" ~/.ssh/id_rsa; then
+            echo "❌ Private key does not appear to be complete"
+            echo "Expected format should end with '-----END PRIVATE KEY-----' or '-----END RSA PRIVATE KEY-----'"
+            exit 1
+          fi
+
+          # Set correct permissions
+          chmod 600 ~/.ssh/id_rsa
+
+          # Verify key file with ssh-keygen (with better error handling)
+          if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+            echo "❌ SSH private key appears to be invalid or corrupted"
+            echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
+            echo "Key file lines: $(wc -l < ~/.ssh/id_rsa) lines"
+            exit 1
+          fi
+
+          echo "✅ SSH key setup completed"
+          echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa | cut -d' ' -f2)"
+
+      - name: Wait for instance to be ready
+        run: |
+          echo "Waiting for instance to be ready..."
+          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
+
+          # Wait for SSH port to be open
+          for i in {1..60}; do
+            if nc -z ${{ steps.instance.outputs.ip }} 22 2>/dev/null; then
+              echo "✅ SSH port is open"
+              break
+            fi
+            echo "⏳ Waiting for SSH (attempt $i/60)..."
+            sleep 5
+          done
+
+          # Additional wait for services to start
+          echo "Waiting additional 30 seconds for services to start..."
+          sleep 30
+
+      - name: Monitor cloud-init and user_data execution
+        timeout-minutes: 15
+        continue-on-error: true
+        run: |
+          echo "📋 Monitoring user_data.sh script execution..."
+          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3"
+
+          # Function to safely execute SSH commands with timeout
+          ssh_exec() {
+            timeout 60 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "$1" 2>/dev/null || echo "Command failed, timed out, or service not ready"
+          }
+
+          # Check if SSH is actually working first
+          echo "🔍 Testing SSH connectivity..."
+          if ! timeout 30 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "echo 'SSH connected successfully'" 2>/dev/null; then
+            echo "❌ SSH connection failed - cannot monitor cloud-init remotely"
+            echo "💡 This could mean:"
+            echo "   - Instance is still booting"
+            echo "   - SSH key is incorrect"
+            echo "   - Security group doesn't allow SSH"
+            echo "   - Instance failed to start"
+            echo ""
+            echo "🔄 Will continue deployment and check health endpoint instead..."
+            exit 0
+          fi
+          echo "✅ SSH connection successful"
+
+          # Check cloud-init status with shorter timeout
+          echo "🔍 Checking cloud-init status..."
+          if ssh_exec "cloud-init status --wait --long" | grep -q "done"; then
+            echo "✅ Cloud-init completed successfully"
+          else
+            echo "⏳ Cloud-init still running or not responding, checking progress..."
+            
+            # Show last 30 lines of cloud-init output
+            echo "📜 Recent cloud-init output:"
+            ssh_exec "sudo tail -n 30 /var/log/cloud-init-output.log" || echo "Could not read cloud-init output"
+            
+            # Check if user_data script is running
+            echo "🔍 Checking if user_data script is running..."
+            ssh_exec "ps aux | grep -v grep | grep -E '(user.?data|cloud.?init)'" || echo "No user_data processes found"
+            
+            # Wait a bit more and check again
+            echo "⏳ Waiting 60 more seconds for cloud-init to complete..."
+            sleep 60
+            
+            echo "🔍 Final cloud-init status check..."
+            ssh_exec "cloud-init status" || echo "Could not get final cloud-init status"
+          fi
+
+          # Display cloud-init logs
+          echo ""
+          echo "📋 ===== CLOUD-INIT OUTPUT LOG (last 100 lines) ====="
+          ssh_exec "sudo tail -n 100 /var/log/cloud-init-output.log" || echo "Could not read cloud-init output log"
+
+          echo ""
+          echo "📋 ===== CUSTOM USER_DATA EXECUTION LOG ====="
+          ssh_exec "sudo cat /var/log/user-data-execution.log 2>/dev/null" || echo "Custom log not found (script may still be running)"
+
+          echo ""
+          echo "📋 ===== CLOUD-INIT ERROR LOG (if any) ====="
+          ssh_exec "sudo tail -n 20 /var/log/cloud-init.log | grep -i error" || echo "No errors found in cloud-init.log"
+
+          echo ""
+          echo "📋 ===== USER DATA SCRIPT SUMMARY ====="
+          # Look for our specific markers in the output
+          ssh_exec "sudo grep -E '(🚀|✅|❌|⚠️|🏁|🔄 PROGRESS|PostgreSQL|New Relic|Nginx|EC2 setup completed)' /var/log/cloud-init-output.log /var/log/user-data-execution.log 2>/dev/null | tail -40" || echo "Could not find script markers"
+
+          echo ""
+          echo "📋 ===== SYSTEM STATUS AFTER USER_DATA ====="
+          ssh_exec "sudo systemctl is-active postgresql nginx newrelic-infra | xargs -I {} echo 'Service {}: {}'" || echo "Could not check service status"
+
+          # Check if our config files were created
+          echo ""
+          echo "📋 ===== CONFIGURATION FILES STATUS ====="
+          ssh_exec "ls -la /etc/nginx/conf.d/foodme.conf /etc/newrelic-infra.yml 2>/dev/null | sed 's/^/  /' || echo 'Some config files missing'"
+
+          echo ""
+          echo "✅ Cloud-init monitoring completed"
+
+      - name: Set Release Version from Tag
+        id: set_release_version
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.5.1
+        with:
+          guid: ${{ secrets.NEW_RELIC_APP_ID }}
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          region: "US"
+          user: ${{ github.actor }}
+          commit: ${{ github.sha }}
+          changelog: ${{ github.event.head_commit.message }}
+          version: "${{ steps.set_release_version.outputs.RELEASE_VERSION }}"
+          description: "Deployed FoodMe-${{ github.event.inputs.environment || 'staging' }} by ${{ github.actor }} to ${{ github.event.inputs.environment || 'staging' }}"
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instance ID**: ${{ steps.instance.outputs.id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instance IP**: ${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Application URL**: http://${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  cleanup-on-failure:
+    name: Cleanup AWS Resources on Failure
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: failure() && needs.deploy.result == 'failure'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+        continue-on-error: true
+
+      - name: Terraform Destroy
+        run: |
+          echo "🧹 Cleaning up AWS resources due to deployment failure..."
+          terraform destroy -auto-approve \
+            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+            -var="app_version=${{ github.sha }}" || echo "⚠️ Some resources may have failed to destroy"
+        working-directory: ./terraform
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+        continue-on-error: true
+
+      - name: Cleanup summary
+        run: |
+          echo "## 🧹 Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: Deployment failed, cleaned up AWS resources" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action**: Terraform destroy executed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Note**: Please verify in AWS console that all resources were removed" >> $GITHUB_STEP_SUMMARY
