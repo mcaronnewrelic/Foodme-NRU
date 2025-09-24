@@ -89,8 +89,8 @@ jobs:
     needs: [cleanup-state]
     if: always() && !cancelled() && (needs.cleanup-state.result == 'success' || needs.cleanup-state.result == 'skipped')
     environment: ${{ github.event.inputs.environment || 'staging' }}
-    outputs:
-      tfplan: ${{ steps.plan.outputs.tfplan }}
+    # outputs:
+    #   tfplan: ${{ steps.plan.outputs.tfplan }}
 
     steps:
       - name: Checkout repository
