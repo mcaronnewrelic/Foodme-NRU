@@ -138,36 +138,65 @@ jobs:
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
 
-          # Check for existing locks
-          EXISTING_LOCK=$(aws dynamodb get-item \
+          echo "Checking for existing locks on key: $LOCK_KEY"
+          
+          # Get lock status with better error handling
+          LOCK_RESPONSE=$(aws dynamodb get-item \
             --table-name "$LOCK_TABLE" \
             --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
-            --query 'Item.Info.S' \
-            --output text 2>/dev/null || echo "NONE")
-
-          if [ "$EXISTING_LOCK" != "NONE" ] && [ "$EXISTING_LOCK" != "null" ]; then
-            echo "Existing Terraform lock detected: $EXISTING_LOCK"
-            echo "Waiting for lock release..."
+            --output json 2>/dev/null || echo '{}')
+          
+          # Check if Item exists in response
+          HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+          
+          if [ "$HAS_ITEM" = "true" ]; then
+            LOCK_INFO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Info.S // "Unknown lock info"')
+            echo "Active Terraform lock detected: $LOCK_INFO"
             
-            for attempt in $(seq 1 20); do
-              sleep 30
-              CURRENT_LOCK=$(aws dynamodb get-item \
+            if [ "${{ github.event.inputs.force_unlock }}" = "true" ]; then
+              echo "Force unlock requested, removing lock..."
+              aws dynamodb delete-item \
                 --table-name "$LOCK_TABLE" \
-                --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
-                --query 'Item.Info.S' \
-                --output text 2>/dev/null || echo "NONE")
-              
-              if [ "$CURRENT_LOCK" = "NONE" ] || [ "$CURRENT_LOCK" = "null" ]; then
-                echo "Lock released, proceeding with operation"
-                break
-              fi
-              
-              if [ $attempt -eq 20 ]; then
-                echo "Lock still exists after 10 minutes, manual intervention required"
-                exit 1
-              fi
-            done
+                --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
+              echo "Lock removed successfully"
+            else
+              echo "ERROR: Terraform state is locked!"
+              echo "To unlock, re-run this workflow with 'force_unlock' set to true"
+              echo "Or run manually: aws dynamodb delete-item --table-name '$LOCK_TABLE' --key '{\"LockID\": {\"S\": \"$LOCK_KEY\"}}'"
+              exit 1
+            fi
+          else
+            echo "No active locks found, proceeding with deployment"
           fi
+
+      - name: Validate Terraform files exist
+        run: |
+          if [ ! -d "./terraform" ]; then
+            echo "ERROR: terraform directory not found"
+            exit 1
+          fi
+          
+          if [ ! -f "./terraform/main.tf" ]; then
+            echo "ERROR: main.tf not found in terraform directory"
+            exit 1
+          fi
+          
+          echo "Terraform files validated"
+        working-directory: ./
+
+      - name: Check Terraform syntax before init
+        run: |
+          # Validate syntax without initialization
+          for tf_file in $(find . -name "*.tf" -type f); do
+            echo "Checking syntax of $tf_file"
+            terraform fmt -check=true "$tf_file" || {
+              echo "ERROR: Terraform file $tf_file has syntax errors"
+              echo "Run 'terraform fmt' to fix formatting issues"
+              exit 1
+            }
+          done
+          echo "All Terraform files have valid syntax"
+        working-directory: ./terraform
 
       - name: Initialize Terraform
         run: |
