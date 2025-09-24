@@ -1,14 +1,16 @@
 terraform {
   required_version = ">= 1.0"
+  
+  backend "s3" {
+    # Backend configuration will be provided via -backend-config during init
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
   }
-
-  # Backend will be configured via -backend-config during terraform init
-  # No backend block needed - prevents "empty value" error
 }
 
 provider "aws" {

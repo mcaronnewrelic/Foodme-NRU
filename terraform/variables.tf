@@ -107,7 +107,18 @@ variable "existing_vpc_id" {
   default     = ""
 
   validation {
-    condition     = var.use_existing_vpc == false || (var.use_existing_vpc == true && length(var.existing_vpc_id) > 0)
-    error_message = "existing_vpc_id must be provided when use_existing_vpc is true."
+    condition     = length(var.existing_vpc_id) > 0 || length(var.existing_vpc_id) == 0
+    error_message = "existing_vpc_id must be a valid VPC ID when provided."
+  }
+}
+
+variable "existing_public_subnet_id" {
+  description = "ID of existing public subnet to use when use_existing_vpc is true"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = length(var.existing_public_subnet_id) > 0 || length(var.existing_public_subnet_id) == 0
+    error_message = "existing_public_subnet_id must be a valid subnet ID when provided."
   }
 }
