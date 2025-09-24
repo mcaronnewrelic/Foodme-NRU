@@ -57,8 +57,21 @@ jobs:
         run: terraform fmt -recursive
         working-directory: ./terraform
 
-      - name: Validate Terraform configuration
-        run: terraform validate
+      - name: Pre-validate Terraform syntax
+        run: terraform validate -json
+        working-directory: ./terraform
+        continue-on-error: false
+
+      - name: Check for duplicate variable declarations
+        run: |
+          DUPLICATE_VARS=$(grep -r "^variable " ./terraform --include="*.tf" | cut -d'"' -f2 | sort | uniq -d)
+          if [ -n "$DUPLICATE_VARS" ]; then
+            echo "Duplicate variable declarations found:"
+            echo "$DUPLICATE_VARS"
+            echo "Please remove duplicate variable declarations from your Terraform files"
+            exit 1
+          fi
+          echo "No duplicate variables found"
         working-directory: ./terraform
 
       - name: Validate concurrent operations
@@ -104,6 +117,10 @@ jobs:
             -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
             -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
             -backend-config="region=${{ vars.AWS_REGION }}"
+        working-directory: ./terraform
+
+      - name: Final validation after initialization
+        run: terraform validate
         working-directory: ./terraform
 
       - name: Execute Terraform plan with lock timeout

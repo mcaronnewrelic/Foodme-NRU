@@ -4,168 +4,168 @@ This guide explains how to clean up AWS resources when deployments fail or when 
 
 ## 🚨 Why Cleanup is Important
 
-When the GitHub Actions deployment fails, AWS resources (EC2 instances, VPC, security groups, etc.) may remain running and continue to incur costs. It's crucial to clean them up promptly.
+When GitHub Actions deployment fails, AWS resources (EC2 instances, VPC, security groups, etc.) may remain running and continue to incur costs. Clean them up promptly to avoid unnecessary charges.
 
 ## 🛠️ Cleanup Methods
 
-### Method 1: Automatic Cleanup (Preferred)
+### Method 1: Automatic Cleanup (Current Implementation)
 
-The deployment workflow now includes automatic cleanup on failure:
+The `deploy VM.yml` workflow includes automatic cleanup on failure:
 
-1. **When deployment fails**, the `cleanup-on-failure` job automatically runs
-2. **Executes `terraform destroy`** to remove all created resources
-3. **Provides cleanup summary** in the GitHub Actions summary
+1. **Triggers automatically** when `deploy-infrastructure` job fails
+2. **Executes `terraform destroy`** to remove all created resources  
+3. **Uses same backend state** to ensure complete cleanup
 
 **How it works:**
-- Triggers only when the `deploy` job fails
-- Uses the same Terraform state to ensure complete cleanup
-- Runs with `continue-on-error: true` to handle partial failures
-
-### Method 2: Manual GitHub Actions Cleanup
-
-Use the manual cleanup workflow for interactive cleanup:
-
-1. Go to **Actions** tab in your GitHub repository
-2. Select **"Manual AWS Cleanup"** workflow
-3. Click **"Run workflow"**
-4. Choose the environment (`staging` or `production`)
-5. Type **`DESTROY`** in the confirmation field
-6. Click **"Run workflow"**
-
-**Features:**
-- Lists resources before cleanup
-- Runs Terraform destroy
-- Performs manual cleanup of remaining resources
-- Verifies cleanup completion
-- Provides detailed summary
-
-### Method 3: Local Script Cleanup
-
-Use the local cleanup script for command-line cleanup:
-
-```bash
-# Navigate to your project
-cd /path/to/foodme
-
-# Make script executable (if not already)
-chmod +x .github/cleanup-failed-deployment.sh
-
-# Run cleanup for staging
-./.github/cleanup-failed-deployment.sh staging
-
-# Run cleanup for production
-./.github/cleanup-failed-deployment.sh production
-
-# Show help
-./.github/cleanup-failed-deployment.sh --help
+```yaml
+cleanup-failed-deployment:
+  runs-on: ubuntu-latest
+  needs: [deploy-infrastructure]
+  if: failure() && needs.deploy-infrastructure.result == 'failure'
 ```
 
-**Script features:**
-- Attempts Terraform cleanup first
-- Falls back to manual AWS CLI cleanup
-- Cleans up EC2, security groups, IAM roles, and key pairs
-- Shows remaining resources after cleanup
-- Detailed progress output
+### Method 2: Manual Terraform Cleanup
 
-### Method 4: Manual AWS Console Cleanup
+Use Terraform directly for manual cleanup:
 
-If automated methods fail, clean up manually:
+```bash
+# Navigate to terraform directory
+cd terraform
+
+# Initialize with correct backend
+terraform init \
+  -backend-config="bucket=YOUR_STATE_BUCKET" \
+  -backend-config="key=staging/terraform.tfstate" \
+  -backend-config="dynamodb_table=YOUR_LOCK_TABLE" \
+  -backend-config="region=us-west-2"
+
+# Destroy resources
+terraform destroy \
+  -var="environment=staging" \
+  -var="app_version=latest"
+```
+
+### Method 3: Manual AWS Console Cleanup
+
+If Terraform cleanup fails, clean up manually:
 
 1. **EC2 Instances:**
    - Go to EC2 Console → Instances
-   - Filter by tag: `Application = FoodMe`
+   - Filter by tag: `Environment = staging/production`
    - Select instances and terminate
 
 2. **Security Groups:**
-   - Go to EC2 Console → Security Groups
+   - Go to EC2 Console → Security Groups  
    - Filter by name: `foodme-*`
-   - Delete security groups (after terminating instances)
+   - Delete after terminating instances
 
 3. **VPC Resources:**
-   - Go to VPC Console
-   - Check for FoodMe-related subnets, route tables, internet gateways
-   - Delete in order: subnets → route tables → internet gateway → VPC
+   - Delete in order: Subnets → Route Tables → Internet Gateway → VPC
+   - Look for resources tagged with `Project = FoodMe`
 
 4. **IAM Resources:**
    - Go to IAM Console → Roles
-   - Filter by name: `foodme-*`
-   - Delete instance profiles and roles
+   - Delete roles matching: `foodme-*-ec2-role`
+   - Delete instance profiles: `foodme-*-ec2-profile`
 
-5. **Key Pairs:**
-   - Go to EC2 Console → Key Pairs
-   - Filter by name: `foodme-*`
-   - Delete key pairs
+## 🔍 Verification Commands
 
-## 🔍 Troubleshooting Cleanup Issues
-
-### Terraform Destroy Fails
-
-**Symptoms:**
-- Terraform destroy returns errors
-- Some resources remain after cleanup
-
-**Solutions:**
-1. Check if resources have dependencies
-2. Run cleanup script for manual AWS CLI cleanup
-3. Use AWS console for stubborn resources
-
-**Common dependency issues:**
-- Security groups attached to running instances
-- Subnets with network interfaces
-- IAM roles attached to instance profiles
-
-### Resources Still Showing After Cleanup
-
-**Possible causes:**
-- AWS eventual consistency delays
-- Resources in different regions
-- Manual resources not created by Terraform
-
-**Solutions:**
-1. Wait 5-10 minutes and check again
-2. Verify you're checking the correct AWS region
-3. Use the verification commands in cleanup script
-
-### Permission Errors During Cleanup
-
-**Symptoms:**
-- "Access Denied" errors
-- "User is not authorized" messages
-
-**Solutions:**
-1. Verify AWS credentials have proper permissions
-2. Check IAM policies include destroy permissions
-3. Ensure you're using the correct AWS profile/region
-
-## 📊 Verification Commands
-
-After cleanup, verify all resources are removed:
+Verify cleanup completion:
 
 ```bash
 # Check EC2 instances
 aws ec2 describe-instances \
-  --filters "Name=tag:Application,Values=FoodMe" \
-  --query "Reservations[].Instances[].[InstanceId,State.Name]" \
+  --filters "Name=tag:Project,Values=FoodMe" \
+  --query "Reservations[].Instances[].[InstanceId,State.Name,Tags[?Key=='Environment'].Value|[0]]" \
   --output table
 
-# Check security groups
+# Check security groups  
 aws ec2 describe-security-groups \
   --filters "Name=group-name,Values=foodme-*" \
   --query "SecurityGroups[].[GroupId,GroupName]" \
   --output table
 
-# Check VPCs
-aws ec2 describe-vpcs \
-  --filters "Name=tag:Name,Values=foodme-*" \
-  --query "Vpcs[].[VpcId,Tags[?Key=='Name'].Value|[0]]" \
-  --output table
-
 # Check IAM roles
 aws iam list-roles \
-  --query "Roles[?starts_with(RoleName, 'foodme-')].[RoleName,Arn]" \
+  --query "Roles[?starts_with(RoleName, 'foodme-')].[RoleName,CreateDate]" \
+  --output table
+
+# Check VPCs
+aws ec2 describe-vpcs \
+  --filters "Name=tag:Project,Values=FoodMe" \
+  --query "Vpcs[].[VpcId,State,Tags[?Key=='Environment'].Value|[0]]" \
   --output table
 ```
 
+## 🔧 Troubleshooting Cleanup Issues
+
+### Terraform State Lock Issues
+
+**Symptoms:** "Error acquiring the state lock"
+
+**Solution:**
+```bash
+# Check for existing locks
+aws dynamodb scan \
+  --table-name YOUR_LOCK_TABLE \
+  --query "Items[].LockID.S"
+
+# Force unlock if needed (use with caution)
+terraform force-unlock LOCK_ID
+```
+
+### Dependency Errors
+
+**Common issues:**
+- Security groups attached to running instances
+- Network interfaces preventing subnet deletion
+- IAM roles attached to instance profiles
+
+**Solution:** Follow dependency order in manual cleanup
+
+### Permission Errors
+
+**Symptoms:** Access denied during destroy
+
+**Solution:**
+- Verify AWS credentials have destroy permissions
+- Check IAM policies include EC2, VPC, and IAM permissions
+- Ensure correct AWS region (us-west-2)
+
+## 💰 Cost Monitoring
+
+Prevent unexpected costs:
+
+1. **Monitor EC2 instances** - Most expensive resource
+2. **Set up billing alerts** for unusual spending  
+3. **Regular verification** after deployments
+4. **Use AWS Cost Explorer** to track FoodMe-related costs
+
+## 🚀 Prevention Best Practices
+
+Minimize cleanup needs:
+
+1. **Test in staging first** before production deployments
+2. **Monitor deployment logs** for early failure detection
+3. **Use infrastructure validation** before apply
+4. **Set appropriate timeouts** to fail fast
+
+## 📞 Emergency Cleanup
+
+For immediate cost control:
+
+1. **Terminate EC2 instances** via AWS Console (immediate cost savings)
+2. **Run verification commands** to identify remaining resources
+3. **Use manual console cleanup** for stubborn resources
+4. **Check billing dashboard** to confirm cost reduction
+
+## 🔄 Current Workflow Integration
+
+The cleanup is integrated into:
+- `deploy VM.yml` - Infrastructure deployment with automatic cleanup
+- `deploy app.yml` - Application deployment (no infrastructure cleanup needed)
+
+**Note:** Application deployment failures don't require infrastructure cleanup since they don't create AWS resources.
 ## 💰 Cost Monitoring
 
 To avoid unexpected costs:
