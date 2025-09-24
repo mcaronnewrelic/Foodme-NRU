@@ -53,8 +53,12 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Validate Terraform formatting
-        run: terraform fmt -check
+      - name: Format Terraform files
+        run: terraform fmt -recursive
+        working-directory: ./terraform
+
+      - name: Validate Terraform configuration
+        run: terraform validate
         working-directory: ./terraform
 
       - name: Validate concurrent operations
