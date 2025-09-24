@@ -25,7 +25,10 @@ env:
   AWS_REGION: us-west-2
   TF_VERSION: 1.6.0
   NODE_VERSION: 22
-
+  TERRAFORM_LOCK_TIMEOUT: 15m
+  TERRAFORM_RETRY_ATTEMPTS: 3
+  LOCK_WAIT_INTERVAL: 30
+  MAX_LOCK_WAIT_TIME: 600  # 10 minutes
 jobs:
   terraform-plan:
     name: Plan Infrastructure Changes
@@ -54,33 +57,79 @@ jobs:
         run: terraform fmt -check
         working-directory: ./terraform
 
-      - name: Initialize Terraform
-        run: terraform init
-        working-directory: ./terraform
-        env: &terraform-env
-          TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
-          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
-          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
-          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          TF_VAR_db_name: ${{ secrets.DB_NAME }}
-          TF_VAR_db_user: ${{ secrets.DB_USER }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-          TF_VAR_db_port: ${{ secrets.DB_PORT }}
+      - name: Validate concurrent operations
+        run: |
+          LOCK_TABLE="${{ vars.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+          
+          # Check for existing locks
+          EXISTING_LOCK=$(aws dynamodb get-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+            --query 'Item.Info.S' \
+            --output text 2>/dev/null || echo "NONE")
+          
+          if [ "$EXISTING_LOCK" != "NONE" ] && [ "$EXISTING_LOCK" != "null" ]; then
+            echo "Existing Terraform lock detected: $EXISTING_LOCK"
+            echo "Waiting for lock release..."
+            
+            for attempt in $(seq 1 20); do
+              sleep 30
+              CURRENT_LOCK=$(aws dynamodb get-item \
+                --table-name "$LOCK_TABLE" \
+                --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+                --query 'Item.Info.S' \
+                --output text 2>/dev/null || echo "NONE")
+              
+              if [ "$CURRENT_LOCK" = "NONE" ] || [ "$CURRENT_LOCK" = "null" ]; then
+                echo "Lock released, proceeding with operation"
+                break
+              fi
+              
+              if [ $attempt -eq 20 ]; then
+                echo "Lock still exists after 10 minutes, manual intervention required"
+                exit 1
+              fi
+            done
+          fi
 
-      - name: Validate Terraform configuration
-        run: terraform validate
+      - name: Initialize Terraform with retry
+        run: |
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Terraform init attempt $ATTEMPT/$MAX_ATTEMPTS"
+            
+            if terraform init \
+              -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+              -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
+              -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
+              -backend-config="region=${{ vars.AWS_REGION }}"; then
+              echo "Terraform initialization successful"
+              break
+            fi
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "Terraform initialization failed after $MAX_ATTEMPTS attempts"
+              exit 1
+            fi
+            
+            echo "Initialization failed, waiting before retry..."
+            sleep $((ATTEMPT * 10))
+            ATTEMPT=$((ATTEMPT + 1))
+          done
         working-directory: ./terraform
 
-      - name: Generate execution plan
-        id: plan
+      - name: Execute Terraform plan with lock timeout
         run: |
           terraform plan \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="app_version=${{ github.sha }}" \
+            -lock-timeout=10m \
             -out=tfplan
-          echo "tfplan=tfplan" >> $GITHUB_OUTPUT
         working-directory: ./terraform
-        env: *terraform-env
+        timeout-minutes: 15
 
       - name: Archive execution plan
         uses: actions/upload-artifact@v4

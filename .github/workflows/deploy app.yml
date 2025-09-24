@@ -1,13 +1,11 @@
 name: deploy-application
 
 on:
-  workflow_run:
-    workflows: ["deploy-vm"]
-    types: [completed]
-    branches: [main, master]
   push:
     branches: [main, master]
-    paths: ['angular-app/**', 'server/**']
+    paths: [angular-app/**, server/**]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       environment:
@@ -16,11 +14,6 @@ on:
         default: staging
         type: choice
         options: [staging, production]
-      skip_infrastructure_check:
-        description: Skip infrastructure validation
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -32,163 +25,144 @@ env:
   AWS_REGION: us-west-2
   TF_VERSION: 1.6.0
   NODE_VERSION: 22
-  SSH_CONNECTION_TIMEOUT: 30
-  SSH_MAX_RETRY_ATTEMPTS: 60
-  SSH_RETRY_DELAY: 5
-  INSTANCE_READINESS_WAIT: 30
-  ARTIFACT_RETENTION_PERIOD: 30
-  APPLICATION_DEPLOY_PATH: /var/www/foodme
-  DEPLOYMENT_SCRIPT_PATH: /home/ec2-user/foodme/config/deploy.sh
+  SSH_TIMEOUT: 30
+  SSH_MAX_ATTEMPTS: 60
+  SSH_RETRY_INTERVAL: 5
+  INSTANCE_READY_DELAY: 30
+  ARTIFACT_RETENTION_DAYS: 30
 
 jobs:
-  validate-infrastructure:
-    name: Validate Infrastructure
-    runs-on: ubuntu-latest
-    if: ${{ !inputs.skip_infrastructure_check }}
-    environment: ${{ github.event.inputs.environment || 'staging' }}
-    outputs:
-      infrastructure-ready: ${{ steps.check-infrastructure.outputs.ready }}
-      instance-ip: ${{ steps.check-infrastructure.outputs.ip }}
-      instance-id: ${{ steps.check-infrastructure.outputs.id }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Check infrastructure state
-        id: check-infrastructure
-        run: |
-          cd terraform
-          terraform init
-          
-          if ! terraform plan -detailed-exitcode > /dev/null 2>&1; then
-            echo "Infrastructure not deployed or out of sync"
-            echo "ready=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          INSTANCE_IP=$(terraform output -raw instance_public_ip 2>/dev/null || echo "")
-          INSTANCE_ID=$(terraform output -raw instance_id 2>/dev/null || echo "")
-          
-          if [ -z "$INSTANCE_IP" ] || [ -z "$INSTANCE_ID" ]; then
-            echo "Infrastructure outputs not available"
-            echo "ready=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          echo "ready=true" >> $GITHUB_OUTPUT
-          echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
-          echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
-
-      - name: Validate instance connectivity
-        run: |
-          INSTANCE_IP="${{ steps.check-infrastructure.outputs.ip }}"
-          
-          for attempt in $(seq 1 ${{ env.SSH_MAX_RETRY_ATTEMPTS }}); do
-            if nc -z -w${{ env.SSH_CONNECTION_TIMEOUT }} "$INSTANCE_IP" 22; then
-              echo "Instance is accessible on SSH port"
-              break
-            fi
-            
-            if [ $attempt -eq ${{ env.SSH_MAX_RETRY_ATTEMPTS }} ]; then
-              echo "Instance not accessible after ${{ env.SSH_MAX_RETRY_ATTEMPTS }} attempts"
-              exit 1
-            fi
-            
-            echo "Waiting for instance (attempt $attempt/${{ env.SSH_MAX_RETRY_ATTEMPTS }})"
-            sleep ${{ env.SSH_RETRY_DELAY }}
-          done
-
   build-application:
     name: Build Application
     runs-on: ubuntu-latest
     outputs:
       artifact-name: ${{ steps.create-artifact.outputs.name }}
-      build-version: ${{ steps.build-info.outputs.version }}
+      build-version: ${{ steps.generate-version.outputs.version }}
 
     steps:
-      - name: Checkout repository
+      - name: Setup build environment
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-
       - name: Install dependencies
         run: npm run install:all
 
       - name: Build production bundle
         run: npm run build
 
-      - name: Generate build information
-        id: build-info
+      - name: Generate build version
+        id: generate-version
         run: |
           BUILD_VERSION="${{ github.sha }}-$(date +%s)"
           echo "version=$BUILD_VERSION" >> $GITHUB_OUTPUT
-          echo "Build version: $BUILD_VERSION"
+
+      - name: Validate required files
+        run: |
+          REQUIRED_FILES=("dist" "package.json")
+          OPTIONAL_FILES=("newrelic.js")
+          MISSING_REQUIRED=()
+          
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -e "$file" ]; then
+              MISSING_REQUIRED+=("$file")
+            fi
+          done
+          
+          if [ ${#MISSING_REQUIRED[@]} -gt 0 ]; then
+            echo "Missing required files: ${MISSING_REQUIRED[*]}"
+            exit 1
+          fi
+          
+          for file in "${OPTIONAL_FILES[@]}"; do
+            if [ ! -e "$file" ]; then
+              echo "Optional file not found: $file (will be skipped)"
+            fi
+          done
 
       - name: Validate build artifacts
         run: |
           if [ ! -d "dist/" ]; then
-            echo "Build failed: dist/ directory not found"
+            echo "Build directory not found"
             exit 1
           fi
           
-          ARTIFACT_COUNT=$(find dist/ -type f | wc -l)
+          ARTIFACT_COUNT=$(find dist/ -type f -name "*.js" -o -name "*.css" -o -name "*.html" | wc -l)
+          
           if [ "$ARTIFACT_COUNT" -eq 0 ]; then
-            echo "Build failed: No files in dist/ directory"
+            echo "No build artifacts found in dist/"
             exit 1
           fi
           
-          echo "Build successful: $ARTIFACT_COUNT files created"
+          echo "Build validation successful: $ARTIFACT_COUNT artifacts found"
+
 
       - name: Create deployment package
-        id: create-artifact
+        id: create-package
         run: |
-          ARTIFACT_NAME="foodme-app-${{ steps.build-info.outputs.version }}"
-          echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          PACKAGE_NAME="foodme-app-${{ steps.generate-version.outputs.version }}"
+          PACKAGE_FILE="${PACKAGE_NAME}.tar.gz"
           
-          tar -czf "$ARTIFACT_NAME.tar.gz" \
-            dist/ \
-            newrelic.js \
-            package.json \
-            --exclude="dist/**/*.map" \
-            --exclude="dist/**/test/**"
+          echo "Creating deployment package: $PACKAGE_FILE"
+          
+          FILES_TO_INCLUDE=()
+          FILES_TO_INCLUDE+=("dist")
+          FILES_TO_INCLUDE+=("package.json")
+          
+          if [ -f "newrelic.js" ]; then
+            FILES_TO_INCLUDE+=("newrelic.js")
+          fi
+          
+          tar --create \
+              --gzip \
+              --file="$PACKAGE_FILE" \
+              --exclude="dist/**/*.map" \
+              --exclude="dist/**/test/**" \
+              --exclude="dist/**/*.spec.*" \
+              "${FILES_TO_INCLUDE[@]}"
+          
+          PACKAGE_SIZE=$(stat -f%z "$PACKAGE_FILE" 2>/dev/null || stat -c%s "$PACKAGE_FILE")
+          echo "Package created: $PACKAGE_FILE (${PACKAGE_SIZE} bytes)"
+          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload deployment package
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.create-artifact.outputs.name }}
-          path: ${{ steps.create-artifact.outputs.name }}.tar.gz
-          retention-days: ${{ env.ARTIFACT_RETENTION_PERIOD }}
-
+          name: ${{ steps.create-package.outputs.name }}
+          path: ${{ steps.create-package.outputs.name }}.tar.gz
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          compression-level: 6
   deploy-to-ec2:
-    name: Deploy Application to EC2
+    name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: [validate-infrastructure, build-application]
+    needs: [build-application]
     environment: ${{ github.event.inputs.environment || 'staging' }}
-    if: |
-      always() && 
-      needs.build-application.result == 'success' && 
-      (needs.validate-infrastructure.result == 'success' || inputs.skip_infrastructure_check)
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Validate infrastructure state
+        id: validate-infrastructure
+        run: |
+          aws ec2 describe-instances \
+            --filters "Name=tag:Environment,Values=${{ github.event.inputs.environment || 'staging' }}" \
+              "Name=tag:Application,Values=foodme" \
+              "Name=instance-state-name,Values=running" \
+            --query 'Reservations[].Instances[0].[InstanceId,PublicIpAddress]' \
+            --output text > instance_info.txt
+          
+          if [ ! -s instance_info.txt ]; then
+            echo "No running instances found for environment: ${{ github.event.inputs.environment || 'staging' }}"
+            exit 1
+          fi
+          
+          INSTANCE_ID=$(cut -f1 instance_info.txt)
+          INSTANCE_IP=$(cut -f2 instance_info.txt)
+          
+          echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
 
       - name: Download deployment package
         uses: actions/download-artifact@v4
@@ -196,67 +170,90 @@ jobs:
           name: ${{ needs.build-application.outputs.artifact-name }}
           path: ./deployment
 
-      - name: Configure SSH authentication
+      - name: Configure SSH credentials
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
           if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
-            echo "Invalid SSH private key"
+            echo "Invalid SSH private key format"
             exit 1
           fi
 
-      - name: Deploy application bundle
+      - name: Wait for SSH availability
         run: |
-          INSTANCE_IP="${{ needs.validate-infrastructure.outputs.instance-ip }}"
-          SSH_OPTIONS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${{ env.SSH_CONNECTION_TIMEOUT }}"
+          INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
           
-          echo "Uploading application bundle to $INSTANCE_IP"
-          scp $SSH_OPTIONS "./deployment/${{ needs.build-application.outputs.artifact-name }}.tar.gz" "ec2-user@$INSTANCE_IP:/tmp/"
+          for attempt in $(seq 1 ${{ env.SSH_MAX_ATTEMPTS }}); do
+            if nc -z -w${{ env.SSH_TIMEOUT }} "$INSTANCE_IP" 22; then
+              echo "SSH connection available"
+              break
+            fi
+            
+            if [ $attempt -eq ${{ env.SSH_MAX_ATTEMPTS }} ]; then
+              echo "SSH connection failed after ${{ env.SSH_MAX_ATTEMPTS }} attempts"
+              exit 1
+            fi
+            
+            echo "Waiting for SSH (attempt $attempt/${{ env.SSH_MAX_ATTEMPTS }})"
+            sleep ${{ env.SSH_RETRY_INTERVAL }}
+          done
+
+      - name: Deploy application package
+        run: |
+          INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
+          PACKAGE_FILE="${{ needs.build-application.outputs.artifact-name }}.tar.gz"
+          SSH_OPTIONS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${{ env.SSH_TIMEOUT }}"
           
-          echo "Extracting and deploying application"
+          echo "Transferring package to instance"
+          scp $SSH_OPTIONS "./deployment/$PACKAGE_FILE" "ec2-user@$INSTANCE_IP:/tmp/"
+          
+          echo "Deploying application"
           ssh $SSH_OPTIONS "ec2-user@$INSTANCE_IP" << 'DEPLOY_SCRIPT'
             set -e
             
-            sudo mkdir -p ${{ env.APPLICATION_DEPLOY_PATH }}
-            sudo chown ec2-user:ec2-user ${{ env.APPLICATION_DEPLOY_PATH }}
+            DEPLOY_DIR="/var/www/foodme"
+            PACKAGE_FILE="/tmp/${{ needs.build-application.outputs.artifact-name }}.tar.gz"
             
-            cd ${{ env.APPLICATION_DEPLOY_PATH }}
-            tar -xzf "/tmp/${{ needs.build-application.outputs.artifact-name }}.tar.gz"
+            sudo mkdir -p "$DEPLOY_DIR"
+            sudo chown ec2-user:ec2-user "$DEPLOY_DIR"
             
-            if [ -f "${{ env.DEPLOYMENT_SCRIPT_PATH }}" ]; then
+            cd "$DEPLOY_DIR"
+            tar -xzf "$PACKAGE_FILE"
+            
+            if [ -f "/home/ec2-user/foodme/config/deploy.sh" ]; then
               echo "Running deployment script"
-              bash "${{ env.DEPLOYMENT_SCRIPT_PATH }}"
+              bash "/home/ec2-user/foodme/config/deploy.sh"
             else
-              echo "No deployment script found, restarting services manually"
-              sudo systemctl restart nginx || true
-              sudo systemctl restart foodme-app || true
+              echo "Restarting services"
+              sudo systemctl restart nginx foodme-app || true
             fi
             
-            echo "Deployment completed successfully"
+            rm -f "$PACKAGE_FILE"
           DEPLOY_SCRIPT
 
       - name: Verify deployment health
         run: |
-          INSTANCE_IP="${{ needs.validate-infrastructure.outputs.instance-ip }}"
+          INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
           
           for attempt in $(seq 1 10); do
-            if curl -f -s "http://$INSTANCE_IP/health" >/dev/null 2>&1; then
-              echo "Application health check passed"
-              break
+            if curl -f -s --max-time 10 "http://$INSTANCE_IP/health" >/dev/null 2>&1; then
+              echo "Health check passed"
+              exit 0
             fi
             
             if [ $attempt -eq 10 ]; then
-              echo "Application health check failed after 10 attempts"
+              echo "Health check failed after 10 attempts"
               exit 1
             fi
             
-            echo "Waiting for application to start (attempt $attempt/10)"
-            sleep 10
+            echo "Waiting for application startup (attempt $attempt/10)"
+            sleep 15
           done
-
-      - name: Create deployment marker
+      - name: Create deployment record
         uses: newrelic/deployment-marker-action@v2.5.1
         with:
           guid: ${{ secrets.NEW_RELIC_APP_ID }}
@@ -264,11 +261,10 @@ jobs:
           region: US
           user: ${{ github.actor }}
           commit: ${{ github.sha }}
-          changelog: ${{ github.event.head_commit.message }}
           version: ${{ needs.build-application.outputs.build-version }}
 
   cleanup-artifacts:
-    name: Cleanup Old Artifacts
+    name: Cleanup Artifacts
     runs-on: ubuntu-latest
     needs: [deploy-to-ec2]
     if: always()
