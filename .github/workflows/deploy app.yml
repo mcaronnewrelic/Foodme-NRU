@@ -1,25 +1,27 @@
-name: Deploy to application to EC2
+name: deploy-application
 
-"on":
+on:
+  workflow_run:
+    workflows: ["deploy-vm"]
+    types: [completed]
+    branches: [main, master]
   push:
     branches: [main, master]
-    paths:
-      - "angular-app/**"
-      - "server/**"
-  pull_request:
-    branches: [main, master]
+    paths: ['angular-app/**', 'server/**']
   workflow_dispatch:
     inputs:
       environment:
-        description: "Environment to deploy to"
+        description: Environment to deploy to
         required: true
-        default: "staging"
+        default: staging
         type: choice
-        options:
-          - staging
-          - production
+        options: [staging, production]
+      skip_infrastructure_check:
+        description: Skip infrastructure validation
+        required: false
+        default: false
+        type: boolean
 
-# Add explicit permissions for the workflow
 permissions:
   contents: read
   actions: write
@@ -30,57 +32,27 @@ env:
   AWS_REGION: us-west-2
   TF_VERSION: 1.6.0
   NODE_VERSION: 22
+  SSH_CONNECTION_TIMEOUT: 30
+  SSH_MAX_RETRY_ATTEMPTS: 60
+  SSH_RETRY_DELAY: 5
+  INSTANCE_READINESS_WAIT: 30
+  ARTIFACT_RETENTION_PERIOD: 30
+  APPLICATION_DEPLOY_PATH: /var/www/foodme
+  DEPLOYMENT_SCRIPT_PATH: /home/ec2-user/foodme/config/deploy.sh
 
 jobs:
-  build:
-    name: Build Application
+  validate-infrastructure:
+    name: Validate Infrastructure
     runs-on: ubuntu-latest
-    outputs:
-      dist-artifact: ${{ steps.upload.outputs.artifact-id }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm run install:all
-
-      - name: Build complete application - also build Angular app
-        run: npm run build
-
-      - name: List dist contents
-        run: |
-          echo "Contents of dist directory:"
-          ls -la dist/
-          find dist/ -type f -name "*.js" -o -name "*.html" -o -name "*.css" -o -name "*.json" | head -20
-
-      - name: Upload dist artifact
-        id: upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: foodme-dist-${{ github.sha }}
-          path: |
-            dist/
-            newrelic.js
-            !dist/**/*.map
-            !dist/**/test/**
-          retention-days: 30
-
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: [build]
+    if: ${{ !inputs.skip_infrastructure_check }}
     environment: ${{ github.event.inputs.environment || 'staging' }}
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    outputs:
+      infrastructure-ready: ${{ steps.check-infrastructure.outputs.ready }}
+      instance-ip: ${{ steps.check-infrastructure.outputs.ip }}
+      instance-id: ${{ steps.check-infrastructure.outputs.id }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
@@ -90,291 +62,220 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: foodme-dist-${{ github.sha }}
-          path: ./dist-download
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
-        env:
-          TF_VAR_environment: ${{ github.event.inputs.environment || 'staging' }}
-
-      - name: Get EC2 instance details
-        id: instance
+      - name: Check infrastructure state
+        id: check-infrastructure
         run: |
-          INSTANCE_IP=$(terraform output -raw instance_public_ip)
-          INSTANCE_ID=$(terraform output -raw instance_id)
+          cd terraform
+          terraform init
+          
+          if ! terraform plan -detailed-exitcode > /dev/null 2>&1; then
+            echo "Infrastructure not deployed or out of sync"
+            echo "ready=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          INSTANCE_IP=$(terraform output -raw instance_public_ip 2>/dev/null || echo "")
+          INSTANCE_ID=$(terraform output -raw instance_id 2>/dev/null || echo "")
+          
+          if [ -z "$INSTANCE_IP" ] || [ -z "$INSTANCE_ID" ]; then
+            echo "Infrastructure outputs not available"
+            echo "ready=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "ready=true" >> $GITHUB_OUTPUT
           echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
           echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
-        working-directory: ./terraform
-        env:
-          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
-          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
-          TF_VAR_new_relic_license_key: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
-          TF_VAR_db_name: ${{ secrets.DB_NAME || 'foodme' }}
-          TF_VAR_db_user: ${{ secrets.DB_USER || 'foodme_user' }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD || 'foodme_secure_password_2025!' }}
-          TF_VAR_db_port: ${{ secrets.DB_PORT || '5432' }}
 
-      - name: Setup SSH key
+      - name: Validate instance connectivity
         run: |
-          # Create SSH directory
-          mkdir -p ~/.ssh
-
-          # Create private key file with proper formatting
-          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-
-          # Verify the key was written correctly
-          if [ ! -s ~/.ssh/id_rsa ]; then
-            echo "❌ Failed to create SSH private key file"
-            exit 1
-          fi
-
-          # Check key format
-          if ! grep -q "BEGIN.*PRIVATE KEY" ~/.ssh/id_rsa; then
-            echo "❌ Private key does not appear to be in correct format"
-            echo "Expected format should start with '-----BEGIN PRIVATE KEY-----' or '-----BEGIN RSA PRIVATE KEY-----'"
-            exit 1
-          fi
-
-          if ! grep -q "END.*PRIVATE KEY" ~/.ssh/id_rsa; then
-            echo "❌ Private key does not appear to be complete"
-            echo "Expected format should end with '-----END PRIVATE KEY-----' or '-----END RSA PRIVATE KEY-----'"
-            exit 1
-          fi
-
-          # Set correct permissions
-          chmod 600 ~/.ssh/id_rsa
-
-          # Verify key file with ssh-keygen (with better error handling)
-          if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
-            echo "❌ SSH private key appears to be invalid or corrupted"
-            echo "Key file size: $(wc -c < ~/.ssh/id_rsa) bytes"
-            echo "Key file lines: $(wc -l < ~/.ssh/id_rsa) lines"
-            exit 1
-          fi
-
-          echo "✅ SSH key setup completed"
-          echo "Key fingerprint: $(ssh-keygen -l -f ~/.ssh/id_rsa | cut -d' ' -f2)"
-
-      - name: Wait for instance to be ready
-        run: |
-          echo "Waiting for instance to be ready..."
-          echo "Instance IP: ${{ steps.instance.outputs.ip }}"
-
-          # Wait for SSH port to be open
-          for i in {1..60}; do
-            if nc -z ${{ steps.instance.outputs.ip }} 22 2>/dev/null; then
-              echo "✅ SSH port is open"
+          INSTANCE_IP="${{ steps.check-infrastructure.outputs.ip }}"
+          
+          for attempt in $(seq 1 ${{ env.SSH_MAX_RETRY_ATTEMPTS }}); do
+            if nc -z -w${{ env.SSH_CONNECTION_TIMEOUT }} "$INSTANCE_IP" 22; then
+              echo "Instance is accessible on SSH port"
               break
             fi
-            echo "⏳ Waiting for SSH (attempt $i/60)..."
-            sleep 5
+            
+            if [ $attempt -eq ${{ env.SSH_MAX_RETRY_ATTEMPTS }} ]; then
+              echo "Instance not accessible after ${{ env.SSH_MAX_RETRY_ATTEMPTS }} attempts"
+              exit 1
+            fi
+            
+            echo "Waiting for instance (attempt $attempt/${{ env.SSH_MAX_RETRY_ATTEMPTS }})"
+            sleep ${{ env.SSH_RETRY_DELAY }}
           done
 
-          # Additional wait for services to start
-          echo "Waiting additional 30 seconds for services to start..."
-          sleep 30
+  build-application:
+    name: Build Application
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.create-artifact.outputs.name }}
+      build-version: ${{ steps.build-info.outputs.version }}
 
-      - name: Deploy application
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm run install:all
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Generate build information
+        id: build-info
         run: |
-          # SSH options for better reliability
-          SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -o ServerAliveInterval=60"
+          BUILD_VERSION="${{ github.sha }}-$(date +%s)"
+          echo "version=$BUILD_VERSION" >> $GITHUB_OUTPUT
+          echo "Build version: $BUILD_VERSION"
 
-          # Clean up any previous deployment files on server
-          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo rm -rf /tmp/foodme-deploy && mkdir -p /tmp/foodme-deploy"
+      - name: Validate build artifacts
+        run: |
+          if [ ! -d "dist/" ]; then
+            echo "Build failed: dist/ directory not found"
+            exit 1
+          fi
+          
+          ARTIFACT_COUNT=$(find dist/ -type f | wc -l)
+          if [ "$ARTIFACT_COUNT" -eq 0 ]; then
+            echo "Build failed: No files in dist/ directory"
+            exit 1
+          fi
+          
+          echo "Build successful: $ARTIFACT_COUNT files created"
 
-          # Create deployment directory
-          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo mkdir -p /var/www/foodme"
+      - name: Create deployment package
+        id: create-artifact
+        run: |
+          ARTIFACT_NAME="foodme-app-${{ steps.build-info.outputs.version }}"
+          echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          
+          tar -czf "$ARTIFACT_NAME.tar.gz" \
+            dist/ \
+            newrelic.js \
+            package.json \
+            --exclude="dist/**/*.map" \
+            --exclude="dist/**/test/**"
 
-          # Check what files we have to upload
-          echo "📂 Files to upload:"
-          if [ -d "./dist-download/dist" ]; then
-            echo "✅ Using dist-download/dist/ directory"
-            find ./dist-download/dist -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
-            # Upload all files from the build artifact
-            scp $SSH_OPTS -r ./dist-download/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
-          elif [ -d "./dist-download" ] && [ "$(find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -1)" ]; then
-            echo "✅ Using dist-download/ directory directly"
-            find ./dist-download -name "*.js" -o -name "*.html" -o -name "*.css" | head -10
-            # Upload files directly from dist-download
-            scp $SSH_OPTS -r ./dist-download/* ec2-user@${{ steps.instance.outputs.ip }}:/tmp/foodme-deploy/
-          else
-            echo "❌ No web files found to upload"
-            echo "Contents of current directory:"
-            ls -la
-            echo "Contents of dist-download:"
-            ls -la ./dist-download/ || echo "dist-download directory not found"
-            echo "Searching for any files in dist-download:"
-            find ./dist-download -type f | head -20 || echo "No files found"
+      - name: Upload deployment package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.create-artifact.outputs.name }}
+          path: ${{ steps.create-artifact.outputs.name }}.tar.gz
+          retention-days: ${{ env.ARTIFACT_RETENTION_PERIOD }}
+
+  deploy-to-ec2:
+    name: Deploy Application to EC2
+    runs-on: ubuntu-latest
+    needs: [validate-infrastructure, build-application]
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    if: |
+      always() && 
+      needs.build-application.result == 'success' && 
+      (needs.validate-infrastructure.result == 'success' || inputs.skip_infrastructure_check)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download deployment package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-application.outputs.artifact-name }}
+          path: ./deployment
+
+      - name: Configure SSH authentication
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+            echo "Invalid SSH private key"
             exit 1
           fi
 
-          # Move files to web directory and set permissions
-          ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "
-
-            # Clear old deployment
-            sudo rm -rf /var/www/foodme/dist /var/www/foodme/server /var/www/foodme/package*.json
+      - name: Deploy application bundle
+        run: |
+          INSTANCE_IP="${{ needs.validate-infrastructure.outputs.instance-ip }}"
+          SSH_OPTIONS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${{ env.SSH_CONNECTION_TIMEOUT }}"
+          
+          echo "Uploading application bundle to $INSTANCE_IP"
+          scp $SSH_OPTIONS "./deployment/${{ needs.build-application.outputs.artifact-name }}.tar.gz" "ec2-user@$INSTANCE_IP:/tmp/"
+          
+          echo "Extracting and deploying application"
+          ssh $SSH_OPTIONS "ec2-user@$INSTANCE_IP" << 'DEPLOY_SCRIPT'
+            set -e
             
-            # Copy new files - ensure all application files are copied
-            sudo cp -r /tmp/foodme-deploy/* /var/www/foodme/
+            sudo mkdir -p ${{ env.APPLICATION_DEPLOY_PATH }}
+            sudo chown ec2-user:ec2-user ${{ env.APPLICATION_DEPLOY_PATH }}
             
-            # Check if server directory exists in the deployed files
-            if [ -d '/var/www/foodme/dist/server' ]; then
-              echo '✅ Server directory found in dist/server'
+            cd ${{ env.APPLICATION_DEPLOY_PATH }}
+            tar -xzf "/tmp/${{ needs.build-application.outputs.artifact-name }}.tar.gz"
+            
+            if [ -f "${{ env.DEPLOYMENT_SCRIPT_PATH }}" ]; then
+              echo "Running deployment script"
+              bash "${{ env.DEPLOYMENT_SCRIPT_PATH }}"
             else
-              echo '❌ No server directory found! Listing contents:'
-              find /var/www/foodme -type d -name '*server*' || echo 'No server directories found'
-              ls -la /var/www/foodme/
-              if [ -d '/var/www/foodme/dist' ]; then
-                echo 'Contents of dist directory:'
-                ls -la /var/www/foodme/dist/
-              fi
+              echo "No deployment script found, restarting services manually"
+              sudo systemctl restart nginx || true
+              sudo systemctl restart foodme-app || true
             fi
             
-            # Check if package.json exists
-            if [ ! -f '/var/www/foodme/dist/server/package.json' ]; then
-              echo '❌ package.json not found in /var/www/foodme/dist/server!'
-              ls -la /var/www/foodme/dist/server
-            else
-              echo '✅ package.json found'
+            echo "Deployment completed successfully"
+          DEPLOY_SCRIPT
+
+      - name: Verify deployment health
+        run: |
+          INSTANCE_IP="${{ needs.validate-infrastructure.outputs.instance-ip }}"
+          
+          for attempt in $(seq 1 10); do
+            if curl -f -s "http://$INSTANCE_IP/health" >/dev/null 2>&1; then
+              echo "Application health check passed"
+              break
             fi
             
-            # Set proper permissions
-            sudo chown -R ec2-user:ec2-user /var/www/foodme
-            sudo chmod -R 755 /var/www/foodme
-            
-            # Run the deployment script
-            if [ -x '/home/ec2-user/foodme/config/deploy.sh' ]; then
-              echo 'Running deployment script...'
-              cd /home/ec2-user/foodme/config && ./deploy.sh
-            else
-              echo 'No deployment script found, manually starting services...'
-              
-              # Install Node.js dependencies in server directory
-              if [ -d '/var/www/foodme/dist/server' ] && [ -f '/var/www/foodme/server/package.json' ]; then
-                echo 'Installing Node.js dependencies in server directory...'
-                cd /var/www/foodme/server && npm install --omit=dev --unsafe-perm --verbose
-              else
-                echo 'No package.json found - dependencies may have been installed during build'
-              fi
-
-              # Configure Systemd service
-              sudo wget -O - "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/terraform/configs/foodme.service" | sudo tee "/etc/systemd/system/foodme.service" > /dev/null
-              sudo systemctl enable foodme
-              sudo systemctl restart foodme
-
-              # Start services
-              sudo systemctl start foodme
-              
-              # Verify environment variables are available to the service
-              echo 'Checking if New Relic environment is accessible to the service:'
-              sudo systemctl show foodme --property=Environment | grep NEW_RELIC || echo 'NEW_RELIC not found in service environment'
-              
-              # Check service status
-              echo 'Service status:'
-              sudo systemctl is-active foodme || echo 'foodme failed to start'
-              
-              # Show detailed status if foodme failed
-              if ! sudo systemctl is-active foodme >/dev/null; then
-                echo 'Foodme service failed - showing detailed status:'
-                sudo systemctl status foodme --no-pager || true
-                echo 'Recent logs:'
-                sudo journalctl -u foodme -n 20 --no-pager || true
-                
-                # Additional debugging for server directory
-                echo 'Checking server directory structure:'
-                ls -la /var/www/foodme/dist/server/ || echo 'Server directory not found'
-                echo 'Checking package.json in server:'
-                ls -la /var/www/foodme/dist/server/package.json || echo 'package.json not found in server'
-              fi
+            if [ $attempt -eq 10 ]; then
+              echo "Application health check failed after 10 attempts"
+              exit 1
             fi
             
-            # Clean up temp files
-            rm -rf /tmp/foodme-deploy
-          "
-      - name: Set Release Version from Tag
-        id: set_release_version
-        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-      - name: New Relic Application Deployment Marker
+            echo "Waiting for application to start (attempt $attempt/10)"
+            sleep 10
+          done
+
+      - name: Create deployment marker
         uses: newrelic/deployment-marker-action@v2.5.1
         with:
           guid: ${{ secrets.NEW_RELIC_APP_ID }}
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
-          region: "US"
+          region: US
           user: ${{ github.actor }}
           commit: ${{ github.sha }}
           changelog: ${{ github.event.head_commit.message }}
-          version: "${{ steps.set_release_version.outputs.RELEASE_VERSION }}"
-          description: "Deployed FoodMe-${{ github.event.inputs.environment || 'staging' }} by ${{ github.actor }} to ${{ github.event.inputs.environment || 'staging' }}"
-
-      - name: Deployment summary
-        run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Instance ID**: ${{ steps.instance.outputs.id }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Instance IP**: ${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Application URL**: http://${{ steps.instance.outputs.ip }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deployed by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          version: ${{ needs.build-application.outputs.build-version }}
 
   cleanup-artifacts:
-    name: Cleanup Build Artifacts
+    name: Cleanup Old Artifacts
     runs-on: ubuntu-latest
-    needs: [deploy]
+    needs: [deploy-to-ec2]
     if: always()
 
     steps:
-      - name: Delete artifacts
-        uses: actions/github-script@v7
+      - name: Remove deployment artifacts
+        uses: geekyeggo/delete-artifact@v4
         with:
-          script: |
-            try {
-              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: context.runId,
-              });
-
-              let deletedCount = 0;
-              let failedCount = 0;
-
-              for (const artifact of artifacts.data.artifacts) {
-                if (artifact.name.includes('${{ github.sha }}')) {
-                  try {
-                    await github.rest.actions.deleteArtifact({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      artifact_id: artifact.id,
-                    });
-                    console.log(`✅ Deleted artifact: ${artifact.name}`);
-                    deletedCount++;
-                  } catch (error) {
-                    console.log(`⚠️ Failed to delete artifact ${artifact.name}: ${error.message}`);
-                    failedCount++;
-                  }
-                }
-              }
-
-              console.log(`\n📊 Cleanup Summary:`);
-              console.log(`- Artifacts deleted: ${deletedCount}`);
-              console.log(`- Deletion failures: ${failedCount}`);
-              
-              if (failedCount > 0) {
-                console.log(`\n💡 Note: Some artifacts may be automatically cleaned up by GitHub after the retention period.`);
-                console.log(`This error is usually due to permission restrictions and won't affect your application.`);
-              }
-            } catch (error) {
-              console.log(`⚠️ Unable to cleanup artifacts: ${error.message}`);
-              console.log(`This is usually due to GitHub token permissions and won't affect your application.`);
-              console.log(`Artifacts will be automatically cleaned up by GitHub after the retention period.`);
-            }
+          name: ${{ needs.build-application.outputs.artifact-name }}
         continue-on-error: true

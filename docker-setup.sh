@@ -114,10 +114,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     
     case $RECOMMENDED in
         "main")
-            docker compose up -d
+            docker/docker compose up -d
             ;;
         "devcontainer")
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+            docker compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d
             ;;
     esac
     

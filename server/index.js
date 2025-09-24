@@ -82,6 +82,10 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
   let ANGULAR_DIST_DIR;
   ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
+  if (process.env.NODE_ENV == 'development') {
+     ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser'); // Dev: /server/ -> /dist/browser/
+  }
+  console.log('Angular directory:', ANGULAR_DIST_DIR);
   console.log('Directory exists:', fs.existsSync(ANGULAR_DIST_DIR));
   
   app.use((req, res, next) => {
@@ -481,7 +485,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     let indexPath;
     indexPath = path.join(__dirname, '../browser/index.html'); // Docker: /foodme/app/server/ -> /foodme/app/browser/index.html   
     // console.log('Index.html exists:', fs.existsSync(indexPath));
-    
+    if (process.env.NODE_ENV == 'development') {
+      indexPath = path.join(__dirname, '../dist/browser/index.html'); // Dev: /server/ -> /dist/browser/index.html
+    }
     fs.readFile(indexPath, 'utf8', async function(err, htmlContent) {
       if (err) {
         console.error('Error reading index.html:', err);
