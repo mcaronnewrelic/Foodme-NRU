@@ -139,16 +139,16 @@ jobs:
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
 
           echo "Checking for existing locks on key: $LOCK_KEY"
-          
+
           # Get lock status with better error handling
           LOCK_RESPONSE=$(aws dynamodb get-item \
             --table-name "$LOCK_TABLE" \
             --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
             --output json 2>/dev/null || echo '{}')
-          
+
           # Check if Item exists in response
           HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
-          
+
           if [ "$HAS_ITEM" = "true" ]; then
             LOCK_INFO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Info.S // "Unknown lock info"')
             echo "Active Terraform lock detected: $LOCK_INFO"
@@ -175,12 +175,12 @@ jobs:
             echo "ERROR: terraform directory not found"
             exit 1
           fi
-          
+
           if [ ! -f "./terraform/main.tf" ]; then
             echo "ERROR: main.tf not found in terraform directory"
             exit 1
           fi
-          
+
           echo "Terraform files validated"
         working-directory: ./
 
