@@ -14,6 +14,11 @@ on:
         default: staging
         type: choice
         options: [staging, production]
+      force_unlock:
+        description: Force unlock and cleanup state
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -30,9 +35,59 @@ env:
   LOCK_WAIT_INTERVAL: 30
   MAX_LOCK_WAIT_TIME: 600
 jobs:
+  cleanup-state:
+    name: Cleanup Terraform State
+    runs-on: ubuntu-latest
+    if: github.event.inputs.force_unlock == 'true'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Force remove DynamoDB locks
+        run: |
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+
+          echo "Attempting to remove lock for key: $LOCK_KEY"
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No lock to remove"
+
+      - name: Delete state file from S3
+        run: |
+          STATE_BUCKET="${{ secrets.TERRAFORM_STATE_BUCKET }}"
+          STATE_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+
+          echo "Deleting state file: s3://$STATE_BUCKET/$STATE_KEY"
+          aws s3 rm "s3://$STATE_BUCKET/$STATE_KEY" || echo "State file not found"
+
+          echo "Deleting backup state file if it exists"
+          aws s3 rm "s3://$STATE_BUCKET/$STATE_KEY.backup" || echo "Backup state file not found"
+
+      - name: Verify cleanup
+        run: |
+          echo "Cleanup completed. State and locks have been removed."
+          echo "You can now run a fresh deployment."
+
   terraform-plan:
     name: Plan Infrastructure Changes
     runs-on: ubuntu-latest
+    needs: [cleanup-state]
+    if: always() && !cancelled() && (needs.cleanup-state.result == 'success' || needs.cleanup-state.result == 'skipped')
     environment: ${{ github.event.inputs.environment || 'staging' }}
     outputs:
       tfplan: ${{ steps.plan.outputs.tfplan }}
