@@ -28,7 +28,7 @@ env:
   TERRAFORM_LOCK_TIMEOUT: 15m
   TERRAFORM_RETRY_ATTEMPTS: 3
   LOCK_WAIT_INTERVAL: 30
-  MAX_LOCK_WAIT_TIME: 600 # 10 minutes
+  MAX_LOCK_WAIT_TIME: 600
 jobs:
   terraform-plan:
     name: Plan Infrastructure Changes
@@ -80,7 +80,7 @@ jobs:
 
       - name: Validate concurrent operations
         run: |
-          LOCK_TABLE="${{ vars.TERRAFORM_LOCK_TABLE }}"
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
 
           # Check for existing locks
@@ -117,10 +117,10 @@ jobs:
       - name: Initialize Terraform
         run: |
           terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
             -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
-            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            -backend-config="dynamodb_table=${{ secrets.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ./terraform
 
       - name: Validate Terraform configuration (post-init)
@@ -176,10 +176,10 @@ jobs:
       - name: Initialize Terraform
         run: |
           terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
             -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
-            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            -backend-config="dynamodb_table=${{ secrets.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ./terraform
 
       - name: Apply infrastructure changes
@@ -279,10 +279,10 @@ jobs:
       - name: Initialize Terraform
         run: |
           terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
             -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
-            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            -backend-config="dynamodb_table=${{ secrets.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ./terraform
         continue-on-error: true
 

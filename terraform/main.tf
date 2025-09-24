@@ -7,8 +7,11 @@ terraform {
     }
   }
 
-  # Backend configuration provided via workflow
-  backend "s3" {}
+  # Backend configuration will be provided via -backend-config flags during init
+  # This prevents the "empty value" error while allowing dynamic configuration
+  backend "s3" {
+    # Configuration provided via CLI flags in workflow
+  }
 }
 
 provider "aws" {

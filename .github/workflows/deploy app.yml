@@ -206,22 +206,22 @@ jobs:
           INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
           PACKAGE_FILE="${{ needs.build-application.outputs.artifact-name }}.tar.gz"
           SSH_OPTIONS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${{ env.SSH_TIMEOUT }}"
-
+          
           echo "Transferring package to instance"
           scp $SSH_OPTIONS "./deployment/$PACKAGE_FILE" "ec2-user@$INSTANCE_IP:/tmp/"
-
+          
           echo "Deploying application"
-          ssh $SSH_OPTIONS "ec2-user@$INSTANCE_IP" << 'DEPLOY_SCRIPT'
+          ssh $SSH_OPTIONS "ec2-user@$INSTANCE_IP" bash << EOF
             set -e
             
             DEPLOY_DIR="/var/www/foodme"
-            PACKAGE_FILE="/tmp/{{ needs.build-application.outputs.artifact-name }}.tar.gz"
+            PACKAGE_FILE="/tmp/$PACKAGE_FILE"
             
-            sudo mkdir -p "$DEPLOY_DIR"
-            sudo chown ec2-user:ec2-user "$DEPLOY_DIR"
+            sudo mkdir -p "\$DEPLOY_DIR"
+            sudo chown ec2-user:ec2-user "\$DEPLOY_DIR"
             
-            cd "$DEPLOY_DIR"
-            tar -xzf "$PACKAGE_FILE"
+            cd "\$DEPLOY_DIR"
+            tar -xzf "\$PACKAGE_FILE"
             
             if [ -f "/home/ec2-user/foodme/config/deploy.sh" ]; then
               echo "Running deployment script"
@@ -231,8 +231,8 @@ jobs:
               sudo systemctl restart nginx foodme-app || true
             fi
             
-            rm -f "$PACKAGE_FILE"
-          DEPLOY_SCRIPT
+            rm -f "\$PACKAGE_FILE"
+          EOF
 
       - name: Verify deployment health
         run: |
