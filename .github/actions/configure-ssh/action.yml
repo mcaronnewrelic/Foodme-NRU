@@ -1,0 +1,29 @@
+name: Configure SSH
+description: Setup SSH authentication for EC2 access
+
+inputs:
+  private-key:
+    description: SSH private key
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create SSH directory
+      shell: bash
+      run: mkdir -p ~/.ssh
+
+    - name: Install SSH private key
+      shell: bash
+      run: |
+        echo "${{ inputs.private-key }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+    - name: Validate SSH key format
+      shell: bash
+      run: |
+        if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+          echo "Invalid SSH private key format"
+          exit 1
+        fi
+        echo "SSH key validated successfully"

@@ -216,7 +216,7 @@ jobs:
             set -e
             
             DEPLOY_DIR="/var/www/foodme"
-            PACKAGE_FILE="/tmp/${{ needs.build-application.outputs.artifact-name }}.tar.gz"
+            PACKAGE_FILE="/tmp/{{ needs.build-application.outputs.artifact-name }}.tar.gz"
             
             sudo mkdir -p "$DEPLOY_DIR"
             sudo chown ec2-user:ec2-user "$DEPLOY_DIR"
