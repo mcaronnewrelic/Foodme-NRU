@@ -290,11 +290,11 @@ jobs:
         run: |
           terraform destroy -auto-approve \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
-            -var="app_version=${{ github.sha }}" \
-            -var="key_name=${{ secrets.EC2_KEY_NAME }}" \
-            -var="allowed_cidr_blocks=${{ secrets.ALLOWED_CIDR_BLOCKS }}"
+            -var="app_version=${{ github.sha }}"
         working-directory: ./terraform
-        continue-on-error: true
+        env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
+          TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+        continue-on-error: true
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
         continue-on-error: true
