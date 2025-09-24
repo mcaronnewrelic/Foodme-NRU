@@ -43,18 +43,19 @@ output "ssh_command" {
   value       = var.key_name != "" ? "ssh -i ~/.ssh/${var.key_name}.pem ec2-user@${aws_instance.foodme.public_ip}" : "No SSH key configured - use AWS Systems Manager Session Manager"
 }
 
-output "load_balancer_dns" {
-  description = "DNS name of the load balancer"
-  value       = var.create_alb ? aws_lb.foodme[0].dns_name : ""
-}
+# Commented out until ALB resource is implemented
+# output "load_balancer_dns" {
+#   description = "DNS name of the load balancer"
+#   value       = var.create_alb ? aws_lb.foodme[0].dns_name : ""
+# }
 
-output "load_balancer_url" {
-  description = "URL of the load balancer"
-  value       = var.create_alb ? "http://${aws_lb.foodme[0].dns_name}" : ""
-}
+# output "load_balancer_url" {
+#   description = "URL of the load balancer"
+#   value       = var.create_alb ? "http://${aws_lb.foodme[0].dns_name}" : ""
+# }
 
 output "vpc_deployment_mode" {
-  description = "Whether using existing VPC or created new VPC"
+  description = "Whether using existing or new VPC"
   value       = var.use_existing_vpc ? "existing" : "new"
 }
 

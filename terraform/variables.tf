@@ -88,3 +88,15 @@ variable "pgdata_path" {
   type        = string
   default     = "/var/lib/pgsql/data"
 }
+
+variable "use_existing_vpc" {
+  description = "Whether to use an existing VPC instead of creating a new one"
+  type        = bool
+  default     = false
+}
+
+variable "create_alb" {
+  description = "Whether to create an Application Load Balancer"
+  type        = bool
+  default     = false
+}
