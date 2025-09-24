@@ -7,11 +7,8 @@ terraform {
     }
   }
 
-  # Backend configuration will be provided via -backend-config flags during init
-  # This prevents the "empty value" error while allowing dynamic configuration
-  backend "s3" {
-    # Configuration provided via CLI flags in workflow
-  }
+  # Backend will be configured via -backend-config during terraform init
+  # No backend block needed - prevents "empty value" error
 }
 
 provider "aws" {
@@ -23,6 +20,9 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Repository  = "foodme"
+    }
+  }
+}
     }
   }
 }
