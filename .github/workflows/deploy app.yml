@@ -65,18 +65,18 @@ jobs:
           REQUIRED_FILES=("dist" "package.json")
           OPTIONAL_FILES=("newrelic.js")
           MISSING_REQUIRED=()
-          
+
           for file in "${REQUIRED_FILES[@]}"; do
             if [ ! -e "$file" ]; then
               MISSING_REQUIRED+=("$file")
             fi
           done
-          
+
           if [ ${#MISSING_REQUIRED[@]} -gt 0 ]; then
             echo "Missing required files: ${MISSING_REQUIRED[*]}"
             exit 1
           fi
-          
+
           for file in "${OPTIONAL_FILES[@]}"; do
             if [ ! -e "$file" ]; then
               echo "Optional file not found: $file (will be skipped)"
@@ -89,33 +89,32 @@ jobs:
             echo "Build directory not found"
             exit 1
           fi
-          
+
           ARTIFACT_COUNT=$(find dist/ -type f -name "*.js" -o -name "*.css" -o -name "*.html" | wc -l)
-          
+
           if [ "$ARTIFACT_COUNT" -eq 0 ]; then
             echo "No build artifacts found in dist/"
             exit 1
           fi
-          
-          echo "Build validation successful: $ARTIFACT_COUNT artifacts found"
 
+          echo "Build validation successful: $ARTIFACT_COUNT artifacts found"
 
       - name: Create deployment package
         id: create-package
         run: |
           PACKAGE_NAME="foodme-app-${{ steps.generate-version.outputs.version }}"
           PACKAGE_FILE="${PACKAGE_NAME}.tar.gz"
-          
+
           echo "Creating deployment package: $PACKAGE_FILE"
-          
+
           FILES_TO_INCLUDE=()
           FILES_TO_INCLUDE+=("dist")
           FILES_TO_INCLUDE+=("package.json")
-          
+
           if [ -f "newrelic.js" ]; then
             FILES_TO_INCLUDE+=("newrelic.js")
           fi
-          
+
           tar --create \
               --gzip \
               --file="$PACKAGE_FILE" \
@@ -123,7 +122,7 @@ jobs:
               --exclude="dist/**/test/**" \
               --exclude="dist/**/*.spec.*" \
               "${FILES_TO_INCLUDE[@]}"
-          
+
           PACKAGE_SIZE=$(stat -f%z "$PACKAGE_FILE" 2>/dev/null || stat -c%s "$PACKAGE_FILE")
           echo "Package created: $PACKAGE_FILE (${PACKAGE_SIZE} bytes)"
           echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
@@ -152,15 +151,15 @@ jobs:
               "Name=instance-state-name,Values=running" \
             --query 'Reservations[].Instances[0].[InstanceId,PublicIpAddress]' \
             --output text > instance_info.txt
-          
+
           if [ ! -s instance_info.txt ]; then
             echo "No running instances found for environment: ${{ github.event.inputs.environment || 'staging' }}"
             exit 1
           fi
-          
+
           INSTANCE_ID=$(cut -f1 instance_info.txt)
           INSTANCE_IP=$(cut -f2 instance_info.txt)
-          
+
           echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
           echo "ip=$INSTANCE_IP" >> $GITHUB_OUTPUT
 
@@ -174,10 +173,10 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          
+
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
+
           if ! ssh-keygen -l -f ~/.ssh/id_rsa >/dev/null 2>&1; then
             echo "Invalid SSH private key format"
             exit 1
@@ -186,7 +185,7 @@ jobs:
       - name: Wait for SSH availability
         run: |
           INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
-          
+
           for attempt in $(seq 1 ${{ env.SSH_MAX_ATTEMPTS }}); do
             if nc -z -w${{ env.SSH_TIMEOUT }} "$INSTANCE_IP" 22; then
               echo "SSH connection available"
@@ -207,10 +206,10 @@ jobs:
           INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
           PACKAGE_FILE="${{ needs.build-application.outputs.artifact-name }}.tar.gz"
           SSH_OPTIONS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=${{ env.SSH_TIMEOUT }}"
-          
+
           echo "Transferring package to instance"
           scp $SSH_OPTIONS "./deployment/$PACKAGE_FILE" "ec2-user@$INSTANCE_IP:/tmp/"
-          
+
           echo "Deploying application"
           ssh $SSH_OPTIONS "ec2-user@$INSTANCE_IP" << 'DEPLOY_SCRIPT'
             set -e
@@ -238,7 +237,7 @@ jobs:
       - name: Verify deployment health
         run: |
           INSTANCE_IP="${{ steps.validate-infrastructure.outputs.ip }}"
-          
+
           for attempt in $(seq 1 10); do
             if curl -f -s --max-time 10 "http://$INSTANCE_IP/health" >/dev/null 2>&1; then
               echo "Health check passed"
