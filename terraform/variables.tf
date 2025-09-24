@@ -100,3 +100,14 @@ variable "create_alb" {
   type        = bool
   default     = false
 }
+
+variable "existing_vpc_id" {
+  description = "ID of existing VPC to use when use_existing_vpc is true"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.use_existing_vpc == false || (var.use_existing_vpc == true && length(var.existing_vpc_id) > 0)
+    error_message = "existing_vpc_id must be provided when use_existing_vpc is true."
+  }
+}
