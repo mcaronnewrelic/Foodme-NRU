@@ -57,10 +57,14 @@ jobs:
         run: terraform fmt -recursive
         working-directory: ./terraform
 
-      - name: Pre-validate Terraform syntax
-        run: terraform validate -json
-        working-directory: ./terraform
-        continue-on-error: false
+      - name: Validate Terraform syntax (pre-init)
+        run: |
+          # Basic syntax validation without providers
+          terraform fmt -check=true -diff=true ./terraform || {
+            echo "Terraform files need formatting. Run 'terraform fmt -recursive' locally."
+            exit 1
+          }
+        working-directory: ./
 
       - name: Check for duplicate variable declarations
         run: |
@@ -119,7 +123,7 @@ jobs:
             -backend-config="region=${{ vars.AWS_REGION }}"
         working-directory: ./terraform
 
-      - name: Final validation after initialization
+      - name: Validate Terraform configuration (post-init)
         run: terraform validate
         working-directory: ./terraform
 
@@ -284,17 +288,13 @@ jobs:
 
       - name: Destroy failed resources
         run: |
-          terraform init \
-            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
-            -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
-            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
-
           terraform destroy -auto-approve \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
-            -var="app_version=${{ github.sha }}"
+            -var="app_version=${{ github.sha }}" \
+            -var="key_name=${{ secrets.EC2_KEY_NAME }}" \
+            -var="allowed_cidr_blocks=${{ secrets.ALLOWED_CIDR_BLOCKS }}"
         working-directory: ./terraform
-        env:
+        continue-on-error: true
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
         continue-on-error: true
