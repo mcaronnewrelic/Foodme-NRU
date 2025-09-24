@@ -3,7 +3,7 @@ name: deploy-vm
 on:
   push:
     branches: [main, master]
-    paths: ['terraform/**']
+    paths: ["terraform/**"]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
@@ -28,7 +28,7 @@ env:
   TERRAFORM_LOCK_TIMEOUT: 15m
   TERRAFORM_RETRY_ATTEMPTS: 3
   LOCK_WAIT_INTERVAL: 30
-  MAX_LOCK_WAIT_TIME: 600  # 10 minutes
+  MAX_LOCK_WAIT_TIME: 600 # 10 minutes
 jobs:
   terraform-plan:
     name: Plan Infrastructure Changes
@@ -61,14 +61,14 @@ jobs:
         run: |
           LOCK_TABLE="${{ vars.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-          
+
           # Check for existing locks
           EXISTING_LOCK=$(aws dynamodb get-item \
             --table-name "$LOCK_TABLE" \
             --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
             --query 'Item.Info.S' \
             --output text 2>/dev/null || echo "NONE")
-          
+
           if [ "$EXISTING_LOCK" != "NONE" ] && [ "$EXISTING_LOCK" != "null" ]; then
             echo "Existing Terraform lock detected: $EXISTING_LOCK"
             echo "Waiting for lock release..."
@@ -93,32 +93,13 @@ jobs:
             done
           fi
 
-      - name: Initialize Terraform with retry
+      - name: Initialize Terraform
         run: |
-          MAX_ATTEMPTS=3
-          ATTEMPT=1
-          
-          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-            echo "Terraform init attempt $ATTEMPT/$MAX_ATTEMPTS"
-            
-            if terraform init \
-              -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
-              -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
-              -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
-              -backend-config="region=${{ vars.AWS_REGION }}"; then
-              echo "Terraform initialization successful"
-              break
-            fi
-            
-            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-              echo "Terraform initialization failed after $MAX_ATTEMPTS attempts"
-              exit 1
-            fi
-            
-            echo "Initialization failed, waiting before retry..."
-            sleep $((ATTEMPT * 10))
-            ATTEMPT=$((ATTEMPT + 1))
-          done
+          terraform init \
+            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
         working-directory: ./terraform
 
       - name: Execute Terraform plan with lock timeout
@@ -168,9 +149,13 @@ jobs:
           path: terraform/
 
       - name: Initialize Terraform
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
         working-directory: ./terraform
-        env: *terraform-env
 
       - name: Apply infrastructure changes
         run: terraform apply -auto-approve tfplan
@@ -190,7 +175,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
+
           if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
             echo "Invalid SSH private key"
             exit 1
@@ -213,9 +198,9 @@ jobs:
         continue-on-error: true
         run: |
           SSH_OPTS="-i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10"
-          
+
           timeout 30 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "cloud-init status --wait" || echo "Cloud-init monitoring failed"
-          
+
           echo "Deployment logs:"
           timeout 30 ssh $SSH_OPTS ec2-user@${{ steps.instance.outputs.ip }} "sudo tail -n 50 /var/log/cloud-init-output.log" || echo "Could not retrieve logs"
 
@@ -267,12 +252,23 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Initialize Terraform
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
         working-directory: ./terraform
         continue-on-error: true
 
       - name: Destroy failed resources
         run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="key=${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate" \
+            -backend-config="dynamodb_table=${{ vars.TERRAFORM_LOCK_TABLE }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+
           terraform destroy -auto-approve \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="app_version=${{ github.sha }}"
