@@ -250,7 +250,7 @@ jobs:
       - name: Execute Terraform plan with lock timeout
         run: |
           set -e
-          
+
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
           attempt=1
@@ -346,7 +346,7 @@ jobs:
               attempt=$((attempt + 1))
             fi
           done
-          
+
           echo "✅ Terraform plan process completed"
         working-directory: ./terraform
         timeout-minutes: 30
@@ -425,10 +425,10 @@ jobs:
       - name: Apply infrastructure changes
         run: |
           set -e
-          
+
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-          
+
           echo "Pre-apply lock cleanup..."
           LOCK_RESPONSE=$(aws dynamodb get-item \
             --table-name "$LOCK_TABLE" \
@@ -569,23 +569,23 @@ jobs:
       - name: Destroy failed resources
         run: |
           set -e
-          
+
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-          
+
           echo "Pre-destroy lock cleanup..."
           aws dynamodb delete-item \
             --table-name "$LOCK_TABLE" \
             --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No lock to clean up"
-          
+
           sleep 5
-          
+
           echo "Destroying failed resources..."
           terraform destroy -auto-approve -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="app_version=${{ github.sha }}" \
             -var="db_password=${{ secrets.DB_PASSWORD }}"
-          
+
           echo "✅ Resource destruction completed"
         working-directory: ./terraform
         env:
