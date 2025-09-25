@@ -390,7 +390,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [terraform-plan]
     environment: ${{ github.event.inputs.environment || 'staging' }}
-    if: needs.terraform-plan.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+    if: |
+      needs.terraform-plan.result == 'success' && (
+        github.event_name == 'workflow_dispatch' ||
+        github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/master'
+      )
 
     steps:
       - name: Checkout repository
