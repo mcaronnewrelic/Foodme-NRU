@@ -137,36 +137,72 @@ jobs:
         run: |
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+          MAX_WAIT_TIME=${{ env.MAX_LOCK_WAIT_TIME }}
+          WAIT_INTERVAL=${{ env.LOCK_WAIT_INTERVAL }}
+          waited=0
 
           echo "Checking for existing locks on key: $LOCK_KEY"
 
-          # Get lock status with better error handling
-          LOCK_RESPONSE=$(aws dynamodb get-item \
-            --table-name "$LOCK_TABLE" \
-            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
-            --output json 2>/dev/null || echo '{}')
+          while [ $waited -lt $MAX_WAIT_TIME ]; do
+            LOCK_RESPONSE=$(aws dynamodb get-item \
+              --table-name "$LOCK_TABLE" \
+              --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+              --output json 2>/dev/null || echo '{}')
 
-          # Check if Item exists in response
-          HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+            HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
 
-          if [ "$HAS_ITEM" = "true" ]; then
-            LOCK_INFO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Info.S // "Unknown lock info"')
-            echo "Active Terraform lock detected: $LOCK_INFO"
-            
-            if [ "${{ github.event.inputs.force_unlock }}" = "true" ]; then
-              echo "Force unlock requested, removing lock..."
-              aws dynamodb delete-item \
-                --table-name "$LOCK_TABLE" \
-                --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
-              echo "Lock removed successfully"
+            if [ "$HAS_ITEM" = "true" ]; then
+              LOCK_INFO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Info.S // "Unknown lock info"')
+              LOCK_ID=$(echo "$LOCK_RESPONSE" | jq -r '.Item.ID.S // "Unknown lock ID"')
+              WHO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Who.S // "Unknown user"')
+              CREATED=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Created.S // "Unknown time"')
+              
+              echo "Active Terraform lock detected:"
+              echo "  ID: $LOCK_ID"
+              echo "  Who: $WHO"
+              echo "  Created: $CREATED"
+              echo "  Info: $LOCK_INFO"
+              
+              # Check if lock is stale (older than 30 minutes)
+              if command -v date >/dev/null; then
+                CREATED_TIMESTAMP=$(date -d "$CREATED" +%s 2>/dev/null || date -j -f "%Y-%m-%d %H:%M:%S" "$CREATED" +%s 2>/dev/null || echo "0")
+                CURRENT_TIMESTAMP=$(date +%s)
+                LOCK_AGE=$((CURRENT_TIMESTAMP - CREATED_TIMESTAMP))
+                
+                if [ $LOCK_AGE -gt 1800 ]; then  # 30 minutes
+                  echo "Lock is stale (age: ${LOCK_AGE}s), attempting automatic cleanup..."
+                  aws dynamodb delete-item \
+                    --table-name "$LOCK_TABLE" \
+                    --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
+                  echo "Stale lock removed, continuing..."
+                  break
+                fi
+              fi
+              
+              if [ "${{ github.event.inputs.force_unlock }}" = "true" ]; then
+                echo "Force unlock requested, removing lock..."
+                aws dynamodb delete-item \
+                  --table-name "$LOCK_TABLE" \
+                  --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
+                echo "Lock removed successfully"
+                break
+              else
+                echo "Waiting for lock to be released (waited: ${waited}s/${MAX_WAIT_TIME}s)"
+                sleep $WAIT_INTERVAL
+                waited=$((waited + WAIT_INTERVAL))
+              fi
             else
-              echo "ERROR: Terraform state is locked!"
-              echo "To unlock, re-run this workflow with 'force_unlock' set to true"
-              echo "Or run manually: aws dynamodb delete-item --table-name '$LOCK_TABLE' --key '{\"LockID\": {\"S\": \"$LOCK_KEY\"}}'"
-              exit 1
+              echo "No active locks found, proceeding with deployment"
+              break
             fi
-          else
-            echo "No active locks found, proceeding with deployment"
+          done
+
+          if [ $waited -ge $MAX_WAIT_TIME ]; then
+            echo "ERROR: Timeout waiting for Terraform lock to be released!"
+            echo "Lock has been active for more than ${MAX_WAIT_TIME} seconds"
+            echo "To force unlock, re-run this workflow with 'force_unlock' set to true"
+            echo "Or run manually: aws dynamodb delete-item --table-name '$LOCK_TABLE' --key '{\"LockID\": {\"S\": \"$LOCK_KEY\"}}'"
+            exit 1
           fi
 
       - name: Validate Terraform files exist
@@ -213,14 +249,55 @@ jobs:
 
       - name: Execute Terraform plan with lock timeout
         run: |
-          terraform plan \
-            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
-            -var="app_version=${{ github.sha }}" \
-            -var="db_password=${{ secrets.DB_PASSWORD }}" \
-            -lock-timeout=10m \
-            -out=tfplan
+          attempt=1
+          max_attempts=${{ env.TERRAFORM_RETRY_ATTEMPTS }}
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Terraform plan attempt $attempt/$max_attempts"
+            
+            if terraform plan \
+              -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+              -var="app_version=${{ github.sha }}" \
+              -var="db_password=${{ secrets.DB_PASSWORD }}" \
+              -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} \
+              -out=tfplan; then
+              echo "Terraform plan completed successfully"
+              break
+            else
+              exit_code=$?
+              echo "Terraform plan failed with exit code $exit_code (attempt $attempt/$max_attempts)"
+              
+              if [ $attempt -eq $max_attempts ]; then
+                echo "All attempts failed. Checking for residual locks..."
+                
+                LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+                LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+                
+                LOCK_RESPONSE=$(aws dynamodb get-item \
+                  --table-name "$LOCK_TABLE" \
+                  --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+                  --output json 2>/dev/null || echo '{}')
+                
+                HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+                
+                if [ "$HAS_ITEM" = "true" ]; then
+                  echo "Residual lock found. Cleaning up..."
+                  aws dynamodb delete-item \
+                    --table-name "$LOCK_TABLE" \
+                    --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
+                  echo "Lock cleaned up. Please re-run the workflow."
+                fi
+                
+                exit $exit_code
+              fi
+              
+              echo "Waiting before retry..."
+              sleep 30
+              attempt=$((attempt + 1))
+            fi
+          done
         working-directory: ./terraform
-        timeout-minutes: 20
+        timeout-minutes: 25
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
@@ -261,6 +338,29 @@ jobs:
           name: terraform-plan-${{ github.sha }}
           path: terraform/
 
+      - name: Verify lock status before apply
+        run: |
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+
+          echo "Checking lock status before terraform apply..."
+          LOCK_RESPONSE=$(aws dynamodb get-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+            --output json 2>/dev/null || echo '{}')
+
+          HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+
+          if [ "$HAS_ITEM" = "true" ]; then
+            echo "WARNING: Lock still exists, attempting cleanup..."
+            aws dynamodb delete-item \
+              --table-name "$LOCK_TABLE" \
+              --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
+            echo "Lock removed before apply"
+          else
+            echo "No existing locks found"
+          fi
+
       - name: Initialize Terraform
         run: |
           terraform init \
@@ -272,7 +372,7 @@ jobs:
 
       - name: Apply infrastructure changes
         run: |
-          terraform apply -auto-approve tfplan
+          terraform apply -auto-approve -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} tfplan
         working-directory: ./terraform
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
@@ -369,6 +469,17 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Clean up any remaining locks
+        run: |
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+
+          echo "Cleaning up any remaining locks..."
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No locks to clean up"
+        continue-on-error: true
+
       - name: Initialize Terraform
         run: |
           terraform init \
@@ -381,7 +492,7 @@ jobs:
 
       - name: Destroy failed resources
         run: |
-          terraform destroy -auto-approve \
+          terraform destroy -auto-approve -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="app_version=${{ github.sha }}" \
             -var="db_password=${{ secrets.DB_PASSWORD }}"
@@ -389,4 +500,15 @@ jobs:
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
+        continue-on-error: true
+
+      - name: Final lock cleanup
+        run: |
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+
+          echo "Final cleanup of any remaining locks..."
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No locks to clean up"
         continue-on-error: true
