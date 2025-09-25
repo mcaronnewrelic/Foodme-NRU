@@ -249,11 +249,71 @@ jobs:
 
       - name: Execute Terraform plan with lock timeout
         run: |
+          set -e
+          
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
           attempt=1
           max_attempts=${{ env.TERRAFORM_RETRY_ATTEMPTS }}
+          STALE_LOCK_THRESHOLD=1800  # 30 minutes
+
+          cleanup_stale_lock() {
+            echo "Checking for stale locks before attempt $1..."
+            
+            LOCK_RESPONSE=$(aws dynamodb get-item \
+              --table-name "$LOCK_TABLE" \
+              --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+              --output json 2>/dev/null || echo '{}')
+
+            HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+
+            if [ "$HAS_ITEM" = "true" ]; then
+              CREATED=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Created.S // "Unknown time"')
+              WHO=$(echo "$LOCK_RESPONSE" | jq -r '.Item.Who.S // "Unknown user"')
+              LOCK_ID=$(echo "$LOCK_RESPONSE" | jq -r '.Item.ID.S // "Unknown lock ID"')
+              
+              echo "Found existing lock:"
+              echo "  ID: $LOCK_ID"
+              echo "  Who: $WHO"
+              echo "  Created: $CREATED"
+              
+              if command -v date >/dev/null; then
+                CREATED_TIMESTAMP=$(date -d "$CREATED" +%s 2>/dev/null || date -j -f "%Y-%m-%d %H:%M:%S" "$CREATED" +%s 2>/dev/null || echo "0")
+                CURRENT_TIMESTAMP=$(date +%s)
+                LOCK_AGE=$((CURRENT_TIMESTAMP - CREATED_TIMESTAMP))
+                
+                if [ $LOCK_AGE -gt $STALE_LOCK_THRESHOLD ]; then
+                  echo "Lock is stale (age: ${LOCK_AGE}s > ${STALE_LOCK_THRESHOLD}s), removing..."
+                  aws dynamodb delete-item \
+                    --table-name "$LOCK_TABLE" \
+                    --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "Failed to remove stale lock"
+                  echo "Stale lock removed"
+                  return 0
+                else
+                  echo "Lock is recent (age: ${LOCK_AGE}s), will retry later"
+                  return 1
+                fi
+              else
+                echo "Cannot determine lock age, forcing cleanup..."
+                aws dynamodb delete-item \
+                  --table-name "$LOCK_TABLE" \
+                  --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "Failed to remove lock"
+                return 0
+              fi
+            else
+              echo "No existing locks found"
+              return 0
+            fi
+          }
 
           while [ $attempt -le $max_attempts ]; do
-            echo "Terraform plan attempt $attempt/$max_attempts"
+            echo "=== Terraform plan attempt $attempt/$max_attempts ==="
+            
+            # Clean up stale locks before each attempt
+            if ! cleanup_stale_lock $attempt && [ $attempt -gt 1 ]; then
+              echo "Lock cleanup failed, waiting longer before retry..."
+              sleep 60
+            fi
             
             if terraform plan \
               -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
@@ -261,43 +321,35 @@ jobs:
               -var="db_password=${{ secrets.DB_PASSWORD }}" \
               -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} \
               -out=tfplan; then
-              echo "Terraform plan completed successfully"
+              echo "✅ Terraform plan completed successfully"
               break
             else
               exit_code=$?
-              echo "Terraform plan failed with exit code $exit_code (attempt $attempt/$max_attempts)"
+              echo "❌ Terraform plan failed with exit code $exit_code"
               
               if [ $attempt -eq $max_attempts ]; then
-                echo "All attempts failed. Checking for residual locks..."
+                echo "All $max_attempts attempts exhausted. Final cleanup attempt..."
                 
-                LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
-                LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-                
-                LOCK_RESPONSE=$(aws dynamodb get-item \
+                # Force cleanup on final failure
+                echo "Force cleaning lock for final attempt..."
+                aws dynamodb delete-item \
                   --table-name "$LOCK_TABLE" \
-                  --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
-                  --output json 2>/dev/null || echo '{}')
+                  --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "Final cleanup failed"
                 
-                HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
-                
-                if [ "$HAS_ITEM" = "true" ]; then
-                  echo "Residual lock found. Cleaning up..."
-                  aws dynamodb delete-item \
-                    --table-name "$LOCK_TABLE" \
-                    --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}'
-                  echo "Lock cleaned up. Please re-run the workflow."
-                fi
-                
+                echo "❌ Terraform plan failed after $max_attempts attempts"
+                echo "💡 Try running the workflow with 'force_unlock: true' to clean up persistent locks"
                 exit $exit_code
               fi
               
-              echo "Waiting before retry..."
-              sleep 30
+              echo "⏳ Waiting 45 seconds before retry..."
+              sleep 45
               attempt=$((attempt + 1))
             fi
           done
+          
+          echo "✅ Terraform plan process completed"
         working-directory: ./terraform
-        timeout-minutes: 25
+        timeout-minutes: 30
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
@@ -372,7 +424,31 @@ jobs:
 
       - name: Apply infrastructure changes
         run: |
+          set -e
+          
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+          
+          echo "Pre-apply lock cleanup..."
+          LOCK_RESPONSE=$(aws dynamodb get-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' \
+            --output json 2>/dev/null || echo '{}')
+
+          HAS_ITEM=$(echo "$LOCK_RESPONSE" | jq -r 'has("Item")')
+
+          if [ "$HAS_ITEM" = "true" ]; then
+            echo "⚠️  Residual lock detected, cleaning up..."
+            aws dynamodb delete-item \
+              --table-name "$LOCK_TABLE" \
+              --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "Cleanup attempt failed"
+            echo "Lock cleanup completed"
+            sleep 5
+          fi
+
+          echo "Applying Terraform plan..."
           terraform apply -auto-approve -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} tfplan
+          echo "✅ Terraform apply completed successfully"
         working-directory: ./terraform
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
@@ -492,10 +568,25 @@ jobs:
 
       - name: Destroy failed resources
         run: |
+          set -e
+          
+          LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
+          LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
+          
+          echo "Pre-destroy lock cleanup..."
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No lock to clean up"
+          
+          sleep 5
+          
+          echo "Destroying failed resources..."
           terraform destroy -auto-approve -lock-timeout=${{ env.TERRAFORM_LOCK_TIMEOUT }} \
             -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
             -var="app_version=${{ github.sha }}" \
             -var="db_password=${{ secrets.DB_PASSWORD }}"
+          
+          echo "✅ Resource destruction completed"
         working-directory: ./terraform
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
