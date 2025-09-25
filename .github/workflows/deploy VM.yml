@@ -571,7 +571,6 @@ jobs:
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
           TF_VAR_allowed_cidr_blocks: ${{ secrets.ALLOWED_CIDR_BLOCKS }}
-        continue-on-error: true
 
       - name: Final lock cleanup
         run: |
@@ -583,9 +582,8 @@ jobs:
             --table-name "$LOCK_TABLE" \
             --key '{"LockID": {"S": "'"$LOCK_KEY"'"}}' || echo "No locks to clean up"
         continue-on-error: true
-            -backend-config="region=${{ env.AWS_REGION }}"
         working-directory: ./terraform
-        continue-on-error: true
+        
 
       - name: Destroy failed resources
         run: |
