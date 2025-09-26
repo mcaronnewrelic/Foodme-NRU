@@ -254,7 +254,7 @@ jobs:
         id: terraform-plan
         run: |
           set -e
-          
+
           execute_terraform_plan() {
             local attempt=$1
             local max_attempts=$2
@@ -279,7 +279,7 @@ jobs:
               return $exit_code
             fi
           }
-          
+
           cleanup_stale_locks() {
             local lock_table="${{ secrets.TERRAFORM_LOCK_TABLE }}"
             local lock_key="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
@@ -290,17 +290,17 @@ jobs:
               --key '{"LockID": {"S": "'"$lock_key"'"}}' || echo "No lock to clean up"
             sleep 3
           }
-          
+
           calculate_wait_time() {
             local attempt=$1
             echo $((30 + (attempt * 15)))
           }
-          
+
           # Main execution logic
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
           MAX_ATTEMPTS=${{ env.TERRAFORM_RETRY_ATTEMPTS }}
-          
+
           for attempt in $(seq 1 $MAX_ATTEMPTS); do
             echo ""
             echo "🚀 === Terraform plan attempt $attempt/$MAX_ATTEMPTS ==="
@@ -339,7 +339,7 @@ jobs:
             echo "❌ Terraform plan file not generated"
             exit 1
           fi
-          
+
           echo "✅ Terraform plan file validated"
           ls -la tfplan
         working-directory: ./terraform
@@ -537,10 +537,10 @@ jobs:
               --table-name "$lock_table" \
               --key '{"LockID": {"S": "'"$lock_key"'"}}' || echo "No locks to clean up"
           }
-          
+
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-          
+
           cleanup_terraform_locks "$LOCK_TABLE" "$LOCK_KEY"
         continue-on-error: true
 
@@ -575,10 +575,10 @@ jobs:
             
             echo "✅ Resource destruction completed"
           }
-          
+
           LOCK_TABLE="${{ secrets.TERRAFORM_LOCK_TABLE }}"
           LOCK_KEY="${{ github.event.inputs.environment || 'staging' }}/terraform.tfstate"
-          
+
           destroy_terraform_resources "$LOCK_TABLE" "$LOCK_KEY"
         working-directory: ./terraform
         env:
