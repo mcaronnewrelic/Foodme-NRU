@@ -3,53 +3,55 @@
 # Stage 1: Build stage
 FROM node:22-alpine AS build
 
-# Set the working directory inside the container
+# Security updates
+RUN apk update && apk upgrade && apk add --no-cache dumb-init
+
+# Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to the working directory
+# Copy dependency files first for better caching
 COPY package.json package-lock.json ./
 
-# Copy the rest of the application code to the working directory
-COPY . /usr/src/app
+# Install dependencies with cache optimization
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production && \
+    npm cache clean --force
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Use npm ci for faster, reliable, reproducible builds.
-# Install all dependencies (including dev) for the build stage
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci
+# Copy application source
+COPY . .
 
-# Install Angular dependencies
+# Build Angular application
 WORKDIR /usr/src/app/angular-app
-RUN npm ci
-WORKDIR /usr/src/app
+RUN npm ci && npm run build
 
 # Build the application
 RUN npm run build
 
 # Stage 2: Production-ready stage
-FROM node:22-alpine
+FROM node:22-alpine AS production
+
+RUN apk add --no-cache dumb-init
+
+WORKDIR /usr/src/foodme
 
 USER node
-ENV NODE_ENV=production
 
 # Set the working directory inside the container
-WORKDIR /foodme
+WORKDIR /usr/src/foodme
 
-# Copy package.json first to install production dependencies
-COPY --from=build /usr/src/app/package.json ./package.json
-COPY --from=build /usr/src/app/package-lock.json ./package-lock.json
+# Copy only production files
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/package.json ./
 
-# Install only production dependencies
-RUN npm ci --omit=dev && npm cache clean --force
-
-# Copy built artifacts from the previous stage
-COPY --from=build /usr/src/app/dist/ ./app
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S node -u 1001
+USER node
 
 # Expose the port your app runs on
 EXPOSE 3000
 
 # Command to run your application
-ENTRYPOINT ["node", "app/server/start.js"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/server.js"]

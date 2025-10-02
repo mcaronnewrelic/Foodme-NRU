@@ -22,32 +22,41 @@ class DatabaseService {
             return;
         }
 
-        // Read database password from file
-        const passwordFile = path.join(__dirname, '../db/password.txt');
-        let dbPassword = process.env.DB_PASSWORD;
-        
-        // If no env password, try to read from file
-        if (!dbPassword && fs.existsSync(passwordFile)) {
-            try {
-                dbPassword = fs.readFileSync(passwordFile, 'utf8').trim();
-            } catch (error) {
-                console.error('Error reading database password file:', error.message);
+        // Use DATABASE_URL if available (production), otherwise use individual env vars (development)
+        if (process.env.DATABASE_URL) {
+            this.client = new Client({
+                connectionString: process.env.DATABASE_URL,
+                ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+            });
+        } else {
+            // Fallback to individual environment variables for development
+            // Read database password from file
+            const passwordFile = path.join(__dirname, '../db/password.txt');
+            let dbPassword = process.env.DB_PASSWORD;
+            
+            // If no env password, try to read from file
+            if (!dbPassword && fs.existsSync(passwordFile)) {
+                try {
+                    dbPassword = fs.readFileSync(passwordFile, 'utf8').trim();
+                } catch (error) {
+                    console.error('Error reading database password file:', error.message);
+                }
             }
-        }
-        
-        // Fallback password
-        if (!dbPassword) {
-            dbPassword = 'foodme_secure_password_2025!';
-        }
+            
+            // Fallback password
+            if (!dbPassword) {
+                dbPassword = 'foodme_secure_password_2025!';
+            }
 
-        this.client = new Client({
-            host: process.env.DB_HOST || 'db', // Use 'db' for Docker Compose, 'localhost' for local
-            port: process.env.DB_PORT || 5432,
-            database: process.env.DB_NAME || 'foodme',
-            user: process.env.DB_USER || 'foodme_user',
-            password: dbPassword,
-            ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-        });
+            this.client = new Client({
+                host: process.env.DB_HOST || 'localhost',
+                port: process.env.DB_PORT || 5432,
+                database: process.env.DB_NAME || 'foodme',
+                user: process.env.DB_USER || 'foodme_user',
+                password: dbPassword,
+                ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+            });
+        }
 
         try {
             await this.client.connect();
@@ -298,6 +307,264 @@ class DatabaseService {
 
     /**
      * Check if database is available
+     */
+    async isAvailable() {
+        try {
+            await this.connect();
+            await this.client.query('SELECT 1');
+            return true;
+        } catch (error) {
+            console.error('Database not available:', error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Create or get customer by email
+     */
+    async createOrGetCustomer(customerData) {
+        await this.connect();
+        
+        try {
+            // First check if customer exists by email
+            const existingCustomerQuery = 'SELECT * FROM customers WHERE email = $1';
+            const existingResult = await this.client.query(existingCustomerQuery, [customerData.email]);
+            
+            if (existingResult.rows.length > 0) {
+                // Update existing customer with latest info
+                const updateQuery = `
+                    UPDATE customers 
+                    SET name = $2, phone = $3, address = $4, updated_at = CURRENT_TIMESTAMP
+                    WHERE email = $1
+                    RETURNING *
+                `;
+                const updateValues = [
+                    customerData.email,
+                    customerData.name,
+                    customerData.phone || null,
+                    customerData.address || null
+                ];
+                const updateResult = await this.client.query(updateQuery, updateValues);
+                return updateResult.rows[0];
+            } else {
+                // Create new customer
+                const insertQuery = `
+                    INSERT INTO customers (name, email, phone, address)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING *
+                `;
+                const insertValues = [
+                    customerData.name,
+                    customerData.email,
+                    customerData.phone || null,
+                    customerData.address || null
+                ];
+                const insertResult = await this.client.query(insertQuery, insertValues);
+                return insertResult.rows[0];
+            }
+        } catch (error) {
+            console.error('Error creating/getting customer:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Create a new order with items
+     */
+    async createOrder(orderData) {
+        await this.connect();
+        
+        try {
+            // Start transaction
+            await this.client.query('BEGIN');
+
+            // Handle both old format (deliverTo) and new format (customer)
+            const customerData = orderData.customer || orderData.deliverTo;
+            if (!customerData) {
+                throw new Error('Customer data is required');
+            }
+
+            // Create or get customer
+            const customer = await this.createOrGetCustomer(customerData);
+
+            // Handle both old format (restaurant.id) and new format (restaurant_id)
+            const restaurantId = orderData.restaurant_id || orderData.restaurant?.id;
+            if (!restaurantId) {
+                throw new Error('Restaurant ID is required');
+            }
+
+            // Generate order number
+            const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+            // Calculate totals - handle both old format (price, qty) and new format (unit_price, quantity)
+            let subtotal = 0;
+            orderData.items.forEach(item => {
+                const price = item.unit_price || item.price || 0;
+                const qty = item.quantity || item.qty || 1;
+                subtotal += price * qty;
+            });
+
+            const totalAmount = orderData.total_amount || orderData.total || subtotal;
+            const deliveryFee = orderData.delivery_fee || 0;
+            const taxAmount = orderData.tax_amount || 0;
+            const deliveryAddress = orderData.delivery_address || customerData.address || '';
+            const specialInstructions = orderData.special_instructions || '';
+
+            // Create order
+            const orderQuery = `
+                INSERT INTO orders (
+                    customer_id, restaurant_id, order_number, status, 
+                    total_amount, delivery_address, delivery_fee, tax_amount, special_instructions
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                RETURNING *
+            `;
+            
+            const orderValues = [
+                customer.id,
+                restaurantId,
+                orderNumber,
+                'pending',
+                totalAmount,
+                deliveryAddress,
+                deliveryFee,
+                taxAmount,
+                specialInstructions
+            ];
+
+            const orderResult = await this.client.query(orderQuery, orderValues);
+            const order = orderResult.rows[0];
+
+            // Create order items
+            for (const item of orderData.items) {
+                // Handle both old format (name) and new format (menu_item_id)
+                let menuItemId = null;
+                const itemName = item.item_name || item.name;
+                const itemPrice = item.unit_price || item.price || 0;
+                const itemQuantity = item.quantity || item.qty || 1;
+                const itemInstructions = item.special_instructions || '';
+
+                if (item.menu_item_id) {
+                    // New format: use provided menu_item_id
+                    menuItemId = item.menu_item_id;
+                } else {
+                    // Old format: look up by name or create new menu item
+                    const menuItemQuery = `
+                        SELECT id FROM menu_items 
+                        WHERE restaurant_id = $1 AND LOWER(name) = LOWER($2)
+                        LIMIT 1
+                    `;
+                    const menuItemResult = await this.client.query(menuItemQuery, [restaurantId, itemName]);
+                    
+                    if (menuItemResult.rows.length > 0) {
+                        menuItemId = menuItemResult.rows[0].id;
+                    } else {
+                        // If menu item doesn't exist, create a temporary one
+                        const createMenuItemQuery = `
+                            INSERT INTO menu_items (restaurant_id, name, price, category, is_available)
+                            VALUES ($1, $2, $3, $4, $5)
+                            RETURNING id
+                        `;
+                        const createMenuItemResult = await this.client.query(createMenuItemQuery, [
+                            restaurantId,
+                            itemName,
+                            itemPrice,
+                            'Other',
+                            true
+                        ]);
+                        menuItemId = createMenuItemResult.rows[0].id;
+                    }
+                }
+
+                // Insert order item
+                const orderItemQuery = `
+                    INSERT INTO order_items (order_id, menu_item_id, item_name, quantity, unit_price, special_instructions)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                `;
+                await this.client.query(orderItemQuery, [
+                    order.id,
+                    menuItemId,
+                    itemName,
+                    itemQuantity,
+                    itemPrice,
+                    itemInstructions
+                ]);
+            }
+
+            // Commit transaction
+            await this.client.query('COMMIT');
+
+            // Return order with additional details
+            return {
+                orderId: order.id,
+                orderNumber: order.order_number,
+                customerId: customer.id,
+                restaurantId: restaurantId,
+                status: order.status,
+                total: order.total_amount,
+                timestamp: order.created_at
+            };
+
+        } catch (error) {
+            // Rollback transaction on error
+            await this.client.query('ROLLBACK');
+            console.error('Error creating order:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get order by ID with items and customer details
+     */
+    async getOrderById(orderId) {
+        await this.connect();
+        
+        try {
+            const orderQuery = `
+                SELECT 
+                    o.*,
+                    c.name as customer_name,
+                    c.email as customer_email,
+                    c.phone as customer_phone,
+                    r.name as restaurant_name,
+                    r.original_id as restaurant_original_id
+                FROM orders o
+                JOIN customers c ON o.customer_id = c.id
+                JOIN restaurants r ON o.restaurant_id = r.id
+                WHERE o.id = $1
+            `;
+            
+            const orderResult = await this.client.query(orderQuery, [orderId]);
+            
+            if (orderResult.rows.length === 0) {
+                return null;
+            }
+            
+            const order = orderResult.rows[0];
+            
+            // Get order items
+            const itemsQuery = `
+                SELECT 
+                    oi.*,
+                    mi.name as item_name,
+                    mi.description as item_description
+                FROM order_items oi
+                JOIN menu_items mi ON oi.menu_item_id = mi.id
+                WHERE oi.order_id = $1
+            `;
+            
+            const itemsResult = await this.client.query(itemsQuery, [orderId]);
+            order.items = itemsResult.rows;
+            
+            return order;
+        } catch (error) {
+            console.error('Error getting order:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Close database connection
      */
     async isAvailable() {
         try {

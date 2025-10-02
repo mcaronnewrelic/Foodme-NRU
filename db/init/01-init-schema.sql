@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-    restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+    restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
     order_number VARCHAR(50) UNIQUE NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     total_amount DECIMAL(10,2) NOT NULL,
@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
+    menu_item_id INTEGER REFERENCES menu_items(id) ON DELETE CASCADE,
+    item_name VARCHAR(255) NOT NULL, -- Store item name directly for historical records
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     unit_price DECIMAL(10,2) NOT NULL,
     special_instructions TEXT,

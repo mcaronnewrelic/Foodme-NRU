@@ -27,6 +27,7 @@ const DatabaseService = require('./database');
 var API_URL = '/api/restaurant';
 var API_URL_ID = '/api/restaurant/:id';
 var API_URL_ORDER = '/api/order';
+var API_URL_ORDER_ID = '/api/order/:id';
 
 // Global variables for data access
 let storage = null;
@@ -79,11 +80,21 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // In dev: server runs from /server/, Angular build is in /dist/browser/
   // In prod: server runs from /dist/server/, Angular build is in /dist/browser/
   // In Docker: server runs from /foodme/app/server/, Angular build is in /foodme/app/browser/
-  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
+  // In EC2: Use environment variable ANGULAR_DIR
   let ANGULAR_DIST_DIR;
-  ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
-  if (process.env.NODE_ENV == 'development') {
-     ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser'); // Dev: /server/ -> /dist/browser/
+  
+  if (process.env.ANGULAR_DIR) {
+    // Use environment variable if set (EC2 deployment)
+    ANGULAR_DIST_DIR = process.env.ANGULAR_DIR;
+  } else if (process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme') {
+    // Docker environment
+    ANGULAR_DIST_DIR = path.join(__dirname, '../browser');
+  } else if (process.env.NODE_ENV == 'development') {
+    // Development environment
+    ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser');
+  } else {
+    // Default production path
+    ANGULAR_DIST_DIR = path.join(__dirname, '../browser');
   }
   console.log('Angular directory:', ANGULAR_DIST_DIR);
   console.log('Directory exists:', fs.existsSync(ANGULAR_DIST_DIR));
@@ -347,35 +358,88 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     }
   });
 
-  app.post(API_URL_ORDER, jsonParser, function(req, res, next) {  
-    logger.info(req.body, 'checkout');
-    
-    var order = req.body;
-    var itemCount = 0;
-    var orderTotal = 0;
-    order.items.forEach(function(item) { 
-      itemCount += item.qty;
-      orderTotal += item.price * item.qty;
-    });
+  app.post(API_URL_ORDER, jsonParser, async function(req, res, next) {  
+    try {
+      logger.info(req.body, 'checkout');
+      
+      var order = req.body;
+      var itemCount = 0;
+      var orderTotal = 0;
+      order.items.forEach(function(item) { 
+        itemCount += item.qty;
+        orderTotal += item.price * item.qty;
+      });
 
-    newrelic.addCustomAttributes({
-      'customer': order.deliverTo.name,
-      'restaurant': order.restaurant.name,
-      'itemCount': itemCount,
-      'orderTotal': orderTotal
-    });
-    
-    newrelic.incrementMetric("Orders/count",4);
-    newrelic.recordMetric('Orders/total', parseInt(orderTotal));
+      newrelic.addCustomAttributes({
+        'customer': order.deliverTo.name,
+        'restaurant': order.restaurant.name,
+        'itemCount': itemCount,
+        'orderTotal': orderTotal
+      });
+      
+      newrelic.incrementMetric("Orders/count", 4);
+      newrelic.recordMetric('Orders/total', parseInt(orderTotal));
 
-    newrelic.recordCustomEvent('Order', {
-      customer: order.deliverTo.name,
-      restaurant: order.restaurant.name,
-      itemCount: itemCount,
-      orderTotal: orderTotal
-    });
+      newrelic.recordCustomEvent('Order', {
+        customer: order.deliverTo.name,
+        restaurant: order.restaurant.name,
+        itemCount: itemCount,
+        orderTotal: orderTotal
+      });
 
-    return res.status(201).send({ orderId: Date.now() });
+      // Store order in database if using database
+      let orderResult = { orderId: Date.now() }; // Default response
+
+      if (useDatabase && dbService) {
+        try {
+          orderResult = await dbService.createOrder(order);
+          console.log('Order saved to database:', orderResult);
+          
+          // Add database-specific metrics
+          newrelic.addCustomAttributes({
+            'databaseOrderId': orderResult.orderId,
+            'orderNumber': orderResult.orderNumber,
+            'customerId': orderResult.customerId
+          });
+          
+        } catch (dbError) {
+          console.error('Error saving order to database:', dbError);
+          // Continue with default response but log the error
+          newrelic.recordCustomEvent('OrderDatabaseError', {
+            customer: order.deliverTo.name,
+            restaurant: order.restaurant.name,
+            error: dbError.message
+          });
+        }
+      }
+
+      return res.status(201).send(orderResult);
+      
+    } catch (error) {
+      console.error('Error processing order:', error);
+      newrelic.recordCustomEvent('OrderProcessingError', {
+        error: error.message,
+        stack: error.stack
+      });
+      res.status(500).send({ error: 'Failed to process order' });
+    }
+  });
+
+  app.get(API_URL_ORDER_ID, async function(req, res, next) {
+    try {
+      if (useDatabase && dbService) {
+        const order = await dbService.getOrderById(req.params.id);
+        if (order) {
+          return res.status(200).send(order);
+        }
+        return res.status(404).send({ error: 'Order not found' });
+      } else {
+        return res.status(404).send({ error: 'Order retrieval not available in file mode' });
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      res.status(500).send({ error: 'Failed to fetch order' });
+    }
   });
 
 

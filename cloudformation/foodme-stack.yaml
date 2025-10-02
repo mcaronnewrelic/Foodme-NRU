@@ -1,0 +1,761 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'FoodMe Full Stack Application - Angular Frontend, Node.js Backend, and PostgreSQL Database'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name for resource naming and configuration
+    
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues: [t3.small, t3.medium, t3.large, t3.xlarge]
+    Description: EC2 instance type for the application server
+    
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access to the instance
+    
+  AllowedCidrBlocks:
+    Type: CommaDelimitedList
+    Default: "0.0.0.0/0"
+    Description: CIDR blocks allowed to access the application
+    
+  ApplicationVersion:
+    Type: String
+    Default: latest
+    Description: Version tag for the application deployment
+    
+  DatabasePassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: Password for the PostgreSQL database
+    
+  NewRelicLicenseKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: New Relic License Key (optional - leave empty to disable New Relic)
+    
+  NodeEnvironment:
+    Type: String
+    Default: production
+    AllowedValues: [development, production]
+    Description: Node.js environment setting
+    
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name containing the application code
+
+Resources:
+  # VPC and Networking Resources
+  ApplicationVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-vpc'
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ApplicationVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-subnet'
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-igw'
+        - Key: Environment
+          Value: !Ref Environment
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref ApplicationVPC
+      InternetGatewayId: !Ref ApplicationInternetGateway
+
+  ApplicationRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref ApplicationVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-rt'
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref ApplicationRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref ApplicationInternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ApplicationSubnet
+      RouteTableId: !Ref ApplicationRouteTable
+
+  # Security Groups
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for FoodMe application server
+      VpcId: !Ref ApplicationVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Select [0, !Ref AllowedCidrBlocks]
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access for Angular app
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access for Angular app
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+          Description: Node.js API server
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.0.1.0/24
+          Description: PostgreSQL database access from subnet
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: All outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-sg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # IAM Role and Instance Profile
+  ApplicationInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-foodme-instance-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${S3BucketName}'
+                  - !Sub 'arn:aws:s3:::${S3BucketName}/*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${Environment}-foodme-instance-profile'
+      Roles:
+        - !Ref ApplicationInstanceRole
+
+  # EC2 Instance
+  ApplicationInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}'
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref ApplicationSubnet
+      SecurityGroupIds:
+        - !Ref ApplicationSecurityGroup
+      IamInstanceProfile: !Ref ApplicationInstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          
+          # Update system and install required packages
+          dnf update -y
+          dnf install -y git nginx postgresql16-server postgresql16 postgresql16-contrib unzip nmap-ncat
+          
+          # Install Node.js 22 using NodeSource repository
+          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+          dnf install -y nodejs
+
+          # Install New Relic Infrastructure agent
+          echo "Installing New Relic Infrastructure agent..."
+          curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo
+          dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
+          dnf install -y newrelic-infra
+
+          # Initialize PostgreSQL
+          sudo -u postgres /usr/bin/postgresql-setup --initdb
+          systemctl start postgresql
+          systemctl enable postgresql
+
+          # Configure PostgreSQL
+          configure_postgresql() {
+            local db_password="${DatabasePassword}"
+            
+            echo "Setting up PostgreSQL user and database..."
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD '$db_password';"
+            sudo -u postgres createdb foodme
+            
+            # Update PostgreSQL configuration
+            sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /var/lib/pgsql/data/postgresql.conf
+            sed -i 's/host    all             all             127.0.0.1\/32            ident/host    all             all             127.0.0.1\/32            md5/' /var/lib/pgsql/data/pg_hba.conf
+            
+            systemctl restart postgresql
+            
+            # Wait for PostgreSQL to be ready
+            echo "Waiting for PostgreSQL to be ready..."
+            until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
+              echo "Waiting for PostgreSQL..."
+              sleep 2
+            done
+            echo "PostgreSQL is ready!"
+          }
+
+          # Setup PostgreSQL monitoring with comprehensive extensions
+          # - pg_stat_statements: Query performance tracking (with enhanced configuration)
+          # - pg_buffercache: Buffer cache monitoring  
+          # - pgstattuple: Table-level statistics and bloat analysis
+          # - pgrowlocks: Row-level locking information
+          # Note: pg_wait_sampling and pg_stat_monitor are not available in standard AL2023 packages
+          setup_postgresql_monitoring() {
+            echo "Setting up PostgreSQL monitoring extensions..."
+            
+            # Configure shared_preload_libraries and pg_stat_statements settings
+            if ! grep -q "shared_preload_libraries" /var/lib/pgsql/data/postgresql.conf; then
+              echo "shared_preload_libraries = 'pg_stat_statements'" >> /var/lib/pgsql/data/postgresql.conf
+            else
+              sed -i "s/^#*shared_preload_libraries = .*/shared_preload_libraries = 'pg_stat_statements'/" /var/lib/pgsql/data/postgresql.conf
+            fi
+            
+            # Add comprehensive pg_stat_statements configuration
+            echo "" >> /var/lib/pgsql/data/postgresql.conf
+            echo "# PostgreSQL Monitoring Configuration" >> /var/lib/pgsql/data/postgresql.conf
+            echo "pg_stat_statements.max = 10000" >> /var/lib/pgsql/data/postgresql.conf
+            echo "pg_stat_statements.track = all" >> /var/lib/pgsql/data/postgresql.conf
+            echo "pg_stat_statements.save = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "pg_stat_statements.track_utility = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "pg_stat_statements.track_planning = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "" >> /var/lib/pgsql/data/postgresql.conf
+            echo "# Additional performance monitoring settings" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_statement_stats = off" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_parser_stats = off" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_planner_stats = off" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_executor_stats = off" >> /var/lib/pgsql/data/postgresql.conf
+            echo "" >> /var/lib/pgsql/data/postgresql.conf
+            echo "# Query logging for additional monitoring" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_min_duration_statement = 1000" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_checkpoints = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_connections = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_disconnections = on" >> /var/lib/pgsql/data/postgresql.conf
+            echo "log_lock_waits = on" >> /var/lib/pgsql/data/postgresql.conf
+            
+            # Restart PostgreSQL to load the extension
+            systemctl restart postgresql
+            
+            # Wait for PostgreSQL to be ready
+            until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
+              echo "Waiting for PostgreSQL to restart..."
+              sleep 2
+            done
+            
+            # Create monitoring extensions in the database
+            echo "Installing PostgreSQL monitoring extensions..."
+            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_buffercache;"
+            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgstattuple;"
+            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgrowlocks;"
+            
+            echo "PostgreSQL monitoring extensions configured successfully!"
+            echo "Installed extensions: pg_stat_statements, pg_buffercache, pgstattuple, pgrowlocks"
+          }
+
+          # Install Node.js application dependencies
+          install_application_dependencies() {
+            echo "Installing PM2 for process management..."
+            npm install -g pm2
+          }
+
+          # Setup application directory structure
+          setup_application_structure() {
+            mkdir -p /opt/foodme/{frontend,backend,database,logs}
+            chown -R ec2-user:ec2-user /opt/foodme
+          }
+
+          # Deploy backend application
+          deploy_backend_application() {
+            cd /opt/foodme/backend
+            
+            # Download backend code from S3
+            echo "Downloading backend code from S3..."
+            aws s3 cp s3://${S3BucketName}/server.zip ./server.zip
+            unzip -q server.zip
+            mv server/* .
+            rmdir server
+            rm server.zip
+            
+            # Install dependencies
+            npm install
+            
+          # Create environment configuration
+          cat > .env << EOF
+          NODE_ENV="${NodeEnvironment}"
+          PORT=3000
+          DATABASE_URL="postgresql://postgres:${DatabasePassword}@localhost:5432/foodme"
+          JWT_SECRET=\$(openssl rand -base64 32)
+          CORS_ORIGIN="http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
+          ANGULAR_DIR="/opt/foodme/dist/browser"
+          NEW_RELIC_LICENSE_KEY="${NewRelicLicenseKey}"
+          NEW_RELIC_APP_NAME="FoodMe-${Environment}"
+          NEW_RELIC_ENABLED=\$([[ -n "${NewRelicLicenseKey}" && "${NewRelicLicenseKey}" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "true" || echo "false")
+          NEW_RELIC_LOG_LEVEL="info"
+          NEW_RELIC_DISTRIBUTED_TRACING_ENABLED="true"
+          NEW_RELIC_SPAN_EVENTS_ENABLED="true"
+          AWS_REGION=\$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+          ENVIRONMENT="${Environment}"
+          EOF
+          
+            # Start application with PM2 using Node.js built-in .env support
+            echo "Starting backend application with PM2..."
+            pm2 start "node --env-file=.env start.js" --name "foodme-backend"
+            
+            # Wait for application to be ready
+            echo "Waiting for backend to be ready..."
+            for i in {1..30}; do
+              if curl -s http://localhost:3000/health > /dev/null 2>&1; then
+                echo "Backend is ready!"
+                break
+              fi
+              echo "Waiting for backend... (\$i/30)"
+              sleep 2
+            done
+            
+            pm2 save
+            pm2 startup systemd -u ec2-user --hp /home/ec2-user
+          }
+
+          # Deploy frontend application
+          deploy_frontend_application() {
+            cd /opt/foodme/frontend
+            
+            # Download frontend code from S3
+            echo "Downloading frontend code from S3..."
+            aws s3 cp s3://${S3BucketName}/angular-app.zip ./angular-app.zip
+            unzip -q angular-app.zip
+            mv angular-app/* .
+            rmdir angular-app
+            rm angular-app.zip
+            
+            # Install dependencies and build
+            npm install
+            npm run build --configuration=production
+            
+            # Configure Nginx with the corrected proxy configuration
+            cat > /etc/nginx/conf.d/foodme.conf << EOF
+          server {
+              listen 80;
+              server_name _;
+              
+              # Health check endpoint
+              location /nginx-health {
+                  access_log off;
+                  return 200 "healthy\\n";
+                  add_header Content-Type text/plain;
+              }
+
+              # Security Headers
+              add_header X-Frame-Options "SAMEORIGIN" always;
+              add_header X-Content-Type-Options "nosniff" always;
+              add_header X-XSS-Protection "1; mode=block" always;
+
+              # Gzip Compression
+              gzip on;
+              gzip_vary on;
+              gzip_min_length 1024;
+              gzip_proxied any;
+              gzip_comp_level 6;
+              gzip_types
+                  text/plain
+                  text/css
+                  text/xml
+                  text/javascript
+                  application/json
+                  application/javascript
+                  application/xml+rss
+                  application/atom+xml
+                  image/svg+xml;
+
+              # API routes - proxy to Node.js backend (FIXED: no trailing slash)
+              location /api/ {
+                  proxy_pass http://localhost:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_cache_bypass \$http_upgrade;
+                  proxy_read_timeout 86400s;
+                  proxy_send_timeout 86400s;
+              }
+
+              # Health endpoint
+              location /health {
+                  proxy_pass http://localhost:3000;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+
+              # Static assets with long cache
+              location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {
+                  proxy_pass http://localhost:3000;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  expires 1y;
+                  add_header Cache-Control "public, immutable";
+              }
+
+              # Main application - serve everything else through Node.js
+              location / {
+                  proxy_pass http://localhost:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_cache_bypass \$http_upgrade;
+                  proxy_read_timeout 86400s;
+                  proxy_send_timeout 86400s;
+              }
+          }
+          EOF
+            
+            # Start and enable Nginx
+            systemctl start nginx
+            systemctl enable nginx
+          }
+
+          # Initialize database with scripts
+          initialize_database() {
+            local init_scripts_dir="/opt/foodme/database/init"
+            mkdir -p "$init_scripts_dir"
+            
+            echo "Downloading database initialization scripts from S3..."
+            
+            # Download SQL scripts from S3
+            aws s3 cp s3://${S3BucketName}/db-init.zip "$init_scripts_dir/db-init.zip"
+            
+            # Extract SQL scripts
+            cd "$init_scripts_dir"
+            unzip -q db-init.zip
+            rm db-init.zip
+            
+            # Set PostgreSQL environment variables for authentication
+            export PGPASSWORD="${DatabasePassword}"
+            
+            # Run initialization scripts in numerical order (01-, 02-, etc.)
+            echo "Executing database initialization scripts..."
+            for script in "$init_scripts_dir"/*.sql; do
+              if [ -f "$script" ]; then
+                script_name=$(basename "$script")
+                echo "Running database script: $script_name"
+                
+                # Execute script with error handling
+                if sudo -u postgres psql -d foodme -f "$script"; then
+                  echo "✅ Successfully executed: $script_name"
+                else
+                  echo "❌ Failed to execute: $script_name"
+                  exit 1
+                fi
+              fi
+            done
+            
+            # Verify database setup
+            echo "Verifying database setup..."
+            restaurant_count=$(sudo -u postgres psql -d foodme -t -c "SELECT COUNT(*) FROM restaurants;" | xargs)
+            menu_item_count=$(sudo -u postgres psql -d foodme -t -c "SELECT COUNT(*) FROM menu_items;" | xargs)
+            
+            echo "Database initialization completed:"
+            echo "  - Restaurants imported: $restaurant_count"
+            echo "  - Menu items imported: $menu_item_count"
+            
+            # Unset password variable for security
+            unset PGPASSWORD
+          }
+
+          # Setup New Relic Infrastructure monitoring
+          setup_newrelic_monitoring() {
+            echo "Setting up New Relic Infrastructure monitoring..."
+            
+            # Create New Relic Infrastructure main configuration
+            cat > /etc/newrelic-infra.yml << EOF
+          license_key: "${NewRelicLicenseKey}"
+          display_name: "foodme-${Environment}-\$(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+          
+          # Logging configuration
+          log:
+            level: info
+            file: /var/log/newrelic-infra/newrelic-infra.log
+            rotate:
+              max_size_mb: 100
+              max_files: 5
+          
+          # Custom attributes
+          custom_attributes:
+            environment: "${Environment}"
+            application: "foodme"
+            region: \$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+            instance_type: "${InstanceType}"
+          
+          # Enable logs forwarding
+          logs:
+            - name: nginx-access
+              file: /var/log/nginx/access.log
+              attributes:
+                logtype: nginx-access
+                service: nginx
+                environment: "${Environment}"
+            - name: nginx-error
+              file: /var/log/nginx/error.log
+              attributes:
+                logtype: nginx-error
+                service: nginx
+                environment: "${Environment}"
+            - name: postgresql
+              file: /var/lib/pgsql/16/data/log/postgresql-*.log
+              attributes:
+                logtype: postgresql
+                service: postgresql
+                environment: "${Environment}"
+          EOF
+          
+            # Download and setup New Relic integration configurations
+            local nr_integrations_dir="/etc/newrelic-infra/integrations.d"
+            mkdir -p "\$nr_integrations_dir"
+            
+            echo "Downloading New Relic integration configurations from S3..."
+            aws s3 cp s3://${S3BucketName}/newrelic-integrations.zip /tmp/newrelic-integrations.zip
+            
+            # Extract integration configs
+            cd /tmp
+            unzip -q newrelic-integrations.zip
+            
+            # Setup Nginx integration
+            cat > "\$nr_integrations_dir/nginx-config.yml" << EOF
+          integrations:
+            - name: nri-nginx
+              env:
+                STATUS_URL: http://localhost/nginx_status
+                STATUS_MODULE: discover
+                REMOTE_MONITORING: true
+                METRICS: true
+                INVENTORY: true
+                CONNECTION_TIMEOUT: 5
+                HTTP_TIMEOUT: 30
+                VALIDATE_CERTS: false
+                CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"${Environment}","application":"foodme"}'
+              interval: 30s
+              labels:
+                env: "${Environment}"
+                role: reverse-proxy
+                service: nginx
+              inventory_source: config/nginx
+          EOF
+          
+            # Setup PostgreSQL integration
+            cat > "\$nr_integrations_dir/postgres-config.yml" << EOF
+          integrations:
+            - name: nri-postgresql
+              env:
+                HOSTNAME: localhost
+                PORT: 5432
+                USERNAME: postgres
+                PASSWORD: "${DatabasePassword}"
+                DATABASE: foodme
+                SSL_MODE: disable
+                CONNECTION_TIMEOUT: 5
+                METRICS: true
+                INVENTORY: true
+                COLLECT_DB_LOCK_METRICS: true
+                COLLECT_BLOAT_METRICS: true
+                CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"${Environment}","application":"foodme","database":"foodme"}'
+                CUSTOM_METRICS_QUERY: |
+                  SELECT 
+                    'restaurants' as table_name,
+                    COUNT(*) as row_count
+                  FROM restaurants
+                  UNION ALL
+                  SELECT 
+                    'menu_items' as table_name,
+                    COUNT(*) as row_count
+                  FROM menu_items;
+              interval: 30s
+              labels:
+                env: "${Environment}"
+                role: database
+                service: postgresql
+                application: foodme
+          EOF
+          
+            # Install New Relic integrations
+            echo "Installing New Relic integrations..."
+            dnf install -y nri-nginx nri-postgresql
+            
+            # Start and enable New Relic Infrastructure agent
+            systemctl enable newrelic-infra
+            systemctl start newrelic-infra
+            
+            # Verify installation
+            echo "Verifying New Relic Infrastructure agent..."
+            sleep 5
+            systemctl status newrelic-infra --no-pager -l || echo "Warning: New Relic Infrastructure agent status check failed"
+            
+            # Cleanup
+            rm -f /tmp/newrelic-integrations.zip
+            rm -rf /tmp/newrelic-integrations
+          }
+
+          # Health check endpoint
+          setup_health_check() {
+            cat > /opt/foodme/health-check.sh << 'EOF'
+          #!/bin/bash
+          
+          check_service_health() {
+            local service_name="$1"
+            local port="$2"
+            
+            if nc -z localhost "$port"; then
+              echo "$service_name: HEALTHY"
+              return 0
+            else
+              echo "$service_name: UNHEALTHY"
+              return 1
+            fi
+          }
+          
+          # Check all services
+          check_service_health "Frontend (Nginx)" 80
+          check_service_health "Backend API" 3000
+          check_service_health "PostgreSQL" 5432
+          EOF
+            
+            chmod +x /opt/foodme/health-check.sh
+            
+            # Setup cron job for health checks
+            echo "*/5 * * * * /opt/foodme/health-check.sh >> /opt/foodme/logs/health-check.log 2>&1" | crontab -
+          }
+
+          # Main execution
+          main() {
+            echo "Starting FoodMe application deployment..."
+            
+            configure_postgresql
+            setup_postgresql_monitoring
+            install_application_dependencies
+            setup_application_structure
+            initialize_database
+            deploy_backend_application
+            deploy_frontend_application
+            setup_newrelic_monitoring
+            setup_health_check
+            
+            echo "FoodMe application deployment completed successfully!"
+            echo "Application URL: http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
+          }
+
+          # Execute main function
+          main
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-instance'
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: FoodMe
+
+Outputs:
+  InstanceId:
+    Description: Instance ID of the application server
+    Value: !Ref ApplicationInstance
+    Export:
+      Name: !Sub '${Environment}-foodme-instance-id'
+
+  PublicIpAddress:
+    Description: Public IP address of the application server
+    Value: !GetAtt ApplicationInstance.PublicIp
+    Export:
+      Name: !Sub '${Environment}-foodme-public-ip'
+
+  ApplicationUrl:
+    Description: URL to access the FoodMe application
+    Value: !Sub 'http://${ApplicationInstance.PublicIp}'
+    Export:
+      Name: !Sub '${Environment}-foodme-application-url'
+
+  DatabaseEndpoint:
+    Description: PostgreSQL database endpoint
+    Value: !Sub '${ApplicationInstance.PrivateIp}:5432'
+    Export:
+      Name: !Sub '${Environment}-foodme-database-endpoint'
+
+  SecurityGroupId:
+    Description: Security Group ID for the application
+    Value: !Ref ApplicationSecurityGroup
+    Export:
+      Name: !Sub '${Environment}-foodme-security-group-id'
+
+  VpcId:
+    Description: VPC ID for the application
+    Value: !Ref ApplicationVPC
+    Export:
+      Name: !Sub '${Environment}-foodme-vpc-id'
