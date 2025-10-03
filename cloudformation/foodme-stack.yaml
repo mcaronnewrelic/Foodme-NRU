@@ -212,154 +212,32 @@ Resources:
           #!/bin/bash
           set -e
           
-          # Update system and install required packages
-          dnf update -y
-          dnf install -y git nginx postgresql16-server postgresql16 postgresql16-contrib unzip nmap-ncat
+          # Log all output
+          exec > >(tee /var/log/user-data.log) 2>&1
           
-          # Install Node.js 22 using NodeSource repository
-          curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-          dnf install -y nodejs
-
-          # Install New Relic Infrastructure agent
-          echo "Installing New Relic Infrastructure agent..."
-          curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo
-          dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
-          dnf install -y newrelic-infra
-
-          # Initialize PostgreSQL
-          sudo -u postgres /usr/bin/postgresql-setup --initdb
-          systemctl start postgresql
-          systemctl enable postgresql
-
-          # Configure PostgreSQL
-          configure_postgresql() {
-            local db_password="${DatabasePassword}"
-            
-            echo "Setting up PostgreSQL user and database..."
-            sudo -u postgres psql -c "ALTER USER postgres PASSWORD '$db_password';"
-            sudo -u postgres createdb foodme
-            
-            # Update PostgreSQL configuration
-            sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /var/lib/pgsql/data/postgresql.conf
-            sed -i 's/host    all             all             127.0.0.1\/32            ident/host    all             all             127.0.0.1\/32            md5/' /var/lib/pgsql/data/pg_hba.conf
-            
-            systemctl restart postgresql
-            
-            # Wait for PostgreSQL to be ready
-            echo "Waiting for PostgreSQL to be ready..."
-            until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
-              echo "Waiting for PostgreSQL..."
-              sleep 2
-            done
-            echo "PostgreSQL is ready!"
-          }
-
-          # Setup PostgreSQL monitoring with comprehensive extensions
-          # - pg_stat_statements: Query performance tracking (with enhanced configuration)
-          # - pg_buffercache: Buffer cache monitoring  
-          # - pgstattuple: Table-level statistics and bloat analysis
-          # - pgrowlocks: Row-level locking information
-          # Note: pg_wait_sampling and pg_stat_monitor are not available in standard AL2023 packages
-          setup_postgresql_monitoring() {
-            echo "Setting up PostgreSQL monitoring extensions..."
-            
-            # Configure shared_preload_libraries and pg_stat_statements settings
-            if ! grep -q "shared_preload_libraries" /var/lib/pgsql/data/postgresql.conf; then
-              echo "shared_preload_libraries = 'pg_stat_statements'" >> /var/lib/pgsql/data/postgresql.conf
-            else
-              sed -i "s/^#*shared_preload_libraries = .*/shared_preload_libraries = 'pg_stat_statements'/" /var/lib/pgsql/data/postgresql.conf
-            fi
-            
-            # Add comprehensive pg_stat_statements configuration
-            echo "" >> /var/lib/pgsql/data/postgresql.conf
-            echo "# PostgreSQL Monitoring Configuration" >> /var/lib/pgsql/data/postgresql.conf
-            echo "pg_stat_statements.max = 10000" >> /var/lib/pgsql/data/postgresql.conf
-            echo "pg_stat_statements.track = all" >> /var/lib/pgsql/data/postgresql.conf
-            echo "pg_stat_statements.save = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "pg_stat_statements.track_utility = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "pg_stat_statements.track_planning = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "" >> /var/lib/pgsql/data/postgresql.conf
-            echo "# Additional performance monitoring settings" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_statement_stats = off" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_parser_stats = off" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_planner_stats = off" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_executor_stats = off" >> /var/lib/pgsql/data/postgresql.conf
-            echo "" >> /var/lib/pgsql/data/postgresql.conf
-            echo "# Query logging for additional monitoring" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_min_duration_statement = 1000" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_checkpoints = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_connections = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_disconnections = on" >> /var/lib/pgsql/data/postgresql.conf
-            echo "log_lock_waits = on" >> /var/lib/pgsql/data/postgresql.conf
-            
-            # Restart PostgreSQL to load the extension
-            systemctl restart postgresql
-            
-            # Wait for PostgreSQL to be ready
-            until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
-              echo "Waiting for PostgreSQL to restart..."
-              sleep 2
-            done
-            
-            # Create monitoring extensions in the database
-            echo "Installing PostgreSQL monitoring extensions..."
-            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
-            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_buffercache;"
-            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgstattuple;"
-            sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgrowlocks;"
-            
-            echo "PostgreSQL monitoring extensions configured successfully!"
-            echo "Installed extensions: pg_stat_statements, pg_buffercache, pgstattuple, pgrowlocks"
-          }
-
-          # Install Node.js application dependencies
-          install_application_dependencies() {
-            echo "Installing PM2 for process management..."
-            npm install -g pm2
-          }
-
-          # Setup application directory structure
-          setup_application_structure() {
-            mkdir -p /opt/foodme/{frontend,backend,database,logs}
-            chown -R ec2-user:ec2-user /opt/foodme
-          }
-
-          # Deploy backend application
-          deploy_backend_application() {
-            cd /opt/foodme/backend
-            
-            # Download backend code from S3
-            echo "Downloading backend code from S3..."
-            aws s3 cp s3://${S3BucketName}/server.zip ./server.zip
-            unzip -q server.zip
-            mv server/* .
-            rmdir server
-            rm server.zip
-            
-            # Install dependencies
-            npm install
-            
-          # Create environment configuration
-          cat > .env << EOF
-          NODE_ENV="${NodeEnvironment}"
-          PORT=3000
-          DATABASE_URL="postgresql://postgres:${DatabasePassword}@localhost:5432/foodme"
-          JWT_SECRET=\$(openssl rand -base64 32)
-          CORS_ORIGIN="http://\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
-          ANGULAR_DIR="/opt/foodme/dist/browser"
-          NEW_RELIC_LICENSE_KEY="${NewRelicLicenseKey}"
-          NEW_RELIC_APP_NAME="FoodMe-${Environment}"
-          NEW_RELIC_ENABLED=\$([[ -n "${NewRelicLicenseKey}" && "${NewRelicLicenseKey}" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "true" || echo "false")
-          NEW_RELIC_LOG_LEVEL="info"
-          NEW_RELIC_DISTRIBUTED_TRACING_ENABLED="true"
-          NEW_RELIC_SPAN_EVENTS_ENABLED="true"
-          AWS_REGION=\$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
-          ENVIRONMENT="${Environment}"
-          EOF
+          # Download and execute installation script
+          echo "Downloading FoodMe installation script..."
+          curl -fsSL -o /tmp/install-foodme.sh "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/cloudformation/install-foodme.sh"
+          chmod +x /tmp/install-foodme.sh
           
-            # Start application with PM2 using Node.js built-in .env support
+          # Execute installation with parameters
+          echo "Starting FoodMe installation..."
+          /tmp/install-foodme.sh "${DatabasePassword}" "${S3BucketName}" "${NewRelicLicenseKey}" "${Environment}" "${NodeEnvironment}"
+          
+          echo "Installation completed successfully!"
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-app-server'
+        - Key: Environment  
+          Value: !Ref Environment
+        - Key: Application
+          Value: FoodMe
+
+Outputs:
+          
+            # Start application with PM2 using ecosystem configuration
             echo "Starting backend application with PM2..."
-            pm2 start "node --env-file=.env start.js" --name "foodme-backend"
+            pm2 start ecosystem.config.js
             
             # Wait for application to be ready
             echo "Waiting for backend to be ready..."
@@ -555,27 +433,6 @@ Resources:
             application: "foodme"
             region: \$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
             instance_type: "${InstanceType}"
-          
-          # Enable logs forwarding
-          logs:
-            - name: nginx-access
-              file: /var/log/nginx/access.log
-              attributes:
-                logtype: nginx-access
-                service: nginx
-                environment: "${Environment}"
-            - name: nginx-error
-              file: /var/log/nginx/error.log
-              attributes:
-                logtype: nginx-error
-                service: nginx
-                environment: "${Environment}"
-            - name: postgresql
-              file: /var/lib/pgsql/16/data/log/postgresql-*.log
-              attributes:
-                logtype: postgresql
-                service: postgresql
-                environment: "${Environment}"
           EOF
           
             # Download and setup New Relic integration configurations
@@ -649,6 +506,66 @@ Resources:
             # Install New Relic integrations
             echo "Installing New Relic integrations..."
             dnf install -y nri-nginx nri-postgresql
+            
+            # Create dedicated FoodMe application logging configuration
+            echo "Setting up FoodMe application logging configuration..."
+            cat > /etc/newrelic-infra/logging.d/foodme-logs.yml << EOF
+          logs:
+            # Nginx logs
+            - name: nginx-access
+              file: /var/log/nginx/access.log
+              attributes:
+                logtype: nginx-access
+                service: nginx
+                environment: "${Environment}"
+                component: reverse-proxy
+                
+            - name: nginx-error
+              file: /var/log/nginx/error.log
+              attributes:
+                logtype: nginx-error
+                service: nginx
+                environment: "${Environment}"
+                component: reverse-proxy
+                log_level: error
+                
+            # PostgreSQL logs
+            - name: postgresql
+              file: /var/lib/pgsql/16/data/log/postgresql-*.log
+              attributes:
+                logtype: postgresql
+                service: postgresql
+                environment: "${Environment}"
+                component: database
+                
+            # FoodMe Application logs
+            - name: foodme-backend-output
+              file: /opt/foodme/logs/foodme-backend-out.log
+              attributes:
+                logtype: foodme-application
+                service: foodme-backend
+                environment: "${Environment}"
+                component: nodejs-backend
+                log_level: info
+              
+            - name: foodme-backend-errors
+              file: /opt/foodme/logs/foodme-backend-error.log
+              attributes:
+                logtype: foodme-application
+                service: foodme-backend
+                environment: "${Environment}"
+                component: nodejs-backend
+                log_level: error
+                
+            - name: foodme-backend-combined
+              file: /opt/foodme/logs/foodme-backend-combined.log
+              attributes:
+                logtype: foodme-application
+                service: foodme-backend
+                environment: "${Environment}"
+                component: nodejs-backend
+                log_level: combined
+          EOF
             
             # Start and enable New Relic Infrastructure agent
             systemctl enable newrelic-infra
