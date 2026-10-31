@@ -47,6 +47,16 @@
       </ul>
 
       <ul class="navbar-nav">
+        <!-- Show or hide the New Relic "Behind the scenes" callouts -->
+        <li class="nav-item">
+          <a class="nav-link nr-toggle" [class.nr-toggle-on]="nrConfig.showCallouts()" href="#" role="button"
+             [attr.aria-pressed]="nrConfig.showCallouts()"
+             (click)="$event.preventDefault(); nrConfig.toggleCallouts()">
+            <i class="fas" [class.fa-eye]="nrConfig.showCallouts()" [class.fa-eye-slash]="!nrConfig.showCallouts()"></i>
+            Behind the scenes
+          </a>
+        </li>
+
         <!-- Cart -->
         <li class="nav-item dropdown" *ngIf="cartItemCount > 0">
           <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown">

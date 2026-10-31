@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CartService } from '../../services/cart.service';
+import { NrConfigService } from '../../nr-config';
 
 @Component({
   selector: 'app-header',
@@ -14,7 +15,7 @@ export class HeaderComponent {
   showHelpDropdown = false;
   showMobileMenu = false;
 
-  constructor(public cartService: CartService) {}
+  constructor(public cartService: CartService, public nrConfig: NrConfigService) {}
 
   get cartItemCount() {
     return this.cartService.totalItems();

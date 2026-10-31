@@ -1,0 +1,465 @@
+{
+  "name": "FoodMe Overview",
+  "description": "Orders, menus and browser activity for FoodMe. The queries match the 'Behind the scenes' callouts on the site.",
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "Orders",
+      "description": "Custom event, attributes and metrics the server records for every order.",
+      "widgets": [
+        {
+          "title": "Orders and revenue",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'FoodMe' SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Orders over time",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 8,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'FoodMe' TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Orders by restaurant",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'FoodMe' FACET restaurant SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Revenue by restaurant",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'FoodMe' FACET restaurant SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Checkout latency (POST /api/order)",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/POST//api/order' TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Order metrics (Custom/Orders/*)",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(newrelic.timeslice.value) FROM Metric WHERE appName = 'FoodMe' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Failed orders",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = 'WebTransaction/Expressjs/POST//api/order' FACET error.message SINCE 1 week ago"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Menus and errors",
+      "description": "Menu requests, including the planned failure set with DEMO_FAILING_RESTAURANT.",
+      "widgets": [
+        {
+          "title": "Menu requests by status code",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET http.statusCode TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Menu requests by restaurant and status",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, http.statusCode SINCE 1 week ago LIMIT 50"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Menu errors",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*), latest(timestamp) AS 'Last seen' FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, error.message SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Menu latency by restaurant",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug SINCE 1 week ago LIMIT 20"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Restaurant list latency (GET /api/restaurant)",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Server errors, all routes (planned errors excluded)",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName NOT LIKE '%/simulate/%' FACET transactionName, error.message SINCE 1 week ago"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Browser",
+      "description": "What visitors' browsers send: page views, errors, page actions and users.",
+      "widgets": [
+        {
+          "title": "Visitors",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(session) AS 'Sessions', count(*) AS 'Page views' FROM PageView WHERE appName = 'FoodMe' SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Page views by page",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 8,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM PageView WHERE appName = 'FoodMe' FACET pageUrl SINCE 1 week ago LIMIT 20"
+              }
+            ]
+          }
+        },
+        {
+          "title": "JavaScript errors",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM JavaScriptError WHERE appName = 'FoodMe' FACET errorMessage, page SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Failed AJAX requests (5xx)",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM AjaxRequest WHERE appName = 'FoodMe' AND httpResponseCode >= 500 FACET requestUrl SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Page actions",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM PageAction WHERE appName = 'FoodMe' FACET actionName SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Error simulation round trip (durationMs)",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE appName = 'FoodMe' AND actionName = 'error_simulation_triggered' TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Activity by user (enduser.id)",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM PageView, AjaxRequest, PageAction, JavaScriptError WHERE appName = 'FoodMe' AND enduser.id IS NOT NULL FACET enduser.id, eventType() SINCE 1 week ago"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

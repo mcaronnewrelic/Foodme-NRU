@@ -101,3 +101,8 @@
     transform: scale(1);
   }
 }
+
+.nr-toggle-on {
+  color: #1ce783 !important;
+  font-weight: 600;
+}

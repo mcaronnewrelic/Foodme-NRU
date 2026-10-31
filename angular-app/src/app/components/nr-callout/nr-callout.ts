@@ -7,7 +7,7 @@ import { NrConfigService } from '../../nr-config';
   styleUrl: './nr-callout.css'
 })
 export class NrCalloutComponent {
-  private config = inject(NrConfigService);
+  protected config = inject(NrConfigService);
 
   @Input({ required: true }) title!: string;
   @Input({ required: true }) nrql!: string;
