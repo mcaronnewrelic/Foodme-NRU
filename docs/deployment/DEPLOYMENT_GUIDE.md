@@ -2,6 +2,25 @@
 
 This quick reference shows all the ways to deploy and manage the FoodMe application using the shared `.env` file.
 
+## Node.js version
+
+FoodMe runs on **Node.js 24**. Amazon Linux 2023 packages it as `nodejs24` and `nodejs24-npm`, so the install scripts (`terraform/user_data.sh`, `cloudformation/install-foodme.sh`) use Amazon's own repository, not NodeSource.
+
+**New instances** get Node 24 from those scripts. For CloudFormation, upload the updated `install-foodme.sh` to the S3 bucket first, because instances download it at launch.
+
+**An existing instance keeps the version it was built with.** cloud-init runs user data once, at first boot, so changing `user_data` in Terraform does not reinstall anything (it only makes `terraform apply` stop and start the instance). Upgrade a running instance by hand, before deploying the new code:
+
+```bash
+sudo dnf install -y nodejs24 nodejs24-npm
+sudo alternatives --set node /usr/bin/node-24
+node -v                                          # v24.x
+cd /var/www/foodme/dist/server && sudo -u ec2-user npm install --omit=dev   # rebuilds native modules for the new Node
+sudo systemctl restart foodme
+sudo journalctl -u foodme -n 20
+```
+
+The service runs `/usr/bin/node`, which `alternatives` now points at Node 24. To go back, run `sudo alternatives --set node /usr/bin/node-22` (the older package stays installed) and restart the service. The CloudFormation layout uses `/opt/foodme` instead of `/var/www/foodme`.
+
 ## 🚀 One-Command Deployments
 
 | Command | Description |

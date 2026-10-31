@@ -63,7 +63,7 @@ export class CartService {
 
   private readonly API_URL_ORDER = '/api/order';
 
-  submitOrder(customer: Customer): Observable<{orderId: number}> {
+  submitOrder(customer: Customer): Observable<{orderId: number; requestId: string}> {
     const cartItems = this.cartItemsSignal();
     
     if (cartItems.length === 0) {
@@ -99,6 +99,6 @@ export class CartService {
     };
 
     // Post to the API endpoint
-    return this.http.post<{orderId: number}>(this.API_URL_ORDER, order);
+    return this.http.post<{orderId: number; requestId: string}>(this.API_URL_ORDER, order);
   }
 }

@@ -173,6 +173,8 @@ ssh ec2-user@$INSTANCE_IP "sudo systemctl restart foodme"
 
 ## 🛠️ Troubleshooting
 
+For Terraform errors and problems on the instance, see the [EC2 and Terraform Troubleshooting](../docs/troubleshooting/EC2_TROUBLESHOOTING.md) guide. A few common cases:
+
 ### Common Issues
 
 #### Permission Denied
@@ -298,4 +300,5 @@ For help with this deployment:
 - [Main Setup Guide](../docs/setup/SETUP_GUIDE.md)
 - [Deployment Guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
 - [DevContainer Setup](../docs/setup/DEVCONTAINER_SETUP.md)
-- [Security Guide](../SECURITY.md)
+- [EC2 and Terraform Troubleshooting](../docs/troubleshooting/EC2_TROUBLESHOOTING.md)
+- [Security](../docs/SECURITY.md)

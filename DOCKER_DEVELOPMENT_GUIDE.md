@@ -1,134 +1,77 @@
 # FoodMe Docker Development Guide
 
-## Quick Start for Mac with Rancher Desktop
+The quick start for running FoodMe on your machine. For what each file in `docker/` does, see [docker/README.md](./docker/README.md). When something breaks, see the [Docker Comprehensive Guide](./docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md).
 
-**New to this project? Follow this simple 3-step process:**
+## Quick start
 
-### 1. Prerequisites
-- Install [Rancher Desktop](https://rancherdesktop.io/) (recommended for Mac)
-- Clone this repository
-- Copy `.env.example` to `.env` and edit with your settings
+1. **Prerequisites.** A Docker engine ([Rancher Desktop](https://rancherdesktop.io/) works well on a Mac) or the [dev container](./docs/setup/DEVCONTAINER_SETUP.md). Clone the repository.
+2. **Configure.** Copy `.env.example` to `.env` and fill in at least `NEW_RELIC_LICENSE_KEY` and `DB_PASSWORD`. See [Environment Variables](./docs/setup/ENVIRONMENT_VARIABLES.md).
+3. **Build the website.** The containers serve the Angular build from `dist/`, so it has to exist first:
+   ```bash
+   npm run build:angular
+   ```
+   Run it where `node_modules` was installed for the same platform. Outside the dev container, `ng build` can fail with an esbuild "another platform" error. In that case build in a container from your terminal instead:
+   ```bash
+   npm run build:angular:docker
+   ```
+4. **Start.**
+   ```bash
+   npm run docker:dev:simple
+   ```
+5. **Open** http://localhost (through nginx) or http://localhost:3000 (the app directly).
 
-### 2. Choose Your Development Style
+| URL | What it is |
+|---|---|
+| http://localhost | The site, through nginx |
+| http://localhost:3000 | The Node app directly |
+| http://localhost/health | Health check |
+| http://localhost/api/restaurant | The restaurant API |
 
-#### Option A: Simple Development (Recommended for Beginners)
-Just the app and database - perfect for getting started:
-```bash
-npm run docker:dev:simple
-```
+## Pick a setup
 
-#### Option B: Full Local Production Simulation
-All services including monitoring - for advanced development:
-```bash
-npm run docker:dev:full
-```
+| | Simple | Full |
+|---|---|---|
+| Command | `npm run docker:dev:simple` | `npm run docker:dev:full` |
+| Runs | App, PostgreSQL, nginx | The same, plus a New Relic infrastructure agent stand-in and database monitoring |
+| Compose file | `docker/docker-compose.dev-simple.yml` | `docker/docker-compose.arm64.yml` |
+| Use it for | Feature work and debugging | Testing monitoring and production-like behavior |
+| Startup | About 30 seconds | About 60 seconds |
 
-### 3. Access Your Application
-- **Main App**: http://localhost (via nginx proxy)
-- **Direct App**: http://localhost:3000 (direct to Node.js)
-- **Health Check**: http://localhost/health
-- **API**: http://localhost/api/restaurant
-
----
-
-## Understanding the Options
-
-### Simple Development Setup
-- **What runs**: Node.js app + PostgreSQL database + nginx proxy
-- **Best for**: Learning, feature development, debugging
-- **Resources**: Low CPU/memory usage
-- **Startup time**: ~30 seconds
-
-### Full Production Simulation
-- **What runs**: Everything above + New Relic monitoring simulation
-- **Best for**: Testing monitoring, production-like debugging
-- **Resources**: Higher CPU/memory usage  
-- **Startup time**: ~60 seconds
-
----
-
-## Common Commands
+## Commands
 
 ```bash
-# Start simple development environment
-npm run docker:dev:simple
+npm run docker:dev:simple:build  # build Angular in a container, rebuild the images, recreate everything
+npm run docker:status            # what is running
+npm run docker:logs              # follow the logs
+npm run docker:stop              # stop everything
+npm run docker:clean             # stop and delete containers and volumes (the database is lost)
 
-# Start full production simulation
-npm run docker:dev:full
-
-# Check what's running
-npm run docker:status
-
-# View logs
-npm run docker:logs
-
-# Stop everything
-npm run docker:stop
-
-# Clean up containers and volumes
-npm run docker:clean
+npm run db:connect:simple        # psql into the database (db:connect:full for the full setup)
+npm run db:backup:simple         # write backup_<date>.sql (db:backup:full for the full setup)
 ```
 
----
+## Working on code
 
-## Troubleshooting
+What you changed decides what to run. The server code is copied into the image when it is built, so it does not reload by itself.
 
-### If containers won't start:
-1. Make sure Rancher Desktop is running
-2. Check if ports 80, 443, 3000, 5432 are free
-3. Try: `npm run docker:clean` then start again
+| You changed | Run |
+|---|---|
+| Angular code (`angular-app/`) | `npm run build:angular`. No restart needed: `dist/` is mounted into the container. |
+| Server code (`server/`) | `docker-compose -f docker/docker-compose.dev-simple.yml up -d --build --force-recreate foodme` |
+| `.env` | `docker-compose -f docker/docker-compose.dev-simple.yml up -d --force-recreate foodme`. The file is read only when the container is created, so a plain restart does not pick up changes. |
+| Database scripts in `db/init/` | `npm run docker:clean`, then start again. They only run when the database volume is first created. |
 
-### If you see "SSL certificate" errors:
-This is normal on ARM64 Macs - the setup automatically handles this.
+From a Mac terminal, `npm run docker:dev:simple:build` covers all of the first three rows at once. It builds Angular in a `node:24` container, rebuilds the images and recreates the containers. The database volume is kept.
 
-### If the database won't connect:
-1. Wait 30 seconds for PostgreSQL to fully start
-2. Check logs: `npm run docker:logs`
-3. Reset database: `npm run docker:clean` then restart
+## Using Docker directly
 
----
-
-## Development Workflow
-
-1. **Start**: `npm run docker:dev:simple`
-2. **Develop**: Edit code - changes auto-reload in simple mode
-3. **Test**: Visit http://localhost to see your changes
-4. **Debug**: Use `npm run docker:logs` to see what's happening
-5. **Stop**: `npm run docker:stop` when done
-
----
-
-## File Structure (What You Need to Know)
-
-```
-docker/
-├── docker-compose.dev-simple.yml   # Simple development setup
-├── docker-compose.arm64.yml        # Full production simulation (ARM64)
-├── Dockerfile.simple               # Simple Node.js build
-└── Dockerfile.arm64                # Full production build
-```
-
-**You typically don't need to modify these files.** Use the npm scripts instead.
-
----
-
-## Advanced: Direct Docker Commands
-
-If you prefer using Docker directly:
+The npm scripts are thin wrappers:
 
 ```bash
-# Simple setup
 docker-compose -f docker/docker-compose.dev-simple.yml up -d
-
-# Full setup
-docker-compose -f docker/docker-compose.arm64.yml up -d
-
-# Status
 docker-compose -f docker/docker-compose.dev-simple.yml ps
-
-# Logs
 docker-compose -f docker/docker-compose.dev-simple.yml logs -f
-
-# Stop
 docker-compose -f docker/docker-compose.dev-simple.yml down
 ```
+
+Use `docker/docker-compose.arm64.yml` in place of the simple file for the full setup.

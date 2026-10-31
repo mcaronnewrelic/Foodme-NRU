@@ -72,3 +72,9 @@
     </div>
   </div>
 </div>
+
+<div class="container mb-5">
+  <app-nr-callout title="Who you are to New Relic" [nrql]="userNrql" buttonLabel="See your sessions">
+    When you continue, the browser agent calls <code>setUserId()</code> with your name. Every page view, AJAX call, action and error after that carries it as <code>enduser.id</code>. Your name never goes to the server as an account, only as that attribute.
+  </app-nr-callout>
+</div>

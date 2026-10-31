@@ -5,6 +5,9 @@
 
 set -e
 
+# Paths below are relative to the repository root
+cd "$(dirname "$0")/.."
+
 echo "🔍 Security Validation Report"
 echo "================================"
 
@@ -37,14 +40,14 @@ echo "🐳 Dockerfile Security Checks"
 echo "------------------------------"
 
 # Check 1: No ARG instructions with secrets
-if grep -r "ARG.*SECRET\|ARG.*PASSWORD\|ARG.*KEY\|ARG.*TOKEN" dockerfile* 2>/dev/null; then
+if grep -r "ARG.*SECRET\|ARG.*PASSWORD\|ARG.*KEY\|ARG.*TOKEN" docker/Dockerfile* 2>/dev/null; then
     report_issue "Found ARG instructions with sensitive data in Dockerfile"
 else
     report_success "No ARG instructions with sensitive data found"
 fi
 
 # Check 2: No ENV instructions with hardcoded secrets
-if grep -r "ENV.*SECRET.*=\|ENV.*PASSWORD.*=\|ENV.*KEY.*=.*[a-zA-Z0-9]\|ENV.*TOKEN.*=.*[a-zA-Z0-9]" dockerfile* 2>/dev/null; then
+if grep -r "ENV.*SECRET.*=\|ENV.*PASSWORD.*=\|ENV.*KEY.*=.*[a-zA-Z0-9]\|ENV.*TOKEN.*=.*[a-zA-Z0-9]" docker/Dockerfile* 2>/dev/null; then
     report_issue "Found ENV instructions with hardcoded secrets in Dockerfile"
 else
     report_success "No hardcoded secrets in ENV instructions"
@@ -66,8 +69,8 @@ echo "🐙 Docker Compose Security Checks"
 echo "----------------------------------"
 
 # Check 4: Docker Compose using environment variables instead of build args
-if grep -A5 -B5 "build:" docker-compose.yml compose.yml 2>/dev/null | grep -q "args:"; then
-    if grep -A10 "args:" docker-compose.yml compose.yml 2>/dev/null | grep -q "SECRET\|PASSWORD\|KEY\|TOKEN"; then
+if grep -A5 -B5 "build:" docker/docker-compose*.yml 2>/dev/null | grep -q "args:"; then
+    if grep -A10 "args:" docker/docker-compose*.yml 2>/dev/null | grep -q "SECRET\|PASSWORD\|KEY\|TOKEN"; then
         report_issue "Found build args with secrets in Docker Compose"
     else
         report_success "Build args in Docker Compose don't contain secrets"
@@ -129,8 +132,8 @@ echo "🎯 Current Dockerfile Analysis"
 echo "------------------------------"
 
 # Show current Dockerfile structure
-echo "Lines 30-40 of current Dockerfile:"
-sed -n '30,40p' dockerfile 2>/dev/null || echo "Could not read dockerfile lines 30-40"
+echo "Lines 30-40 of docker/Dockerfile:"
+sed -n '30,40p' docker/Dockerfile 2>/dev/null || echo "Could not read docker/Dockerfile lines 30-40"
 
 echo
 echo "📊 Summary"

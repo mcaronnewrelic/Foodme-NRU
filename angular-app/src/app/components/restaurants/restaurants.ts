@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,14 +7,19 @@ import { CustomerService } from '../../services/customer.service';
 import { Restaurant } from '../../models/restaurant.model';
 import { CustomerCardComponent } from '../customer-card/customer-card';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-restaurants',
-  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent, NrCalloutComponent],
   templateUrl: './restaurants.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './restaurants.css'
 })
 export class RestaurantsComponent implements OnInit {
+  readonly listNrql =
+    "SELECT count(*), average(duration), percentile(duration, 95) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' SINCE 1 day ago";
+
   allRestaurants = signal<Restaurant[]>([]);
   
   // Add collapsible state for filters

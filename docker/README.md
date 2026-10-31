@@ -1,85 +1,31 @@
-# Docker Configuration for FoodMe
+# Docker files
 
-## For New Developers - Quick Start
+What each file in this folder is for. To run the app, use [DOCKER_DEVELOPMENT_GUIDE.md](../DOCKER_DEVELOPMENT_GUIDE.md) and its npm scripts. If something breaks, see the [Docker Comprehensive Guide](../docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md).
 
-**Use the npm scripts from the main directory instead of Docker commands directly:**
+## Compose files
 
-```bash
-# Start simple development environment (recommended)
-npm run docker:dev:simple
+| File | Runs | Start it with |
+|---|---|---|
+| `docker-compose.dev-simple.yml` | App, PostgreSQL 16, nginx | `npm run docker:dev:simple` |
+| `docker-compose.arm64.yml` | App, nginx, PostgreSQL with monitoring, New Relic infrastructure agent stand-in | `npm run docker:dev:full` |
 
-# Start full production simulation
-npm run docker:dev:full
+## Dockerfiles
 
-# Check status
-npm run docker:status
+| File | Builds |
+|---|---|
+| `Dockerfile.simple` | The Node app for the simple setup (server code only; the Angular build is mounted from `dist/`) |
+| `Dockerfile.arm64` | The Node app for the full setup, on ARM64 |
+| `Dockerfile` | A multi-stage production build of the Node app |
+| `nginx.dockerfile` | nginx reverse proxy |
+| `postgres-monitoring.dockerfile` | PostgreSQL with the monitoring extensions |
+| `newrelic-infra.arm64.dockerfile` | A minimal ARM64-compatible stand-in for the infrastructure agent, for local development |
 
-# View logs
-npm run docker:logs
+`newrelic-integrations/` holds the integration configuration mounted into the infrastructure container. See [newrelic-integrations/README.md](../newrelic-integrations/README.md).
 
-# Stop everything
-npm run docker:stop
-```
+## Archive
 
-## Development Files (Use These)
+`archive/` keeps the earlier compose files and Dockerfiles (`docker-compose.yml`, the dev and devcontainer overrides, the load test setup, and the security-hardened Dockerfile). They are not maintained, and documents that refer to them may be out of date.
 
-### For Daily Development
-- **`docker-compose.dev-simple.yml`** - Lightweight setup (app + database + nginx)
-- **`Dockerfile.simple`** - Basic Node.js application build
+## Environment
 
-### For Production Testing
-- **`docker-compose.arm64.yml`** - Full production simulation with monitoring
-- **`Dockerfile.arm64`** - Production-ready build for ARM64 (Apple Silicon)
-
-### Supporting Files
-- **`nginx.dockerfile`** - Nginx reverse proxy configuration
-- **`postgres-monitoring.dockerfile`** - PostgreSQL with monitoring extensions
-- **`newrelic-infra.arm64.dockerfile`** - New Relic monitoring simulation
-
-## Architecture Overview
-
-### Simple Development Setup
-```
-Browser → nginx:80 → foodme:3000 → postgres:5432
-```
-
-### Full Production Simulation
-```
-Browser → nginx:80/443 → foodme:3000 → postgres:5432
-                                   ↗ newrelic-infra (monitoring)
-```
-
-## Advanced Configuration
-
-If you need to modify Docker settings, see the archived configurations in `archive/` folder.
-
-## Troubleshooting
-
-### Common Issues on Mac:
-- **SSL Certificate Errors**: Normal on ARM64 - automatically handled
-- **Port Conflicts**: Stop other services using ports 80, 443, 3000, 5432
-- **Slow Startup**: Wait 30-60 seconds for all services to initialize
-
-### Reset Everything:
-```bash
-npm run docker:clean
-```
-
-## Environment Variables
-
-Make sure you have a `.env` file in the root directory. Copy from `.env.example` if needed.
-
-Required variables:
-- `NEW_RELIC_LICENSE_KEY` - For monitoring (get from New Relic)
-- `DB_PASSWORD` - Database password (auto-generated if not set)
-
-# Database Configuration
-POSTGRES_DB=foodme
-POSTGRES_USER=foodme_user
-POSTGRES_PASSWORD=your_secure_password
-```
-
-For more detailed information, see the main project documentation files:
-- [Setup Guide](../docs/setup/SETUP_GUIDE.md)
-- [Docker Comprehensive Guide](../docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)
-- [Deployment Guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
+Both compose files read `../.env`. See [Environment Variables](../docs/setup/ENVIRONMENT_VARIABLES.md).

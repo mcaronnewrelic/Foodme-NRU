@@ -36,10 +36,10 @@ log "Updating system and installing packages..."
 dnf update -y
 dnf install -y git nginx postgresql16-server postgresql16 postgresql16-contrib unzip nmap-ncat
 
-# Install Node.js 22 using NodeSource repository
-log "Installing Node.js 22..."
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-dnf install -y nodejs
+# Install Node.js 24 from Amazon Linux 2023's own repository (node and npm come through alternatives)
+log "Installing Node.js 24..."
+dnf install -y nodejs24 nodejs24-npm
+alternatives --set node /usr/bin/node-24
 
 # Install New Relic Infrastructure agent
 log "Installing New Relic Infrastructure agent..."

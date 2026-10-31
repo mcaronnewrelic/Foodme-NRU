@@ -1,6 +1,6 @@
 # 🍕 FoodMe - Restaurant Ordering Application
 
-[![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org/)
 [![Angular](https://img.shields.io/badge/Angular-20-red.svg)](https://angular.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/Security-Validated-brightgreen.svg)](#-security-features)
@@ -168,7 +168,7 @@ foodme/
 ### � Essential Reading
 - **[Docker Development Guide](./DOCKER_DEVELOPMENT_GUIDE.md)** - 🐳 **START HERE** for local development
 - **[Project Structure](./PROJECT_STRUCTURE.md)** - 📁 Understanding the organized codebase
-- **[Documentation Index](./docs/README.md)** - 📚 Complete documentation navigation
+- **[Documentation Index](./docs/README.md)** - 📚 Which document to read for what
 
 ### 🎯 Quick Access by Topic
 
@@ -184,14 +184,15 @@ foodme/
 - **[Terraform Deployment](./terraform/README.md)** - Infrastructure as code with Terraform
 
 #### 📊 Monitoring & Testing
-- **[New Relic Setup](./docs/NEW_RELIC_INFRA_SETUP.md)** - Application performance monitoring
+- **[New Relic Demo Features](./docs/NEW_RELIC_DEMO.md)** - "Behind the scenes" callouts, planned failures and source maps
+- **[New Relic Setup Scripts](./newrelic/README.md)** - Dashboard, service levels, alerts and workload
+- **[New Relic Infrastructure Setup](./docs/NEW_RELIC_INFRA_SETUP.md)** - Host and database monitoring
 - **[Load Testing](./docs/LOAD_TESTING.md)** - Performance testing with Locust
-- **[Security Guide](./docs/SECURITY.md)** - Security implementation and compliance
+- **[Security](./docs/SECURITY.md)** - Practices, checks and the open findings from the security review
 
 #### 🔧 Troubleshooting
-- **[Docker Issues](./docs/troubleshooting/DOCKER_MOUNT_FIX.md)** - Common Docker problems
-- **[EC2 Troubleshooting](./docs/troubleshooting/EC2_TROUBLESHOOTING.md)** - AWS deployment issues
-- **[Comprehensive Docker Guide](./docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)** - Advanced Docker debugging
+- **[EC2 and Terraform Troubleshooting](./docs/troubleshooting/EC2_TROUBLESHOOTING.md)** - Terraform errors and EC2 deployment issues
+- **[Docker Comprehensive Guide](./docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)** - Docker services, commands and fixes for common problems
 
 ### 💡 Quick Reference for New Developers
 1. **[README.md](./README.md)** - This file, project overview
@@ -210,7 +211,7 @@ foodme/
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 22+ (or use the included dev container)
+- Node.js 24+ (or use the included dev container)
 - Docker and Docker Compose
 - Python 3.11+ (for load testing)
 
