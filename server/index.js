@@ -587,7 +587,20 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         'orderTotal': orderTotal,
         'requestId': req.requestId
       });
-      
+
+      // Planned failures for the "find the failed order in New Relic" exercise; each is off unless its variable is set.
+      // They run after the attributes above, so the failed transaction still says who ordered what, and before the
+      // Order event and metrics below, so a failed order isn't counted as a sale.
+      const { nameToSlug } = require('./url-utils');
+      const failingItem = order.items.find(item => nameToSlug(item.name) === process.env.DEMO_FAILING_ORDER_ITEM);
+      if (failingItem) {
+        newrelic.addCustomAttributes({ failedItem: failingItem.name });
+        throw new Error(`Inventory check failed for "${failingItem.name}": stock count is -2`);
+      }
+      if (nameToSlug(order.restaurant?.name || '') === process.env.DEMO_FAILING_ORDER_RESTAURANT) {
+        throw new Error(`Kitchen at "${order.restaurant.name}" is not accepting orders: ticket printer offline`);
+      }
+
       newrelic.incrementMetric("Orders/count", 1);
       newrelic.recordMetric('Orders/total', parseInt(orderTotal));
 
@@ -671,7 +684,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
           itemCount: order.items?.length
         }
       }, 'Error processing order');
-      return res.status(500).send({ error: 'Failed to process order' });
+      return next(error);
     }
   });
 
