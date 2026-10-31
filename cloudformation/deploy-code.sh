@@ -11,6 +11,7 @@ AWS_REGION=""
 UPDATE_FRONTEND=true
 UPDATE_BACKEND=true
 RESTART_SERVICES=true
+SHOW_LOGS=false
 
 # Function to show usage
 usage() {
@@ -24,6 +25,7 @@ usage() {
     echo "  --frontend-only   Update only Angular frontend"
     echo "  --backend-only    Update only Node.js backend"
     echo "  --no-restart      Skip restarting services"
+    echo "  --logs            Show recent backend and nginx logs at the end"
     echo "  -h                Show this help message"
     echo ""
     echo "Examples:"
@@ -55,6 +57,10 @@ while [[ $# -gt 0 ]]; do
             UPDATE_BACKEND=true
             shift
             ;;
+        --logs)
+            SHOW_LOGS=true
+            shift
+            ;;
         --no-restart)
             RESTART_SERVICES=false
             shift
@@ -68,6 +74,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+if ! command -v jq > /dev/null; then
+    echo "❌ jq is required (brew install jq, or dnf/apt install jq)"
+    exit 1
+fi
 
 # Validate required parameters
 if [ -z "$ENVIRONMENT" ]; then
@@ -173,7 +184,7 @@ execute_on_ec2() {
     aws ssm send-command \
         --instance-ids "$INSTANCE_ID" \
         --document-name "AWS-RunShellScript" \
-        --parameters "commands=[\"$command\"]" \
+        --parameters "$(jq -n --arg c "$command" '{commands: [$c]}')" \
         --region "$AWS_REGION" \
         --query 'Command.CommandId' \
         --output text
@@ -233,30 +244,28 @@ if [ "$UPDATE_BACKEND" = true ]; then
     echo "🔄 Updating backend on EC2..."
     BACKEND_COMMANDS="
         set -e
+
+        # Keep the current code (without node_modules) so a bad deploy can be rolled back by hand
+        tar -czf /opt/foodme/backend-backup.tgz --exclude=node_modules -C /opt/foodme/backend .
+
+        # Download and unpack the new code
+        aws s3 cp s3://$S3_BUCKET/server.zip /tmp/server.zip
+        rm -rf /tmp/server-new && mkdir /tmp/server-new
+        unzip -q /tmp/server.zip -d /tmp/server-new
+
+        # Copy everything, including data/ and views/. The .env file and ecosystem.config.js only exist on
+        # the instance, and the zip does not contain them, so they stay as they are.
+        cp -r /tmp/server-new/server/. /opt/foodme/backend/
+        rm -rf /tmp/server-new /tmp/server.zip
+        chown -R ec2-user:ec2-user /opt/foodme/backend
+
+        # Install what package.json asks for, as the user that runs the app
         cd /opt/foodme/backend
-        
-        # Backup current code
-        if [ -d backup ]; then rm -rf backup; fi
-        mkdir backup
-        cp -r *.js *.json package* backup/ 2>/dev/null || true
-        
-        # Download and extract new code
-        aws s3 cp s3://$S3_BUCKET/server.zip ./server.zip
-        rm -rf temp_server && mkdir temp_server
-        cd temp_server
-        unzip -q ../server.zip
-        
-        # Move new files (preserve .env and node_modules)
-        cd /opt/foodme/backend
-        cp temp_server/server/* .
-        rm -rf temp_server server.zip
-        
-        # Install dependencies if package.json changed
-        npm install --production
-        
+        sudo -u ec2-user npm install --omit=dev --no-audit --no-fund
+
         echo 'Backend code updated successfully'
     "
-    
+
     COMMAND_ID=$(execute_on_ec2 "$BACKEND_COMMANDS")
     wait_for_command "$COMMAND_ID"
     
@@ -315,68 +324,67 @@ if [ "$RESTART_SERVICES" = true ]; then
     
     RESTART_COMMANDS="
         set -e
-        
-        # Restart backend service
-        if systemctl is-active --quiet foodme-backend; then
-            echo 'Restarting foodme-backend service...'
-            systemctl restart foodme-backend
-            sleep 5
-            if systemctl is-active --quiet foodme-backend; then
-                echo 'Backend service restarted successfully'
-            else
-                echo 'Warning: Backend service failed to restart'
-                systemctl status foodme-backend
-            fi
+        cd /opt/foodme/backend
+
+        # The backend is a PM2 process owned by ec2-user
+        if sudo -u ec2-user pm2 describe foodme-backend > /dev/null 2>&1; then
+            sudo -u ec2-user pm2 restart foodme-backend --update-env
         else
-            echo 'Starting foodme-backend service...'
-            systemctl start foodme-backend
+            sudo -u ec2-user pm2 start ecosystem.config.js
         fi
-        
-        # Restart nginx
-        echo 'Restarting nginx...'
-        systemctl restart nginx
-        
-        # Check service status
-        echo 'Service status:'
-        systemctl is-active foodme-backend nginx
+        sudo -u ec2-user pm2 save
+
+        # Give it a moment, then make sure it answers
+        sleep 5
+        curl -sf http://localhost:3000/health > /dev/null || { echo 'Backend did not answer /health'; sudo -u ec2-user pm2 logs foodme-backend --nostream --lines 30; exit 1; }
+        echo 'Backend answers /health'
+
+        systemctl reload nginx
+        systemctl is-active nginx
     "
-    
+
     COMMAND_ID=$(execute_on_ec2 "$RESTART_COMMANDS")
     wait_for_command "$COMMAND_ID"
     
     echo "✅ Services restarted"
 fi
 
-# Get application URL
+# Check the application through the load balancer
 echo ""
 echo "🌐 Application Status:"
-ALB_DNS=$(get_stack_output "LoadBalancerDNS")
-if [ -n "$ALB_DNS" ]; then
-    echo "   Application URL: http://$ALB_DNS"
-    echo "   API URL: http://$ALB_DNS:3000"
-else
-    PUBLIC_IP=$(get_stack_output "PublicIpAddress")
-    if [ -n "$PUBLIC_IP" ]; then
-        echo "   Application URL: http://$PUBLIC_IP"
-        echo "   API URL: http://$PUBLIC_IP:3000"
+APP_URL=$(get_stack_output "ApplicationURL")
+HEALTH_URL=$(get_stack_output "HealthCheckURL")
+if [ -n "$HEALTH_URL" ]; then
+    echo "   Application URL: $APP_URL"
+    echo "   Health check:    $HEALTH_URL"
+    healthy=false
+    for attempt in 1 2 3 4 5 6; do
+        if curl -sf --max-time 10 "$HEALTH_URL" > /dev/null; then healthy=true; break; fi
+        echo "   Waiting for the load balancer to see a healthy instance (attempt $attempt/6)..."
+        sleep 10
+    done
+    if [ "$healthy" != true ]; then
+        echo "❌ $HEALTH_URL did not answer after the deployment"
+        exit 1
     fi
+    echo "   ✅ Health check passed"
 fi
 
 echo ""
 echo "✅ Deployment completed successfully!"
 echo ""
-echo "🔍 To verify the deployment:"
-echo "   - Check application: curl -s -o /dev/null -w '%{http_code}' http://$ALB_DNS"
-echo "   - Check API: curl -s http://$ALB_DNS:3000/api/restaurant"
-echo "   - View logs: $0 --logs"
+echo "🔍 To check it again:"
+echo "   - Application: curl -s -o /dev/null -w '%{http_code}' $APP_URL"
+echo "   - API:         curl -s $APP_URL/api/restaurant"
+echo "   - Logs:        $0 -e $ENVIRONMENT --logs"
 
 # Optional: Show recent logs
-if [ "$1" = "--logs" ]; then
+if [ "$SHOW_LOGS" = true ]; then
     echo ""
     echo "📜 Recent application logs:"
     LOG_COMMANDS="
         echo '=== Backend Logs ==='
-        journalctl -u foodme-backend --no-pager -n 20
+        sudo -u ec2-user pm2 logs foodme-backend --nostream --lines 20
         echo
         echo '=== Nginx Error Logs ==='
         tail -20 /var/log/nginx/error.log
