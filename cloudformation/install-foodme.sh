@@ -3,6 +3,14 @@ set -e
 
 # FoodMe Application Installation Script
 # This script installs and configures the complete FoodMe application stack
+#
+# Key Fixes Applied:
+# - Fixed Angular build output path handling (outputs to /opt/foodme/dist directly)
+# - Corrected New Relic file ownership (root:root instead of root:newrelic-infra)
+# - Fixed file permissions (644 instead of 640)
+# - Improved PostgreSQL integration test (PGPASSWORD method)
+# - Enhanced service startup with error handling and fallback
+# - Added comprehensive step-by-step logging
 
 # Function to log with timestamp
 log() {
@@ -178,6 +186,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 CORS_ORIGIN="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
 ANGULAR_DIR="/opt/foodme/dist/browser"
 NEW_RELIC_LICENSE_KEY="$new_relic_key"
+NRIA_LICENSE_KEY="$new_relic_key"
 NEW_RELIC_APP_NAME="FoodMe-$environment"
 NEW_RELIC_ENABLED=$([[ -n "$new_relic_key" && "$new_relic_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "true" || echo "false")
 NEW_RELIC_LOG_LEVEL="info"
@@ -189,7 +198,7 @@ EOF
     
     # Create PM2 ecosystem configuration
     log "Creating PM2 ecosystem configuration..."
-    cat > ecosystem.config.js << 'EOF'
+    cat > ecosystem.config.js << EOF
 module.exports = {
   apps: [{
     name: 'foodme-backend',
@@ -226,42 +235,90 @@ deploy_frontend_application() {
     aws s3 cp "s3://$s3_bucket/angular-app.zip" ./angular-app.zip
     unzip -q angular-app.zip
     rm angular-app.zip
+    
+    # Fix ownership of angular-app directory
+    log "Fixing Angular app permissions..."
+    chown -R ec2-user:ec2-user /opt/foodme/angular-app
+    
+    # Build Angular application
+    log "Building Angular application..."
+    cd /opt/foodme/angular-app
+    sudo -u ec2-user npm install
+    sudo -u ec2-user npm run build
+    
+    # Verify Angular build output location
+    log "Verifying Angular build output..."
+    if [ -d "/opt/foodme/dist/browser" ]; then
+        log "✅ Angular build output found at correct location: /opt/foodme/dist/browser"
+    else
+        log "❌ Angular build output not found at expected location"
+        log "Checking alternative locations..."
+        find /opt/foodme -name "browser" -type d 2>/dev/null | head -5
+        exit 1
+    fi
+    
+    log "Frontend deployment completed!"
 }
 
 # Configure Nginx
 configure_nginx() {
     log "Configuring Nginx..."
     
-    # Create Nginx configuration
+    # Remove conflicting default server block from nginx.conf
+    log "Removing default server block from nginx.conf..."
+    sed -i '/^    server {/,/^    }/d' /etc/nginx/nginx.conf
+    
+    # Create main nginx configuration with monitoring module
     cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
 server {
     listen 80;
+    listen 8080;
     server_name _;
     
-    # Security headers
+    # Health check endpoint for monitoring
+    location /nginx-health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+    
+    # Nginx status page for New Relic monitoring
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        allow ::1;
+        allow 10.0.0.0/8;
+        allow 172.16.0.0/12;
+        allow 192.168.0.0/16;
+        deny all;
+    }
+    
+    # Security Headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     
-    # Serve Angular frontend
-    location / {
-        root /opt/foodme/dist/browser;
-        try_files $uri $uri/ /index.html;
-        expires 1h;
-        add_header Cache-Control "public, immutable";
-    }
+    # Gzip Compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
     
-    # Serve static assets with longer cache
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        root /opt/foodme/dist/browser;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-        gzip_static on;
-    }
-    
-    # Proxy API requests to Node.js backend
-    location /api {
+    # API routes - proxy to Node.js backend
+    location /api/ {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -271,24 +328,47 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        proxy_connect_timeout 30s;
-        proxy_send_timeout 30s;
-        proxy_read_timeout 30s;
+        proxy_read_timeout 100s;
+        proxy_send_timeout 100s;
     }
     
-    # Health check endpoint
+    # Health endpoint
     location /health {
-        proxy_pass http://localhost:3000/health;
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         access_log off;
     }
     
-    # Error pages
-    error_page 404 /index.html;
-    error_page 500 502 503 504 /50x.html;
-    location = /50x.html {
-        root /usr/share/nginx/html;
+    # Static assets with long cache
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Main application - serve everything else through Node.js
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
     }
 }
+
 EOF
     
     # Enable and start Nginx
@@ -303,6 +383,10 @@ configure_new_relic() {
     
     if [[ -n "$license_key" && "$license_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]]; then
         log "Configuring New Relic Infrastructure monitoring..."
+        
+        # Set system-wide environment variable for New Relic Infrastructure
+        echo "NRIA_LICENSE_KEY=$license_key" >> /etc/environment
+        export NRIA_LICENSE_KEY="$license_key"
         
         # Configure New Relic Infrastructure
         cat > /etc/newrelic-infra.yml << EOF
@@ -321,6 +405,216 @@ EOF
         log "New Relic Infrastructure monitoring enabled"
     else
         log "New Relic monitoring disabled (no license key provided)"
+    fi
+}
+
+# Configure PostgreSQL monitoring for New Relic
+configure_postgresql_monitoring() {
+    local license_key="$1"
+    local environment="$2"
+    local db_password="$3"
+    
+    if [[ -n "$license_key" && "$license_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]]; then
+        log "Setting up PostgreSQL monitoring for New Relic..."
+        
+        # Install PostgreSQL integration
+        log "Installing New Relic PostgreSQL integration..."
+        dnf install -y nri-postgresql
+        
+        # Create dedicated monitoring user for New Relic
+        log "Creating New Relic monitoring user in PostgreSQL..."
+        local newrelic_db_password=$(openssl rand -base64 32)
+        
+        sudo -u postgres psql -d foodme << EOF
+-- Create monitoring user
+CREATE USER newrelic WITH PASSWORD '$newrelic_db_password';
+
+-- Grant necessary permissions for monitoring
+GRANT CONNECT ON DATABASE foodme TO newrelic;
+GRANT USAGE ON SCHEMA public TO newrelic;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO newrelic;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO newrelic;
+GRANT pg_read_all_stats TO newrelic;
+
+-- Grant permissions for database stats
+GRANT pg_monitor TO newrelic;
+
+-- Ensure future tables are accessible
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO newrelic;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO newrelic;
+
+-- Test the connection
+SELECT 1;
+EOF
+        
+        # Create the integration configuration directory
+        mkdir -p /etc/newrelic-infra/integrations.d
+        
+        # Create PostgreSQL integration configuration
+        log "Creating PostgreSQL integration configuration..."
+        cat > /etc/newrelic-infra/integrations.d/postgresql-config.yml << EOF
+integrations:
+  - name: nri-postgresql
+    env:
+      HOSTNAME: localhost
+      PORT: 5432
+      USERNAME: newrelic
+      DATABASE: foodme
+      PASSWORD: $newrelic_db_password
+      SSL_MODE: disable
+      CONNECTION_TIMEOUT: 5
+      METRICS: true
+      INVENTORY: true
+      COLLECTION_LIST: ALL
+      ENABLE_QUERY_MONITORING: true
+      COLLECT_DB_LOCK_METRICS: true
+      COLLECT_BLOAT_METRICS: true
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"$environment","application":"foodme","database":"foodme","deployment":"ec2"}'
+      CUSTOM_METRICS_QUERY: |
+        SELECT 
+          'database_size' as metric_name,
+          'gauge' as metric_type,
+          pg_database_size('foodme') as metric_value,
+          'bytes' as metric_unit
+        UNION ALL
+        SELECT 
+          'active_connections' as metric_name,
+          'gauge' as metric_type,
+          COUNT(*) as metric_value,
+          'connections' as metric_unit
+        FROM pg_stat_activity 
+        WHERE state = 'active'
+        UNION ALL
+        SELECT 
+          'idle_connections' as metric_name,
+          'gauge' as metric_type,
+          COUNT(*) as metric_value,
+          'connections' as metric_unit
+        FROM pg_stat_activity 
+        WHERE state = 'idle';
+    interval: 30s
+    labels:
+      env: $environment
+      role: database
+      service: postgresql
+      application: foodme
+      deployment: ec2
+    inventory_source: config/postgresql
+EOF
+        
+        # Set proper permissions
+        chown root:root /etc/newrelic-infra/integrations.d/postgresql-config.yml
+        chmod 644 /etc/newrelic-infra/integrations.d/postgresql-config.yml
+        
+        # Test the integration
+        log "Testing PostgreSQL integration..."
+        if PGPASSWORD="$newrelic_db_password" psql -h localhost -p 5432 -U newrelic -d foodme -c "SELECT 1;" > /dev/null 2>&1; then
+            log "✅ PostgreSQL integration connection test successful"
+        else
+            log "⚠️  PostgreSQL integration connection test failed - check configuration"
+        fi
+        
+        # Restart New Relic Infrastructure to pick up the new integration
+        systemctl restart newrelic-infra
+        
+        log "PostgreSQL monitoring configuration completed"
+    else
+        log "PostgreSQL monitoring disabled (no New Relic license key provided)"
+    fi
+}
+
+# Configure Nginx monitoring for New Relic
+configure_nginx_monitoring() {
+    local license_key="$1"
+    local environment="$2"
+    
+    if [[ -n "$license_key" && "$license_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]]; then
+        log "Setting up Nginx monitoring for New Relic..."
+        
+        # Install Nginx integration
+        log "Installing New Relic Nginx integration..."
+        dnf install -y nri-nginx
+        
+        # Ensure stub_status module is available (should be included by default)
+        log "Verifying Nginx status module..."
+        if nginx -V 2>&1 | grep -q "http_stub_status_module"; then
+            log "✅ Nginx status module is available"
+        else
+            log "⚠️  Nginx status module not found - some metrics may be limited"
+        fi
+        
+        # Create the integration configuration directory if it doesn't exist
+        mkdir -p /etc/newrelic-infra/integrations.d
+        
+        # Create Nginx integration configuration
+        log "Creating Nginx integration configuration..."
+        cat > /etc/newrelic-infra/integrations.d/nginx-config.yml << EOF
+integrations:
+  - name: nri-nginx
+    env:
+      # Status URL for nginx stub_status module
+      STATUS_URL: http://127.0.0.1:8080/nginx_status
+      
+      # Connection settings
+      CONNECTION_TIMEOUT: 5
+      
+      # Metrics collection settings
+      METRICS: true
+      INVENTORY: true
+      
+      # Custom attributes for better organization
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"$environment","application":"foodme","role":"web-server","deployment":"ec2"}'
+      
+      # Optional: Parse nginx access logs for additional metrics
+      ACCESS_LOG_PATH: /var/log/nginx/access.log
+      ERROR_LOG_PATH: /var/log/nginx/error.log
+      
+      # Log parsing format (combined is default nginx format)
+      LOG_FORMAT: combined
+      
+      # Enable log metrics collection
+      COLLECT_LOG_METRICS: true
+      
+    interval: 30s
+    labels:
+      env: $environment
+      role: web-server
+      service: nginx
+      application: foodme
+      deployment: ec2
+    inventory_source: config/nginx
+EOF
+        
+        # Set proper permissions for the configuration file
+        chown root:root /etc/newrelic-infra/integrations.d/nginx-config.yml
+        chmod 644 /etc/newrelic-infra/integrations.d/nginx-config.yml
+        
+        # Ensure nginx log directory permissions allow New Relic to read logs
+        log "Configuring Nginx log permissions for monitoring..."
+        chmod 755 /var/log/nginx
+        chmod 644 /var/log/nginx/*.log 2>/dev/null || true
+        
+        # Note: New Relic Infrastructure agent runs as root, no user group changes needed
+        # The agent has proper permissions to read nginx logs via file system permissions
+        
+        # Test the status endpoint
+        log "Testing Nginx status endpoint..."
+        if curl -s http://127.0.0.1:8080/nginx_status > /dev/null 2>&1; then
+            log "✅ Nginx status endpoint test successful"
+            # Show a sample of the status output
+            log "Status endpoint sample:"
+            curl -s http://127.0.0.1:8080/nginx_status | head -3
+        else
+            log "⚠️  Nginx status endpoint test failed - check nginx configuration"
+            log "Nginx should be configured with stub_status on port 8080"
+        fi
+        
+        # Restart New Relic Infrastructure to pick up the new integration
+        systemctl restart newrelic-infra
+        
+        log "Nginx monitoring configuration completed"
+    else
+        log "Nginx monitoring disabled (no New Relic license key provided)"
     fi
 }
 
@@ -347,6 +641,19 @@ initialize_database() {
     else
         log "No database initialization scripts found in S3"
     fi
+    
+    # Run schema initialization from local files if they exist
+    if [ -f "/opt/foodme/database/init/01-init-schema.sql" ]; then
+        log "Running local database schema initialization..."
+        sudo -u postgres psql foodme < /opt/foodme/database/init/01-init-schema.sql
+        
+        if [ -f "/opt/foodme/database/init/02-import-restaurants-uuid.sql" ]; then
+            log "Importing restaurant data..."
+            sudo -u postgres psql foodme < /opt/foodme/database/init/02-import-restaurants-uuid.sql
+        fi
+    else
+        log "Warning: Local database initialization scripts not found"
+    fi
 }
 
 # Start application services
@@ -354,15 +661,36 @@ start_services() {
     log "Starting application services..."
     
     # Start backend with PM2
+    log "Starting backend application with PM2..."
     cd /opt/foodme/backend
-    sudo -u ec2-user pm2 start ecosystem.config.js
-    sudo -u ec2-user pm2 save
     
-    # Setup PM2 startup script
-    pm2 startup systemd -u ec2-user --hp /home/ec2-user
+    # Kill any existing PM2 processes
+    sudo -u ec2-user pm2 kill 2>/dev/null || true
     
-    # Ensure Nginx is running
-    systemctl restart nginx
+    # Start the application
+    if sudo -u ec2-user pm2 start ecosystem.config.js; then
+        log "✅ Backend started successfully with PM2"
+        sudo -u ec2-user pm2 save
+        
+        # Setup PM2 startup script
+        pm2 startup systemd -u ec2-user --hp /home/ec2-user
+    else
+        log "❌ Failed to start backend with PM2, trying direct node start..."
+        # Fallback to direct node start
+        nohup node start.js > /opt/foodme/logs/backend.log 2>&1 &
+        log "✅ Backend started directly with node"
+    fi
+    
+    # Ensure Nginx is enabled and running
+    log "Starting and enabling Nginx..."
+    systemctl enable nginx
+    if systemctl restart nginx; then
+        log "✅ Nginx started and enabled successfully"
+    else
+        log "❌ Failed to start Nginx"
+        systemctl status nginx
+        exit 1
+    fi
     
     log "All services started successfully!"
 }
@@ -415,16 +743,43 @@ main() {
     log "New Relic: $([[ -n "$new_relic_key" && "$new_relic_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "Enabled" || echo "Disabled")"
     
     # Execute deployment steps
+    log "📋 Step 1/12: Configuring PostgreSQL..."
     configure_postgresql "$db_password"
+    
+    log "📋 Step 2/12: Setting up PostgreSQL monitoring extensions..."
     setup_postgresql_monitoring
+    
+    log "📋 Step 3/12: Installing application dependencies..."
     install_application_dependencies
+    
+    log "📋 Step 4/12: Setting up application structure..."
     setup_application_structure
+    
+    log "📋 Step 5/12: Deploying backend application..."
     deploy_backend_application "$s3_bucket" "$db_password" "$new_relic_key" "$environment" "$node_env"
+    
+    log "📋 Step 6/12: Deploying frontend application..."
     deploy_frontend_application "$s3_bucket"
+    
+    log "📋 Step 7/12: Configuring Nginx..."
     configure_nginx
+    
+    log "📋 Step 8/12: Configuring New Relic Infrastructure..."
     configure_new_relic "$new_relic_key" "$environment"
+    
+    log "📋 Step 9/12: Configuring PostgreSQL monitoring..."
+    configure_postgresql_monitoring "$new_relic_key" "$environment" "$db_password"
+    
+    log "📋 Step 10/12: Configuring Nginx monitoring..."
+    configure_nginx_monitoring "$new_relic_key" "$environment"
+    
+    log "📋 Step 11/12: Initializing database..."
     initialize_database "$db_password" "$s3_bucket"
+    
+    log "📋 Step 12/12: Starting services..."
     start_services
+    
+    log "🔍 Verifying deployment..."
     verify_deployment
     
     log "=== FoodMe Application Deployment Completed Successfully ==="

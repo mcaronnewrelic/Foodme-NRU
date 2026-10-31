@@ -1,0 +1,401 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'FoodMe Application - Production Ready with Enhanced Monitoring (AL2023)'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+  
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues: 
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+    Description: EC2 instance type
+  
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access
+  
+  DatabasePassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: PostgreSQL database password
+  
+  NewRelicLicenseKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: New Relic License Key (optional, for monitoring)
+  
+  S3BucketName:
+    Type: String
+    Description: S3 bucket containing deployment artifacts
+
+Mappings:
+  RegionConfig:
+    us-east-1:
+      AvailabilityZone1: us-east-1a
+      AvailabilityZone2: us-east-1b
+    us-west-2:
+      AvailabilityZone1: us-west-2a
+      AvailabilityZone2: us-west-2b
+    eu-west-1:
+      AvailabilityZone1: eu-west-1a
+      AvailabilityZone2: eu-west-1b
+
+Resources:
+  # VPC and Networking
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-igw
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !FindInMap [RegionConfig, !Ref 'AWS::Region', AvailabilityZone1]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-public-subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !FindInMap [RegionConfig, !Ref 'AWS::Region', AvailabilityZone2]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-public-subnet-2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-public-rt
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # Security Groups
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for FoodMe EC2 instance
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          Description: Node.js application
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          Description: Nginx frontend
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-ec2-sg
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-alb-sg
+
+  # IAM Role for EC2
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Environment}-foodme-ec2-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${S3BucketName}
+                  - !Sub arn:aws:s3:::${S3BucketName}/*
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  # EC2 Instance with AL2023 and Working Configuration
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}'
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Log all output
+          exec > >(tee /var/log/user-data.log) 2>&1
+          
+          echo "[$(date)] === FoodMe Installation Starting ==="
+          yum update -y
+          
+          # Install AWS CLI v2 and dependencies
+          dnf install -y wget curl unzip git
+          
+          # Install AWS CLI v2 if not present
+          if ! command -v aws &> /dev/null; then
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+          fi
+          
+          # Set environment variables for the installation script
+          export ENVIRONMENT="${Environment}"
+          export DATABASE_PASSWORD="${DatabasePassword}"
+          export NEW_RELIC_LICENSE_KEY="${NewRelicLicenseKey}"
+          export S3_BUCKET_NAME="${S3BucketName}"
+          
+          echo "[$(date)] Environment: $ENVIRONMENT"
+          echo "[$(date)] S3 Bucket: $S3_BUCKET_NAME"
+          echo "[$(date)] New Relic: $([ -n "$NEW_RELIC_LICENSE_KEY" ] && echo "Enabled" || echo "Disabled")"
+          
+          # Download and execute the installation script
+          echo "[$(date)] Downloading installation script..."
+          aws s3 cp s3://${S3BucketName}/install-foodme.sh /tmp/install-foodme.sh
+          chmod +x /tmp/install-foodme.sh
+          
+          # Execute installation with error handling
+          echo "[$(date)] Executing installation script..."
+          if /tmp/install-foodme.sh "$DATABASE_PASSWORD" "$S3_BUCKET_NAME" "$NEW_RELIC_LICENSE_KEY" "$ENVIRONMENT" "production"; then
+              echo "[$(date)] Installation completed successfully"
+              echo "[$(date)] === FoodMe Installation Completed Successfully ==="
+          else
+              echo "[$(date)] Installation script failed with exit code $?"
+              exit 1
+          fi
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-instance
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Application Load Balancer
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${Environment}-foodme-alb
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-foodme-alb
+
+  # Target Group for Backend API
+  BackendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${Environment}-foodme-backend-tg
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      HealthCheckPath: /health
+      HealthCheckProtocol: HTTP
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 3000
+
+  # Target Group for Frontend
+  FrontendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${Environment}-foodme-frontend-tg
+      Port: 8080
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Targets:
+        - Id: !Ref EC2Instance
+          Port: 8080
+
+  # ALB Listener
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+      
+  # ALB Listener Rules for API routing
+  ApiListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref LoadBalancerListener
+      Priority: 100
+      Conditions:
+        - Field: path-pattern
+          Values: 
+            - '/api/*'
+            - '/health'
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+Outputs:
+  LoadBalancerDNS:
+    Description: DNS name of the load balancer
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub ${Environment}-foodme-alb-dns
+
+  LoadBalancerHostedZone:
+    Description: Hosted zone ID of the load balancer
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+    Export:
+      Name: !Sub ${Environment}-foodme-alb-zone
+
+  ApplicationURL:
+    Description: Application URL
+    Value: !Sub http://${LoadBalancer.DNSName}
+
+  HealthCheckURL:
+    Description: Health check URL
+    Value: !Sub http://${LoadBalancer.DNSName}/health
+
+  ApiBaseURL:
+    Description: API base URL
+    Value: !Sub http://${LoadBalancer.DNSName}/api
+
+  EC2InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref EC2Instance
+    Export:
+      Name: !Sub ${Environment}-foodme-instance-id
+
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${Environment}-foodme-vpc-id
+
+  Environment:
+    Description: Environment name
+    Value: !Ref Environment
+
+  MonitoringStatus:
+    Description: New Relic monitoring status
+    Value: !If 
+      - HasNewRelicKey
+      - 'Enabled'
+      - 'Disabled (no license key)'
+
+Conditions:
+  HasNewRelicKey: !Not [!Equals [!Ref NewRelicLicenseKey, '']]
