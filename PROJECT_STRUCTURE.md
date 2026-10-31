@@ -27,7 +27,7 @@ foodme/
 │   └── *.md                   # 📊 Monitoring, security, testing docs
 │
 ├── cloudformation/             # ☁️ AWS CloudFormation templates
-├── terraform/                  # 🏗️ Terraform infrastructure code
+├── archive/                    # 🗄️ Retired code kept for reference (Terraform)
 ├── nginx-config/              # 🌐 Nginx reverse proxy configuration
 ├── newrelic-integrations/     # 📊 New Relic monitoring configuration
 └── db/                        # 🗄️ Database initialization and scripts

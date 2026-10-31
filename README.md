@@ -181,7 +181,7 @@ foodme/
 #### 🚀 Deployment & Operations  
 - **[Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md)** - Production deployment workflows
 - **[CloudFormation Templates](./cloudformation/README.md)** - AWS infrastructure deployment
-- **[Terraform Deployment](./terraform/README.md)** - Infrastructure as code with Terraform
+- **[GitHub Actions deployment](./docs/deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions)** - The deploy-cloudformation workflow: code, stack and cleanup
 
 #### 📊 Monitoring & Testing
 - **[New Relic Demo Features](./docs/NEW_RELIC_DEMO.md)** - "Behind the scenes" callouts, planned failures and source maps
@@ -191,7 +191,7 @@ foodme/
 - **[Security](./docs/SECURITY.md)** - Practices, checks and the open findings from the security review
 
 #### 🔧 Troubleshooting
-- **[EC2 and Terraform Troubleshooting](./docs/troubleshooting/EC2_TROUBLESHOOTING.md)** - Terraform errors and EC2 deployment issues
+- **[EC2 Troubleshooting](./docs/troubleshooting/EC2_TROUBLESHOOTING.md)** - Stack problems and a site that is not working on EC2
 - **[Docker Comprehensive Guide](./docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)** - Docker services, commands and fixes for common problems
 
 ### 💡 Quick Reference for New Developers
@@ -200,13 +200,12 @@ foodme/
 3. **[docs/README.md](./docs/README.md)** - Find any specific documentation
 - **DevContainer Setup**: Use [DEVCONTAINER_SETUP.md](./docs/setup/DEVCONTAINER_SETUP.md) for dev container configurations
 - **Database Setup**: Use [DATABASE_GUIDE.md](./docs/setup/DATABASE_GUIDE.md) for PostgreSQL initialization  
-- **Terraform Deployment**: Use [terraform/README.md](./terraform/README.md) for AWS EC2 deployment
-- **GitHub Actions**: Push to main branch for automatic deployment to EC2
+- **AWS Deployment**: Use the **deploy-cloudformation** workflow (Actions tab). A push to `main` that changes `server/` or `angular-app/` deploys the code to staging. See [Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions)
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow
 - **Environment Setup**: Copy `.env.example` to `.env` and configure your settings
-- **AWS Cleanup**: Use [Cleanup Guide](./.github/CLEANUP_GUIDE.md) for removing failed deployments
+- **AWS Cleanup**: See [Removing a deployment](./docs/deployment/DEPLOYMENT_GUIDE.md#removing-a-deployment)
 
 ## 🛠️ Development
 

@@ -1,436 +1,132 @@
-# EC2 and Terraform Troubleshooting
+# EC2 Troubleshooting
 
-One guide for a deployment that fails, whether it fails while Terraform runs or after the instance is up.
+For the CloudFormation deployment. The Terraform guides are in [archive/terraform](../../archive/terraform/).
 
 ## Where does it fail?
 
 | What you see | Go to |
 |---|---|
-| `terraform plan`, `apply` or `init` prints an error | [Terraform errors](#terraform-errors) |
-| `InvalidKeyPair.NotFound` | [EC2 Key Pair Setup](../../terraform/EC2_KEYPAIR_SETUP.md) |
-| Terraform finished, but the site does not load or is wrong | [On the instance](#on-the-instance) |
-| The New Relic infrastructure agent will not install on Amazon Linux 2023 | [New Relic on Amazon Linux 2023](../../terraform/NEW_RELIC_AL2023_FIX.md) |
-| A failed deployment left AWS resources behind | [Cleanup Guide](../../.github/CLEANUP_GUIDE.md) |
+| The stack fails to create or update | [Stack problems](#stack-problems) |
+| `InvalidKeyPair.NotFound` | [EC2 Key Pair Setup](../../archive/terraform/EC2_KEYPAIR_SETUP.md). The key pair named in the `EC2_KEY_NAME` secret must exist in the deployment region. |
+| The stack is fine, but the site does not load or is wrong | [On the instance](#on-the-instance) |
+| The code deployment workflow fails | [The code deployment fails](#the-code-deployment-fails) |
+| The New Relic infrastructure agent will not install on Amazon Linux 2023 | [New Relic on Amazon Linux 2023](../../archive/terraform/NEW_RELIC_AL2023_FIX.md) |
+| You want to remove a deployment | [Removing a deployment](../deployment/DEPLOYMENT_GUIDE.md#removing-a-deployment) |
 
 ## How the deployment is set up
 
-This is what a Terraform deployment creates today, so you know what to compare a broken instance against:
+Checked on a running staging instance on 2026-10-31.
 
-- **nginx** (`terraform/configs/nginx.conf`) proxies every request, including `/`, `/health`, `/api/` and static files, to the Node app on port 3000. The one exception is `/nginx_status`, which nginx answers itself for monitoring.
-- **The app** runs as the `foodme` systemd service (`terraform/configs/foodme.service`): user `ec2-user`, working directory `/var/www/foodme/dist/server`, command `/usr/bin/node start.js`. Restart is automatic after 10 seconds.
-- **Angular routing** works because the Node app serves the Angular build and answers unknown paths with `index.html`.
-- **PostgreSQL 16** runs on the instance as `postgresql-16`.
-- The CloudFormation deployment lays files out differently (the server code refers to `/opt/foodme`). The commands below use the Terraform paths.
+- **Traffic:** an Application Load Balancer listens on port 80. Requests to `/api/*` go to the backend target group (port 3000, health check `/health`). Everything else goes to nginx on port 8080 (health check `/`).
+- **nginx** listens on ports 80 and 8080 and proxies everything (pages, static files, `/api/` and `/health`) to the Node app on port 3000. Only `/nginx-health` and `/nginx_status` are answered by nginx itself.
+- **The Node app** serves the Angular build from `/opt/foodme/dist/browser`, and answers unknown paths with `index.html` so Angular routes work.
+- **The backend** runs under **PM2** as `ec2-user`, as the process `foodme-backend`. There is no systemd unit for it. Its code is in `/opt/foodme/backend`, with the settings in `.env` and `ecosystem.config.js`, and its logs are in `/opt/foodme/logs`.
+- **PostgreSQL 16** runs as the systemd service **`postgresql`** (not `postgresql-16`).
+- **The Angular source** is in `/opt/foodme/angular-app` and is built on the instance.
+- **Installation** runs once, when the instance first boots, from `install-foodme.sh` in the deployment S3 bucket. Its output is in `/var/log/cloud-init-output.log`.
 
-## Terraform errors
+## Getting onto the instance
 
-### 🚨 Template Syntax Errors
-
-#### Issue: Invalid template control keyword
-
-```
-Error: Call to function "templatefile" failed: ./user_data.sh:145,39-48: Invalid
-template control keyword; "http_code" is not a valid template control keyword.
-```
-
-**Cause**: Terraform interprets `%{...}` as template directives. Curl's `%{http_code}` conflicts with this.
-
-**Solution**: Escape the `%` character in user_data.sh:
-```bash
-# Wrong
-response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
-
-# Correct  
-response=$(curl -s -o /dev/null -w "%%{http_code}" http://localhost:3000/health)
-```
-
-#### Issue: CloudFormation variables in EC2 user data
-
-```
-Error: Invalid template interpolation value; The given value is not a string.
-```
-
-**Cause**: CloudFormation-style variables like `${AWS::StackName}` are not valid in Terraform templates.
-
-**Solution**: Remove or replace CloudFormation-specific code:
-```bash
-# Wrong (CloudFormation style)
-/opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource AutoScalingGroup --region ${AWS::Region}
-
-# Correct (Terraform style)
-echo "User data script completed successfully"
-```
-
-### 🔧 Backend Configuration Issues
-
-#### Issue: S3 Backend Access Denied
-
-```
-Error: error configuring S3 Backend: error validating provider credentials
-```
-
-**Solution 1**: Comment out backend for initial testing:
-```hcl
-# backend "s3" {
-#   bucket = "your-terraform-state-bucket"
-#   key    = "foodme/terraform.tfstate"
-#   region = "us-east-1"
-# }
-```
-
-**Solution 2**: Create S3 bucket for state storage:
-```bash
-aws s3 mb s3://your-terraform-state-bucket --region us-east-1
-aws s3api put-bucket-versioning --bucket your-terraform-state-bucket --versioning-configuration Status=Enabled
-```
-
-#### Issue: Backend Initialization Failed
-
-```
-Error: Backend configuration changed
-```
-
-**Solution**: Re-initialize with new backend:
-```bash
-terraform init -reconfigure
-```
-
-### 🔑 AWS Credentials Issues
-
-#### Issue: Expired Token
-
-```
-Error: ExpiredToken: The security token included in the request is expired
-```
-
-**Solution**: Refresh AWS credentials:
-```bash
-# For AWS CLI profiles
-aws configure
-
-# For temporary credentials
-export AWS_ACCESS_KEY_ID="your-key"
-export AWS_SECRET_ACCESS_KEY="your-secret"
-export AWS_SESSION_TOKEN="your-token"  # if using temporary credentials
-```
-
-#### Issue: Access Denied
-
-```
-Error: User is not authorized to perform ec2:CreateVpc
-```
-
-**Solution**: Ensure IAM user has required permissions:
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:*",
-                "iam:GetRole",
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "iam:AttachRolePolicy",
-                "iam:DetachRolePolicy",
-                "iam:CreateInstanceProfile",
-                "iam:DeleteInstanceProfile",
-                "iam:AddRoleToInstanceProfile",
-                "iam:RemoveRoleFromInstanceProfile",
-                "iam:PassRole"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-
-### 📝 Variable Configuration Issues
-
-#### Issue: Key pair not found
-
-```
-Error: The key pair 'my-key' does not exist
-```
-
-**Solution**: Create key pair or update variable:
-```bash
-# Create new key pair
-aws ec2 create-key-pair --key-name foodme-keypair --output text --query 'KeyMaterial' > foodme-keypair.pem
-
-# Update terraform.tfvars
-key_name = "foodme-keypair"
-```
-
-#### Issue: Invalid CIDR blocks
-
-```
-Error: Invalid CIDR format
-```
-
-**Solution**: Use proper CIDR notation:
-```hcl
-# Wrong
-allowed_cidr_blocks = ["192.168.1.1"]
-
-# Correct
-allowed_cidr_blocks = ["192.168.1.1/32"]  # Single IP
-allowed_cidr_blocks = ["0.0.0.0/0"]       # All IPs (not recommended for production)
-```
-
-#### Issue: Invalid CIDR block format
-
-```
-Error: "97.120.85.138/0" is not a valid IPv4 CIDR block; did you mean "0.0.0.0/0"?
-```
-
-**Cause**: Incorrect CIDR notation in `allowed_cidr_blocks` variable.
-
-**Common Mistakes**:
-- Using `/0` instead of `/32` for single IP
-- Forgetting the subnet mask entirely
-- Using invalid IP addresses
-
-**Solutions**:
-```hcl
-# Wrong formats
-allowed_cidr_blocks = ["192.168.1.1"]        # Missing subnet mask
-allowed_cidr_blocks = ["192.168.1.1/0"]      # Invalid subnet mask
-allowed_cidr_blocks = ["256.1.1.1/32"]       # Invalid IP address
-
-# Correct formats
-allowed_cidr_blocks = ["192.168.1.1/32"]     # Single IP address
-allowed_cidr_blocks = ["192.168.1.0/24"]     # Subnet (256 addresses)
-allowed_cidr_blocks = ["10.0.0.0/8"]         # Large network
-allowed_cidr_blocks = ["0.0.0.0/0"]          # All IPs (not recommended)
-
-# Multiple ranges
-allowed_cidr_blocks = [
-  "192.168.1.1/32",    # Your home IP
-  "10.0.0.0/24",       # Office network
-  "172.16.0.0/16"      # VPN range
-]
-```
-
-**Quick IP Detection**:
-```bash
-# Get your current public IP
-curl -s https://checkip.amazonaws.com/
-
-# Use in terraform.tfvars
-allowed_cidr_blocks = ["$(curl -s https://checkip.amazonaws.com/)/32"]
-```
-
-### 🔍 Validation and Testing
-
-#### Pre-deployment Validation
-
-Run the validation script:
-```bash
-cd terraform
-./validate.sh
-```
-
-#### Manual Validation Steps
-
-1. **Check Terraform syntax**:
-   ```bash
-   terraform fmt -check
-   terraform validate
-   ```
-
-2. **Test template files**:
-   ```bash
-   terraform console <<< 'templatefile("user_data.sh", {app_port=3000, environment="test", app_version="1.0.0"})'
-   ```
-
-3. **Verify AWS access**:
-   ```bash
-   aws sts get-caller-identity
-   aws ec2 describe-regions
-   ```
-
-### 🛠️ Quick Fixes
-
-#### Reset Terraform state
+The instance ID is the `EC2InstanceId` output of the stack.
 
 ```bash
-# Remove local state (use with caution)
-rm terraform.tfstate*
-rm -rf .terraform/
+# No SSH needed (requires the Session Manager plugin for the AWS CLI)
+aws ssm start-session --target <instance-id>
 
-# Re-initialize
-terraform init
+# Or with the key pair
+ssh -i foodme-keypair.pem ec2-user@<public-ip>
 ```
 
-#### Force resource recreation
+You can also run a command without logging in: `aws ssm send-command --instance-ids <id> --document-name AWS-RunShellScript --parameters '{"commands":["pm2 list"]}'`.
+
+## Stack problems
 
 ```bash
-# Force recreation of specific resource
-terraform taint aws_instance.foodme
-terraform apply
+# What failed, and why
+aws cloudformation describe-stack-events --stack-name foodme-staging \
+  --query 'StackEvents[?contains(ResourceStatus, `FAILED`)].[LogicalResourceId,ResourceStatusReason]' --output table
 ```
 
-#### Clean deployment
-
-```bash
-# Destroy everything and start fresh
-terraform destroy
-terraform apply
-```
-
-### 📞 Getting Help
-
-#### Terraform debugging
-
-```bash
-# Enable detailed logging
-export TF_LOG=DEBUG
-terraform plan
-
-# Show detailed plan
-terraform plan -detailed-exitcode
-
-# Show current state
-terraform show
-```
-
-#### AWS debugging
-
-```bash
-# List resources
-aws ec2 describe-instances
-aws ec2 describe-security-groups
-aws ec2 describe-key-pairs
-
-# Check logs
-aws logs describe-log-groups
-aws logs get-log-events --log-group-name foodme-application
-```
-
-#### Common validation commands
-
-```bash
-# Full validation pipeline
-terraform fmt
-terraform validate
-terraform plan -detailed-exitcode
-terraform apply -auto-approve
-```
+- A stack in `ROLLBACK_COMPLETE` cannot be updated. Delete it (the `delete-stack` action in the workflow, or `aws cloudformation delete-stack`) and deploy again.
+- The stack parameters are the environment, the instance type, a key pair that already exists, a database password of at least 8 characters, an optional New Relic license key, and the S3 bucket with the deployment packages.
+- Changing the instance's user data in a template update does not reinstall anything: the install script only runs at first boot. To apply installation changes, replace the instance (delete and deploy the stack).
 
 ## On the instance
-
-Connect with `ssh -i your-key.pem ec2-user@<instance-ip>`. `terraform output` shows the instance's address. (`terraform/get-ip.sh` finds *your* public IP, for `allowed_cidr_blocks`.)
 
 ### First checks
 
 ```bash
-# Are the three services up?
-sudo systemctl status foodme nginx postgresql-16
+sudo systemctl status nginx postgresql        # both should be active
+sudo -u ec2-user pm2 list                      # foodme-backend should be "online"
+sudo -u ec2-user pm2 logs foodme-backend --lines 50 --nostream
 
-# Why did the app stop? (follow the log)
-sudo journalctl -u foodme -f
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/health   # the app
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/health   # through nginx
 
-# nginx errors
-sudo tail -f /var/log/nginx/error.log
-
-# Does the app answer directly, and through nginx?
-curl http://localhost:3000/health
-curl http://localhost/health
-
-# What is listening?
-sudo netstat -tlnp | grep -E ':80|:3000'
+sudo tail -50 /var/log/nginx/error.log
+sudo tail -100 /var/log/cloud-init-output.log   # the installation
 ```
 
-If the instance never finished setting up, read the user data output:
+### The backend is not running
+
+If `pm2 list` shows `errored` or `stopped`, or `/health` fails:
 
 ```bash
-sudo cat /var/log/cloud-init-output.log
-sudo cat /var/log/cloud-init.log
+cd /opt/foodme/backend
+sudo -u ec2-user node start.js        # run it by hand and read the error (stop it with Ctrl-C)
+sudo -u ec2-user pm2 restart foodme-backend --update-env
 ```
 
-`terraform/debug-user-data.sh` checks the user data run, and `terraform/diagnose-ec2.sh <ip>` runs a set of checks against an instance. Open the scripts to see what each does before you run them. `scripts/archive/diagnose-deployment.sh` is an older diagnostic that runs on the instance.
+Common causes: a missing or wrong value in `.env` (the database password, the New Relic key), the database not running, or dependencies not installed after a code change (`sudo -u ec2-user npm install --omit=dev`).
 
-### The `foodme` service fails to start
+### The load balancer returns 502 or 503
 
-**Symptom:**
-```
-● foodme.service - FoodMe Node.js Application
-   Active: failed (Result: exit-code)
-```
-
-**Cause on older instances:** the unit file had an `ExecStartPre` line that ran `npm install --production`, which fails for lack of permissions. The current unit does not have it, because dependencies are installed during deployment.
-
-**Fix:** compare `/etc/systemd/system/foodme.service` with `terraform/configs/foodme.service`. If the old line is there, remove it, then:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart foodme
-sudo journalctl -u foodme -n 50
-```
-If it still fails, run the app by hand to see the real error: `cd /var/www/foodme/dist/server && node start.js`.
-
-### Angular routes return 404, but `/` works
-
-**Cause:** nginx is serving files from disk instead of proxying to the app, so it does not know the Angular routes. This is how earlier deployments were set up.
-
-**Fix:** use the proxy configuration. Replace the server block with `terraform/configs/nginx.conf` (the older helper `scripts/archive/apply-nodejs-proxy-nginx.sh` applied the same change), then:
-```bash
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-### 403 from nginx, or "Error loading application"
-
-- **403:** nginx is looking for `index.html` on disk and cannot find it or cannot read it. With the proxy configuration this should not happen, so check that nginx is using it.
-- **"Error loading application":** the Node app cannot find the Angular build. Check that `index.html` exists in the `dist/browser` folder beside the server, and that `ec2-user` can read it.
-
-Ownership problems are fixed with:
-```bash
-sudo chown -R ec2-user:ec2-user /var/www/foodme
-sudo chmod -R 755 /var/www/foodme
-```
-
-### Health checks fail
-
-**Common causes:** the app is not running, the port is wrong, or a firewall or security group blocks access.
+The targets are unhealthy. Check them, then fix whichever of nginx (8080) or the backend (3000) is down:
 
 ```bash
-curl http://localhost:3000/health     # on the instance
-sudo netstat -tlnp | grep :3000
+aws elbv2 describe-target-groups --query 'TargetGroups[?contains(TargetGroupName, `foodme`)].[TargetGroupName,TargetGroupArn]' --output text
+aws elbv2 describe-target-health --target-group-arn <arn>
 ```
 
-If it works on the instance but not from outside, check that the security group allows inbound traffic on port 80, and that your address is in `allowed_cidr_blocks` (see the CIDR sections above).
+### A blank page, "Error loading application", or Angular routes returning 404
+
+The Node app cannot find the Angular build, which it serves itself. Check `ls /opt/foodme/dist/browser/index.html`. To rebuild it on the instance:
+
+```bash
+cd /opt/foodme/angular-app
+sudo -u ec2-user npm install
+sudo -u ec2-user npm run build        # writes to /opt/foodme/dist
+```
+
+Angular 22 needs Node 22.22.3 or later, or 24.15 or later.
 
 ### The database
 
 ```bash
-sudo -u postgres psql -c "SELECT version();"
-sudo -u postgres psql -d foodme -c "\dt"
-sudo systemctl status postgresql-16
+sudo systemctl status postgresql
+sudo -u postgres psql -d foodme -c '\dt'
+pg_isready
 ```
 
-### After a fix
+### The installation stopped partway
 
-```bash
-sudo systemctl status foodme nginx
-sudo journalctl -u foodme -n 20
-curl http://localhost/health
-curl http://localhost/api/restaurant
-```
+Read `/var/log/cloud-init-output.log` to find the step that failed. Because installation only runs at first boot, the simplest fix is usually to delete the stack and deploy it again.
 
-The app should be `active (running)`, and `/health` should return a healthy status.
+### The Node.js version
+
+`node -v` should say 24. Instances built before 2026-10-31 have Node 22. See [Node.js version](../deployment/DEPLOYMENT_GUIDE.md#nodejs-version) for the upgrade.
+
+## The code deployment fails
+
+The workflow and `cloudformation/deploy-code.sh` send commands to the instance through AWS Systems Manager.
+
+- **"Could not find EC2 instance":** the stack `foodme-<environment>` does not exist in that region.
+- **The command never starts:** the instance must show as Online in Systems Manager. Its role needs `AmazonSSMManagedInstanceCore`, which the template adds.
+- **A command fails:** the script prints the error output. For the full record, run `aws ssm list-command-invocations --instance-id <id> --details --max-items 1`.
+- **The health check at the end fails:** the backend did not come up after the restart. Run the first checks above.
 
 ## If it still fails
 
-1. Run the diagnostics above and read `journalctl -u foodme`.
-2. Check the GitHub Actions logs for deployment errors.
-3. Check CloudWatch logs for the instance.
-4. If the deployment is beyond repair, remove it with the [Cleanup Guide](../../.github/CLEANUP_GUIDE.md) and start again.
-
-## 📚 Additional Resources
-
-- [Terraform Template Functions](https://www.terraform.io/docs/language/functions/templatefile.html)
-- [AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [EC2 User Data Guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html)
-- [GitHub Actions AWS Credentials](https://github.com/aws-actions/configure-aws-credentials)
+1. Read the CloudFormation events and `/var/log/cloud-init-output.log`.
+2. Check CloudWatch logs for the instance.
+3. Delete the stack and deploy it again. It builds everything from scratch.

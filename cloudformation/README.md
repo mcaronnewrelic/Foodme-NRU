@@ -52,7 +52,12 @@
 
 ## 🚀 **HOW TO DEPLOY**
 
-### **Quick Deployment (Recommended)**
+### **From GitHub (Recommended)**
+The **deploy-cloudformation** workflow runs these same scripts. Run it from the Actions tab with `stack` to create or update the stack, `code` to update the running instance, or `delete-stack` to remove it. A push to `main` that changes `server/` or `angular-app/` deploys the code to staging by itself. The secrets it needs are listed in [the deployment guide](../docs/deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions).
+
+`deploy-code.sh` updates the code through AWS Systems Manager, so no SSH key is needed. It restarts the backend with PM2, which is how the instance runs it.
+
+### **Quick Deployment from your machine**
 ```bash
 cd cloudformation
 ./deploy-production.sh staging t3.medium foodme-keypair mysecurepasswordexample

@@ -1,5 +1,7 @@
 # FoodMe EC2 Deployment with Terraform
 
+> **Archived on 2026-10-31.** FoodMe deploys with CloudFormation now (see [cloudformation/README.md](../../cloudformation/README.md) and the `deploy-cloudformation` workflow). Nothing here runs any more: the three GitHub workflows that used it are in `workflows/`, and paths in these files still say `terraform/`.
+
 This directory contains Terraform configurations to deploy the FoodMe application to AWS EC2 instances.
 
 ## 📋 Prerequisites
@@ -173,7 +175,7 @@ ssh ec2-user@$INSTANCE_IP "sudo systemctl restart foodme"
 
 ## 🛠️ Troubleshooting
 
-For Terraform errors and problems on the instance, see the [EC2 and Terraform Troubleshooting](../docs/troubleshooting/EC2_TROUBLESHOOTING.md) guide. A few common cases:
+For Terraform errors and problems on the instance, see the [EC2 and Terraform Troubleshooting](../../docs/troubleshooting/EC2_TROUBLESHOOTING.md) guide. A few common cases:
 
 ### Common Issues
 
@@ -292,13 +294,13 @@ For help with this deployment:
 
 1. Check the [troubleshooting section](#troubleshooting)
 2. Review AWS CloudWatch logs
-3. Check the [main deployment guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
-4. Verify your [environment setup](../docs/setup/SETUP_GUIDE.md)
+3. Check the [main deployment guide](../../docs/deployment/DEPLOYMENT_GUIDE.md)
+4. Verify your [environment setup](../../docs/setup/SETUP_GUIDE.md)
 
 ## 🔗 Related Documentation
 
-- [Main Setup Guide](../docs/setup/SETUP_GUIDE.md)
-- [Deployment Guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
-- [DevContainer Setup](../docs/setup/DEVCONTAINER_SETUP.md)
-- [EC2 and Terraform Troubleshooting](../docs/troubleshooting/EC2_TROUBLESHOOTING.md)
-- [Security](../docs/SECURITY.md)
+- [Main Setup Guide](../../docs/setup/SETUP_GUIDE.md)
+- [Deployment Guide](../../docs/deployment/DEPLOYMENT_GUIDE.md)
+- [DevContainer Setup](../../docs/setup/DEVCONTAINER_SETUP.md)
+- [EC2 and Terraform Troubleshooting](../../docs/troubleshooting/EC2_TROUBLESHOOTING.md)
+- [Security](../../docs/SECURITY.md)
