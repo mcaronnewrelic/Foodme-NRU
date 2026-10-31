@@ -16,6 +16,7 @@
   "scripts": {
     "install:all": "npm install && cd angular-app && npm install",
     "build:angular": "cd angular-app && npm run build",
+    "build:angular:docker": "docker run --rm -v \"$PWD\":/app -w /app/angular-app node:24 npm run build",
     "sourcemaps:upload": "./scripts/upload-sourcemaps.sh",
     "build": "npm run build:angular && cp -r server dist/",
     "start": "npm run build:angular && node -r newrelic --env-file=.env server/start.js",
@@ -32,6 +33,7 @@
     "newrelic:deployment:direct": "node scripts/newrelic-deployment.js",
     "newrelic:deployment:simple": "node scripts/newrelic-deployment-simple.js",
     "docker:dev:simple": "echo '🚀 Starting simple development environment...' && docker-compose -f docker/docker-compose.dev-simple.yml up -d",
+    "docker:dev:simple:build": "npm run build:angular:docker && docker-compose -f docker/docker-compose.dev-simple.yml up -d --build --force-recreate",
     "docker:dev:full": "echo '🚀 Starting full production simulation...' && docker-compose -f docker/docker-compose.arm64.yml up -d",
     "docker:status": "echo '📊 Docker containers status:' && docker-compose -f docker/docker-compose.dev-simple.yml ps 2>/dev/null || docker-compose -f docker/docker-compose.arm64.yml ps 2>/dev/null || echo 'No containers running'",
     "docker:logs": "docker-compose -f docker/docker-compose.dev-simple.yml logs -f 2>/dev/null || docker-compose -f docker/docker-compose.arm64.yml logs -f",
@@ -59,19 +61,20 @@
     "security:docker": "docker run --rm -i hadolint/hadolint < docker/Dockerfile"
   },
   "dependencies": {
-    "body-parser": "^1.20.0",
-    "csv": ">=0.2.1",
-    "express": "^4.18.3",
-    "express-handlebars": "^8.0.2",
-    "morgan": "^1.10.0",
-    "newrelic": "^12.21.0",
-    "open": "^8.4.2",
-    "pg": "^8.12.0",
-    "pino": "^9.13.0",
-    "uuid": "^9.0.1"
+    "axios": "^1.21.0",
+    "body-parser": "^2.4.0",
+    "csv": "^6.6.4",
+    "express": "^5.3.0",
+    "express-handlebars": "^9.0.4",
+    "morgan": "^1.12.1",
+    "newrelic": "^14.10.0",
+    "open": "^11.0.4",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "uuid": "^14.0.3"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "license": "MIT"
 }

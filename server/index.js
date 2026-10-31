@@ -18,7 +18,7 @@ const { engine } = require('express-handlebars');
 const path = require('path');
 
 var fs = require('fs');
-var open = require('open');
+var open = require('open').default; // open 11 is an ES module
 
 var RestaurantRecord = require('./model').Restaurant;
 var MemoryStorage = require('./storage').Memory;
@@ -860,7 +860,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       res.status(500).send({ error: 'Failed to delete restaurant' });
     }
 
-    return res.send(400, { error: 'No restaurant with id "' + req.params.id + '"!' });
+    return res.status(400).send({ error: 'No restaurant with id "' + req.params.id + '"!' });
   });
 
   // Orders API endpoints
