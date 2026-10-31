@@ -192,4 +192,8 @@
   <app-nr-callout title="Each menu is its own request" [nrql]="menuNrql" buttonLabel="See menu requests">
     Opening a restaurant calls <code>GET /api/restaurant/by-name/:name</code>. New Relic groups them under one transaction name and keeps the real URL, so you can see which restaurants get the most visits.
   </app-nr-callout>
+  <app-nr-callout title="Does every menu load?" [nrql]="menuStatusNrql" buttonLabel="Check the status codes">
+    Not every request has to succeed. This groups the same requests by HTTP status code.
+    If a menu ever fails to load, it shows up here before anyone tells you.
+  </app-nr-callout>
 </div>

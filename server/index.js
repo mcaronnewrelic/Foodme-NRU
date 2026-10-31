@@ -187,56 +187,6 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // create application/json parser
   var jsonParser = bodyParser.json()
 
-  // Global error handling middleware with enhanced logging
-  app.use((err, req, res, next) => {
-      // Generate error correlation ID if not present
-      const errorId = req.requestId ? `${req.requestId}_err` : `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Determine error severity
-      const isServerError = !err.statusCode || err.statusCode >= 500;
-      const logLevel = isServerError ? 'error' : 'warn';
-      
-      // Enhanced error logging with full context
-      logger[logLevel]({
-          errorId,
-          requestId: req.requestId,
-          err: {
-              name: err.name,
-              message: err.message,
-              stack: err.stack,
-              code: err.code,
-              statusCode: err.statusCode
-          },
-          request: {
-              method: req.method,
-              url: req.url,
-              userAgent: req.get('User-Agent'),
-              ip: req.ip || req.connection.remoteAddress,
-              body: req.method === 'POST' ? req.body : undefined
-          },
-          timestamp: new Date().toISOString()
-      }, 'Express error handler caught error');
-      
-      // Set error ID in response headers for correlation
-      res.setHeader('X-Error-ID', errorId);
-      
-      // Send appropriate error response
-      const statusCode = err.statusCode || 500;
-      const errorResponse = {
-          status: 'error',
-          message: isServerError ? 'Internal Server Error' : err.message,
-          errorId: errorId,
-          timestamp: new Date().toISOString()
-      };
-      
-      // Include stack trace in development
-      if (process.env.NODE_ENV === 'development') {
-          errorResponse.stack = err.stack;
-      }
-      
-      res.status(statusCode).json(errorResponse);
-  });
-
   // Handle unhandled promise rejections and uncaught exceptions
   process.on('unhandledRejection', (reason, promise) => {
       logger.error({ promise, reason }, 'Unhandled promise rejection detected');
@@ -817,7 +767,12 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
   // New endpoint for getting restaurant by name slug
   app.get('/api/restaurant/by-name/:name', async function(req, res, next) {
+    newrelic.addCustomAttributes({ restaurantSlug: req.params.name });
     try {
+      // Planned failure for the "find the error in New Relic" exercise; off unless the variable is set
+      if (process.env.DEMO_FAILING_RESTAURANT === req.params.name) {
+        throw new Error(`Menu data for "${req.params.name}" is corrupted: menu_items.category is null for 3 rows`);
+      }
       if (useDatabase) {
         const restaurant = await dbService.getRestaurantByName(req.params.name);
         if (restaurant) {
@@ -826,13 +781,8 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         return res.status(404).send({ error: 'No restaurant with name "' + req.params.name + '"!' });
       } else {
         // For non-database mode, we need to search by name in storage
-        const { slugToSearchPattern } = require('./url-utils');
-        const searchPattern = slugToSearchPattern(req.params.name);
-        const allRestaurants = storage.getAll();
-        
-        const restaurant = allRestaurants.find(r => 
-          r.name.toLowerCase().includes(searchPattern.toLowerCase())
-        );
+        const { nameToSlug } = require('./url-utils');
+        const restaurant = storage.getAll().find(r => nameToSlug(r.name) === req.params.name);
         
         if (restaurant) {
           return res.status(200).send(restaurant);
@@ -841,7 +791,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       }
     } catch (error) {
       logger.error({ err: error, restaurantName: req.params.name }, 'Failed to fetch restaurant by name');
-      res.status(500).send({ error: 'Failed to fetch restaurant' });
+      next(error);
     }
   });
 
@@ -1193,6 +1143,61 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       res.setHeader('Content-Type', 'text/html');
       res.send(modifiedHtml);
     });
+  });
+
+  // Global error handling middleware with enhanced logging.
+  // Must stay after every route: Express only sends errors to handlers registered later than the route that failed.
+  app.use((err, req, res, next) => {
+      if (res.headersSent) {
+          return next(err);
+      }
+
+      // Generate error correlation ID if not present
+      const errorId = req.requestId ? `${req.requestId}_err` : `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Determine error severity
+      const isServerError = !err.statusCode || err.statusCode >= 500;
+      const logLevel = isServerError ? 'error' : 'warn';
+      
+      // Enhanced error logging with full context
+      logger[logLevel]({
+          errorId,
+          requestId: req.requestId,
+          err: {
+              name: err.name,
+              message: err.message,
+              stack: err.stack,
+              code: err.code,
+              statusCode: err.statusCode
+          },
+          request: {
+              method: req.method,
+              url: req.url,
+              userAgent: req.get('User-Agent'),
+              ip: req.ip || req.connection.remoteAddress,
+              body: req.method === 'POST' ? req.body : undefined
+          },
+          timestamp: new Date().toISOString()
+      }, 'Express error handler caught error');
+      
+      // Set error ID in response headers for correlation
+      res.setHeader('X-Error-ID', errorId);
+      
+      // Send appropriate error response
+      const statusCode = err.statusCode || 500;
+      const errorResponse = {
+          status: 'error',
+          message: isServerError ? 'Internal Server Error' : err.message,
+          errorId: errorId,
+          timestamp: new Date().toISOString()
+      };
+      
+      // Include stack trace in development
+      if (process.env.NODE_ENV === 'development') {
+          errorResponse.stack = err.stack;
+      }
+      
+      res.status(statusCode).json(errorResponse);
   });
 
   // Start the server

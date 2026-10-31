@@ -221,6 +221,8 @@ class DatabaseService {
      * Get a single restaurant by name slug
      */
     async getRestaurantByName(nameSlug) {
+        // Mirrors nameToSlug() in url-utils.js (minus the underscores), so names with punctuation still match
+        const NAME_AS_SLUG_TEXT = `btrim(regexp_replace(regexp_replace(LOWER(r.name), '[^a-z0-9 ]', '', 'g'), ' +', ' ', 'g'))`;
         await this.connect();
         
         const { slugToSearchPattern } = require('./url-utils');
@@ -241,7 +243,7 @@ class DatabaseService {
                     r.min_order,
                     r.is_active
                 FROM restaurants r
-                WHERE LOWER(r.name) = LOWER($1) AND r.is_active = true
+                WHERE ${NAME_AS_SLUG_TEXT} = $1 AND r.is_active = true
             `;
             
             let restaurantResult = await this.client.query(exactQuery, [searchPattern.replace(/_/g, ' ')]);
@@ -261,7 +263,7 @@ class DatabaseService {
                         r.min_order,
                         r.is_active
                     FROM restaurants r
-                    WHERE LOWER(r.name) LIKE LOWER($1) AND r.is_active = true
+                    WHERE ${NAME_AS_SLUG_TEXT} LIKE $1 AND r.is_active = true
                     LIMIT 1
                 `;
                 
@@ -303,7 +305,7 @@ class DatabaseService {
                 minOrder: parseFloat(restaurant.min_order)
             };
         } catch (error) {
-            logger.error({ err: error, operation: 'getRestaurantByName', restaurantName: name }, 'Error fetching restaurant by name');
+            logger.error({ err: error, operation: 'getRestaurantByName', restaurantName: nameSlug }, 'Error fetching restaurant by name');
             throw error;
         }
     }
