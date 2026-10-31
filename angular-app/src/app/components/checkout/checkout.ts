@@ -7,6 +7,7 @@ import { CartService } from '../../services/cart.service';
 import { CustomerService } from '../../services/customer.service';
 import { Customer } from '../../models/restaurant.model';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 interface PaymentInfo {
   type: string;
@@ -18,11 +19,14 @@ interface PaymentInfo {
 
 @Component({
   selector: 'app-checkout',
-  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })
 export class CheckoutComponent implements OnInit {
+  readonly checkoutNrql =
+    "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/POST//api/order' SINCE 1 day ago";
+
   submitting = signal(false);
   
   // Use customer data from the customer service
@@ -141,7 +145,9 @@ export class CheckoutComponent implements OnInit {
       this.cartService.clearCart();
       
       // Navigate to thank you page
-      this.router.navigate(['/thank-you']);
+      this.router.navigate(['/thank-you'], {
+        state: { orderId: orderResponse.orderId, requestId: orderResponse.requestId }
+      });
     } catch (error) {
       console.error('Purchase failed:', error);
       alert('Purchase failed. Please try again.');

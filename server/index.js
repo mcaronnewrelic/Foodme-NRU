@@ -374,7 +374,10 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
   // Lets the Angular "Behind the scenes" callouts build New Relic links for the current account
   app.get('/api/nr-config', (req, res) => {
-    res.json({ accountId: process.env.NEW_RELIC_ACCOUNT_ID || null });
+    res.json({
+      accountId: process.env.NEW_RELIC_ACCOUNT_ID || null,
+      browserEntityGuid: process.env.NEW_RELIC_BROWSER_ENTITY_GUID || null
+    });
   });
 
   // Health check endpoint
@@ -692,6 +695,8 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         }, 'Order processed in memory mode');
       }
 
+      newrelic.addCustomAttributes({ orderId });
+
       const totalDuration = Date.now() - startTime;
       logger.info({
         requestId: req.requestId,
@@ -702,7 +707,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         orderTotal
       }, 'Order processing completed successfully');
 
-      return res.status(201).send({ orderId: orderId });
+      return res.status(201).send({ orderId: orderId, requestId: req.requestId });
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.error({

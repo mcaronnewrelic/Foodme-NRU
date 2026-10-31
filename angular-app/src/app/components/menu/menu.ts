@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { RestaurantService } from '../../services/restaurant.service';
 import { CartService } from '../../services/cart.service';
 import { CustomerService } from '../../services/customer.service';
@@ -10,11 +11,14 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, RouterModule, HeaderComponent, FormsModule],
+  imports: [CommonModule, RouterModule, HeaderComponent, FormsModule, NrCalloutComponent],
   templateUrl: './menu.html',
   styleUrl: './menu.css'
 })
 export class MenuComponent implements OnInit {
+  readonly menuNrql =
+    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
+
   restaurant = signal<Restaurant | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);

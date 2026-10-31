@@ -179,3 +179,9 @@
     </div>
   </div>
 </div>
+
+<div class="container mb-5">
+  <app-nr-callout title="The restaurant list request" [nrql]="listNrql" buttonLabel="See the transaction">
+    This page loads its restaurants from <code>GET /api/restaurant</code>. New Relic times every call, so you can see how fast the list comes back.
+  </app-nr-callout>
+</div>

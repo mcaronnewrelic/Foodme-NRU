@@ -72,7 +72,7 @@
             </button>
           </div>
 
-          <app-nr-callout title="The error you just caused" [nrql]="errorNrql">
+          <app-nr-callout title="The error you just caused" [nrql]="errorNrql" [showBrowserErrors]="true">
             The button calls <code>noticeError()</code> after the server returns a 500.
             The error lands in <b>JavaScriptError</b>, and in Errors Inbox.
           </app-nr-callout>

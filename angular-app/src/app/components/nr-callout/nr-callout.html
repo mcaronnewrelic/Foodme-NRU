@@ -8,4 +8,9 @@
       {{ buttonLabel }} <i class="fas fa-arrow-up-right-from-square ms-1"></i>
     </a>
   }
+  @if (browserErrorsUrl; as errorsLink) {
+    <a class="btn btn-sm nr-callout-btn nr-callout-btn-alt ms-2" [href]="errorsLink" target="newrelic">
+      Open Errors Inbox <i class="fas fa-arrow-up-right-from-square ms-1"></i>
+    </a>
+  }
 </aside>

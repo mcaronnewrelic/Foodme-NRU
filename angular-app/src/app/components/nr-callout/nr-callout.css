@@ -52,3 +52,14 @@
   background: #4cf0a2;
   color: #0d1b1b;
 }
+
+.nr-callout-btn-alt {
+  background: transparent;
+  border: 1px solid #1ce783;
+  color: #1ce783;
+}
+
+.nr-callout-btn-alt:hover {
+  background: #1ce783;
+  color: #0d1b1b;
+}

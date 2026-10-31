@@ -97,3 +97,9 @@
     </div>
   </div>
 </div>
+
+<div class="container mb-5">
+  <app-nr-callout title="Looking up past orders" [nrql]="ordersNrql" buttonLabel="See the lookups">
+    The server tags each lookup with a <code>userID</code> and an <code>operation</code> custom attribute. The query leaves out the email on purpose, so it works as a demo without showing anyone's address.
+  </app-nr-callout>
+</div>

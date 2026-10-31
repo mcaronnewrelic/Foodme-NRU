@@ -7,14 +7,18 @@ import { CustomerService } from '../../services/customer.service';
 import { Restaurant } from '../../models/restaurant.model';
 import { CustomerCardComponent } from '../customer-card/customer-card';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-restaurants',
-  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent, NrCalloutComponent],
   templateUrl: './restaurants.html',
   styleUrl: './restaurants.css'
 })
 export class RestaurantsComponent implements OnInit {
+  readonly listNrql =
+    "SELECT count(*), average(duration), percentile(duration, 95) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' SINCE 1 day ago";
+
   allRestaurants = signal<Restaurant[]>([]);
   
   // Add collapsible state for filters

@@ -267,3 +267,9 @@
     </div>
   </div>
 </div>
+
+<div class="container mb-5">
+  <app-nr-callout title="Placing the order" [nrql]="checkoutNrql" buttonLabel="See recent orders">
+    When you purchase, <code>POST /api/order</code> adds the restaurant, item count and total as custom attributes on its transaction. These are the most recent orders.
+  </app-nr-callout>
+</div>

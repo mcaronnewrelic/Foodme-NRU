@@ -20,6 +20,21 @@
             Back to Home
           </a>
         </div>
+
+        @if (requestId) {
+          <app-nr-callout title="Your order, as a custom event" [nrql]="orderEventNrql" buttonLabel="See your Order event">
+            The server records an <b>Order</b> event with the customer, restaurant, item count and total.
+            This query finds yours by its request ID, <code>{{ requestId }}</code>.
+          </app-nr-callout>
+          <app-nr-callout title="Your order, as transaction attributes" [nrql]="transactionNrql" buttonLabel="See your transaction">
+            The same details are attached to the <b>POST /api/order</b> transaction as custom attributes,
+            along with the new order ID ({{ orderId }}). Open it to see them next to the trace.
+          </app-nr-callout>
+          <app-nr-callout title="Order metrics for everyone" [nrql]="metricsNrql" buttonLabel="See the metrics">
+            <b>Orders/count</b> and <b>Orders/total</b> are custom metrics. They roll up every order
+            in a minute, so this chart includes orders from other visitors too.
+          </app-nr-callout>
+        }
       </div>
     </div>
   </div>

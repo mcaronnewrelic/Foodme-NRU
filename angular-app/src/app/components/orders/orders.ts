@@ -5,15 +5,19 @@ import { OrderService } from '../../services/order.service';
 import { CustomerService } from '../../services/customer.service';
 import { Order } from '../../models/order.model';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './orders.html',
   styleUrls: ['./orders.css']
 })
 export class OrdersComponent implements OnInit {
+  readonly ordersNrql =
+    "SELECT timestamp, userID, operation, duration FROM Transaction WHERE operation IN ('get_orders_by_email', 'get_orders_by_phone') SINCE 1 day ago";
+
   orders = signal<Order[]>([]);
   loading = signal<boolean>(false);
   error = signal<string | null>(null);

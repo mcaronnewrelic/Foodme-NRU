@@ -16,6 +16,7 @@
   "scripts": {
     "install:all": "npm install && cd angular-app && npm install",
     "build:angular": "cd angular-app && npm run build",
+    "sourcemaps:upload": "./scripts/upload-sourcemaps.sh",
     "build": "npm run build:angular && cp -r server dist/",
     "start": "npm run build:angular && node -r newrelic --env-file=.env server/start.js",
     "start:prod": "NODE_ENV=production node -r newrelic --env-file=.env dist/server/start.js",

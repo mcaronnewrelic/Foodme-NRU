@@ -7,14 +7,18 @@ import { Customer } from '../../models/restaurant.model';
 import { NewRelicService } from '../../services/newrelic.service';
 import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-customer',
-  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './customer.html',
   styleUrl: './customer.css'
 })
 export class CustomerComponent {
+  readonly userNrql =
+    "SELECT count(*) FROM PageView, AjaxRequest, PageAction, JavaScriptError WHERE enduser.id IS NOT NULL FACET enduser.id, eventType() SINCE 1 day ago";
+
   customerForm = signal<Customer>({
     name: '',
     email: '',
