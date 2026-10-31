@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header';
@@ -11,8 +11,9 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, RouterModule, HeaderComponent, FormsModule, NrCalloutComponent],
+  imports: [RouterModule, HeaderComponent, FormsModule, NrCalloutComponent],
   templateUrl: './menu.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu.css'
 })
 export class MenuComponent implements OnInit {

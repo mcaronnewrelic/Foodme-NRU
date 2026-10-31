@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { NrConfigService } from '../../nr-config';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './header.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './header.css'
 })
 export class HeaderComponent {

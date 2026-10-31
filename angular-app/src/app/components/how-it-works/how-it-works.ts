@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../header/header';
@@ -9,8 +9,9 @@ import { errorToJson, flattenError, getErrorSummary, getUserFriendlyErrorMessage
 
 @Component({
   selector: 'app-how-it-works',
-  imports: [CommonModule, RouterModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './how-it-works.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './how-it-works.css'
 })
 export class HowItWorksComponent {

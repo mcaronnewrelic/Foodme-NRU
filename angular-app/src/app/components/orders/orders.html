@@ -11,91 +11,108 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading()" class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>Loading your orders...</p>
-  </div>
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading your orders...</p>
+    </div>
+  }
 
   <!-- Error State -->
-  <div *ngIf="error()" class="error-state">
-    <div class="error-icon">⚠️</div>
-    <h3>Unable to Load Orders</h3>
-    <p>{{ error() }}</p>
-    <button class="btn btn-primary" (click)="loadOrders()">Try Again</button>
-  </div>
+  @if (error()) {
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Unable to Load Orders</h3>
+      <p>{{ error() }}</p>
+      <button class="btn btn-primary" (click)="loadOrders()">Try Again</button>
+    </div>
+  }
 
   <!-- Empty State -->
-  <div *ngIf="!loading() && !error() && sortedOrders().length === 0" class="empty-state">
-    <div class="empty-icon">🍽️</div>
-    <h3>No Orders Yet</h3>
-    <p>You haven't placed any orders yet. Start browsing restaurants to place your first order!</p>
-    <button class="btn btn-primary" (click)="router.navigate(['/restaurants'])">Browse Restaurants</button>
-  </div>
+  @if (!loading() && !error() && sortedOrders().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">🍽️</div>
+      <h3>No Orders Yet</h3>
+      <p>You haven't placed any orders yet. Start browsing restaurants to place your first order!</p>
+      <button class="btn btn-primary" (click)="router.navigate(['/restaurants'])">Browse Restaurants</button>
+    </div>
+  }
 
   <!-- Orders List -->
-  <div *ngIf="!loading() && !error() && sortedOrders().length > 0" class="orders-list">
-    <div *ngFor="let order of sortedOrders()" class="order-card">
-      <div class="order-header">
-        <div class="order-info">
-          <h3 class="restaurant-name">{{ order.restaurantName }}</h3>
-          <p class="order-number">Order #{{ order.orderNumber }}</p>
-          <p class="order-date">{{ formatDate(order.createdAt) }}</p>
-        </div>
-        <div class="order-status">
-          <span class="status-badge" [class]="getStatusClass(order.status)">
-            {{ getStatusDisplayName(order.status) }}
-          </span>
-        </div>
-      </div>
-
-      <div class="order-items">
-        <div *ngFor="let item of order.items" class="order-item">
-          <div class="item-info">
-            <span class="item-name">{{ item.itemName }}</span>
-            <span class="item-quantity">× {{ item.quantity }}</span>
+  @if (!loading() && !error() && sortedOrders().length > 0) {
+    <div class="orders-list">
+      @for (order of sortedOrders(); track order) {
+        <div class="order-card">
+          <div class="order-header">
+            <div class="order-info">
+              <h3 class="restaurant-name">{{ order.restaurantName }}</h3>
+              <p class="order-number">Order #{{ order.orderNumber }}</p>
+              <p class="order-date">{{ formatDate(order.createdAt) }}</p>
+            </div>
+            <div class="order-status">
+              <span class="status-badge" [class]="getStatusClass(order.status)">
+                {{ getStatusDisplayName(order.status) }}
+              </span>
+            </div>
           </div>
-          <span class="item-price">{{ formatCurrency(item.unitPrice * item.quantity) }}</span>
+          <div class="order-items">
+            @for (item of order.items; track item) {
+              <div class="order-item">
+                <div class="item-info">
+                  <span class="item-name">{{ item.itemName }}</span>
+                  <span class="item-quantity">× {{ item.quantity }}</span>
+                </div>
+                <span class="item-price">{{ formatCurrency(item.unitPrice * item.quantity) }}</span>
+              </div>
+            }
+          </div>
+          <div class="order-summary">
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span>{{ formatCurrency(order.totalAmount - order.deliveryFee - order.taxAmount) }}</span>
+            </div>
+            @if (order.deliveryFee > 0) {
+              <div class="summary-row">
+                <span>Delivery Fee:</span>
+                <span>{{ formatCurrency(order.deliveryFee) }}</span>
+              </div>
+            }
+            @if (order.taxAmount > 0) {
+              <div class="summary-row">
+                <span>Tax:</span>
+                <span>{{ formatCurrency(order.taxAmount) }}</span>
+              </div>
+            }
+            <div class="summary-row total">
+              <span>Total:</span>
+              <span>{{ formatCurrency(order.totalAmount) }}</span>
+            </div>
+          </div>
+          @if (order.status === 'delivered') {
+            <div class="order-actions">
+              <button class="btn btn-secondary" (click)="reorder(order)">
+                Order Again
+              </button>
+            </div>
+          }
+          @if (order.deliveryAddress) {
+            <div class="delivery-info">
+              <p class="delivery-address">
+                <strong>Delivery to:</strong> {{ order.deliveryAddress }}
+              </p>
+            </div>
+          }
+          @if (order.specialInstructions) {
+            <div class="special-instructions">
+              <p>
+                <strong>Special Instructions:</strong> {{ order.specialInstructions }}
+              </p>
+            </div>
+          }
         </div>
-      </div>
-
-      <div class="order-summary">
-        <div class="summary-row">
-          <span>Subtotal:</span>
-          <span>{{ formatCurrency(order.totalAmount - order.deliveryFee - order.taxAmount) }}</span>
-        </div>
-        <div class="summary-row" *ngIf="order.deliveryFee > 0">
-          <span>Delivery Fee:</span>
-          <span>{{ formatCurrency(order.deliveryFee) }}</span>
-        </div>
-        <div class="summary-row" *ngIf="order.taxAmount > 0">
-          <span>Tax:</span>
-          <span>{{ formatCurrency(order.taxAmount) }}</span>
-        </div>
-        <div class="summary-row total">
-          <span>Total:</span>
-          <span>{{ formatCurrency(order.totalAmount) }}</span>
-        </div>
-      </div>
-
-      <div class="order-actions" *ngIf="order.status === 'delivered'">
-        <button class="btn btn-secondary" (click)="reorder(order)">
-          Order Again
-        </button>
-      </div>
-
-      <div class="delivery-info" *ngIf="order.deliveryAddress">
-        <p class="delivery-address">
-          <strong>Delivery to:</strong> {{ order.deliveryAddress }}
-        </p>
-      </div>
-
-      <div class="special-instructions" *ngIf="order.specialInstructions">
-        <p>
-          <strong>Special Instructions:</strong> {{ order.specialInstructions }}
-        </p>
-      </div>
+      }
     </div>
-  </div>
+  }
 </div>
 
 <div class="container mb-5">

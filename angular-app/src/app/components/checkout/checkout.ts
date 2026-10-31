@@ -1,5 +1,5 @@
-import { Component, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -19,8 +19,9 @@ interface PaymentInfo {
 
 @Component({
   selector: 'app-checkout',
-  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './checkout.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './checkout.css'
 })
 export class CheckoutComponent implements OnInit {

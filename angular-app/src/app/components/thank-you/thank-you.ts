@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-thank-you',
-  imports: [CommonModule, RouterModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './thank-you.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './thank-you.css'
 })
 export class ThankYouComponent {

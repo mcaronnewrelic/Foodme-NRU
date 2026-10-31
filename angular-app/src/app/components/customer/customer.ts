@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../services/customer.service';
@@ -11,8 +11,9 @@ import { NrCalloutComponent } from '../nr-callout/nr-callout';
 
 @Component({
   selector: 'app-customer',
-  imports: [CommonModule, RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './customer.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './customer.css'
 })
 export class CustomerComponent {

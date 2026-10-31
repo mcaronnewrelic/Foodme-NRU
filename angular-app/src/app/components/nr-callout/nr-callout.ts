@@ -1,9 +1,10 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NrConfigService } from '../../nr-config';
 
 @Component({
   selector: 'app-nr-callout',
   templateUrl: './nr-callout.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './nr-callout.css'
 })
 export class NrCalloutComponent {

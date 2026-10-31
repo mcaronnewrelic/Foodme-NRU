@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,7 @@ import { NrCalloutComponent } from '../nr-callout/nr-callout';
   selector: 'app-restaurants',
   imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent, NrCalloutComponent],
   templateUrl: './restaurants.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './restaurants.css'
 })
 export class RestaurantsComponent implements OnInit {

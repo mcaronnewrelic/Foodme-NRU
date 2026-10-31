@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { OrderService } from '../../services/order.service';
 import { CustomerService } from '../../services/customer.service';
@@ -10,8 +10,9 @@ import { NrCalloutComponent } from '../nr-callout/nr-callout';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, NrCalloutComponent],
+  imports: [HeaderComponent, NrCalloutComponent],
   templateUrl: './orders.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./orders.css']
 })
 export class OrdersComponent implements OnInit {
