@@ -1,0 +1,85 @@
+services:
+  # Main FoodMe application service
+  foodme:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.simple
+    container_name: foodme-app
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - DOCKER_COMPOSE=true
+      - DB_HOST=${DB_HOST:-db}
+    volumes:
+      - ../dist:/dist:ro
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - foodme_network
+
+  # PostgreSQL database (simplified)
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    container_name: foodme-db
+    env_file:
+      - ../.env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Mount application initialization scripts
+      - ../db/init/01-init-schema.sql:/docker-entrypoint-initdb.d/10-init-schema.sql:ro
+      - ../db/init/02-import-restaurants-uuid.sql:/docker-entrypoint-initdb.d/20-import-restaurants-uuid.sql:ro
+    environment:
+      - POSTGRES_DB=${DB_NAME:-foodme}
+      - POSTGRES_USER=${DB_USER:-foodme_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      # PostgreSQL monitoring configuration
+      - POSTGRES_INITDB_ARGS=--data-checksums
+    expose:
+      - "5432"
+    networks:
+      - foodme_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d foodme -U foodme_user"]
+      interval: ${DB_HEALTH_INTERVAL:-10s}
+      timeout: ${DB_HEALTH_TIMEOUT:-5s}
+      retries: ${DB_HEALTH_RETRIES:-5}
+      start_period: ${DB_HEALTH_START_PERIOD:-60s}
+
+  # Nginx reverse proxy (simplified)
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: foodme-nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ../nginx-config/foodme.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - foodme_network
+    depends_on:
+      - foodme
+    healthcheck:
+      test:
+        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: ${HEALTH_CHECK_INTERVAL:-30s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-10s}
+
+# Docker volumes for persistent data
+volumes:
+  db-data:
+    driver: local
+    name: foodme-db-data
+
+# Docker networks
+networks:
+  foodme_network:
+    driver: bridge
+    name: foodme_network

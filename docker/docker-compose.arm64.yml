@@ -1,0 +1,149 @@
+services:
+  # Main FoodMe application
+  foodme:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.arm64 # Use ARM64-compatible Dockerfile
+    restart: unless-stopped
+    container_name: foodme-app
+    env_file:
+      - ../.env
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-foodme}
+      - DB_USER=${DB_USER:-foodme_user}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - TINI_SUBREAPER=1
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - foodme_network
+    volumes:
+      - ../server/data:/usr/src/foodme/data:rw
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1",
+        ]
+      interval: ${HEALTH_CHECK_INTERVAL:-60s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-10s}
+
+  # NGINX reverse proxy
+  nginx:
+    build:
+      context: ..
+      dockerfile: docker/nginx.dockerfile
+    restart: unless-stopped
+    container_name: foodme-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    depends_on:
+      foodme:
+        condition: service_healthy
+    networks:
+      - foodme_network
+    volumes:
+      - ../nginx-config/foodme.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - TINI_SUBREAPER=1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:80/nginx-health || exit 1",
+        ]
+      interval: ${HEALTH_CHECK_INTERVAL:-60s}
+      timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
+      retries: ${HEALTH_CHECK_RETRIES:-3}
+      start_period: ${HEALTH_CHECK_START_PERIOD:-10s}
+
+  # PostgreSQL database with monitoring extensions
+  db:
+    build:
+      context: ..
+      dockerfile: docker/postgres-monitoring.dockerfile
+    restart: unless-stopped
+    user: postgres
+    container_name: foodme-db
+    env_file:
+      - ../.env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Mount application initialization scripts
+      - ../db/init/01-init-schema.sql:/docker-entrypoint-initdb.d/10-init-schema.sql:ro
+      - ../db/init/02-import-restaurants-uuid.sql:/docker-entrypoint-initdb.d/20-import-restaurants-uuid.sql:ro
+      # Mount monitoring scripts for initialization
+      - ../db/scripts:/docker-entrypoint-initdb.d/scripts:ro
+    environment:
+      - POSTGRES_DB=${DB_NAME:-foodme}
+      - POSTGRES_USER=${DB_USER:-foodme_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TINI_SUBREAPER=1
+      # PostgreSQL monitoring configuration
+      - POSTGRES_INITDB_ARGS=--data-checksums
+      # Enable additional logging for monitoring
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    expose:
+      - "5432"
+    networks:
+      - foodme_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d foodme -U foodme_user"]
+      interval: ${DB_HEALTH_INTERVAL:-10s}
+      timeout: ${DB_HEALTH_TIMEOUT:-5s}
+      retries: ${DB_HEALTH_RETRIES:-5}
+      start_period: ${DB_HEALTH_START_PERIOD:-60s}
+
+  # New Relic Infrastructure Agent for container monitoring (ARM64 Mock)
+  newrelic-infra:
+    build:
+      context: ..
+      dockerfile: docker/newrelic-infra.arm64.dockerfile # Use ARM64-compatible mock
+    container_name: foodme-infra
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    # Reduced capabilities for local development
+    depends_on:
+      - foodme
+      - db
+      - nginx
+    volumes:
+      # Minimal volume mounts for local development
+      - "../newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
+    environment:
+      - TINI_SUBREAPER=1
+      - NRIA_DISPLAY_NAME=${MONITORING_DISPLAY_NAME:-FoodMe-Infra-Docker-ARM64}
+      - NRIA_VERBOSE=${MONITORING_VERBOSE:-1}
+      - NRIA_LICENSE_KEY=${NRIA_LICENSE_KEY:-your-license-key-here}
+      # Custom attributes for easier filtering in New Relic
+      - NRIA_CUSTOM_ATTRIBUTES={"environment":"local-arm64","application":"foodme"}
+    networks:
+      - foodme_network
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# Docker volumes for persistent data
+volumes:
+  db-data:
+    driver: local
+    name: foodme-db-data
+
+# Docker networks
+networks:
+  foodme_network:
+    driver: bridge
+    name: foodme_network
