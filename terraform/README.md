@@ -76,22 +76,22 @@ Access your application at: `http://INSTANCE_IP:3000`
 
 ### Basic Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `aws_region` | AWS region | `us-east-1` |
-| `environment` | Environment name | `staging` |
-| `instance_type` | EC2 instance type | `t3.small` |
-| `key_name` | SSH key pair name | **Required** |
-| `app_port` | Application port | `3000` |
+| Variable        | Description       | Default      |
+| --------------- | ----------------- | ------------ |
+| `aws_region`    | AWS region        | `us-east-1`  |
+| `environment`   | Environment name  | `staging`    |
+| `instance_type` | EC2 instance type | `t3.small`   |
+| `key_name`      | SSH key pair name | **Required** |
+| `app_port`      | Application port  | `3000`       |
 
 ### Advanced Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `create_alb` | Create Application Load Balancer | `false` |
-| `ssl_certificate_arn` | SSL certificate ARN | `""` |
-| `domain_name` | Domain name | `""` |
-| `allowed_cidr_blocks` | Allowed IP ranges | `["0.0.0.0/0"]` |
+| Variable              | Description                      | Default         |
+| --------------------- | -------------------------------- | --------------- |
+| `create_alb`          | Create Application Load Balancer | `false`         |
+| `ssl_certificate_arn` | SSL certificate ARN              | `""`            |
+| `domain_name`         | Domain name                      | `""`            |
+| `allowed_cidr_blocks` | Allowed IP ranges                | `["0.0.0.0/0"]` |
 
 ## 🏗️ Architecture
 
@@ -290,12 +290,12 @@ For help with this deployment:
 
 1. Check the [troubleshooting section](#troubleshooting)
 2. Review AWS CloudWatch logs
-3. Check the [main deployment guide](../DEPLOYMENT_GUIDE.md)
-4. Verify your [environment setup](../SETUP_GUIDE.md)
+3. Check the [main deployment guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
+4. Verify your [environment setup](../docs/setup/SETUP_GUIDE.md)
 
 ## 🔗 Related Documentation
 
-- [Main Setup Guide](../SETUP_GUIDE.md)
-- [Deployment Guide](../DEPLOYMENT_GUIDE.md)
-- [DevContainer Setup](../DEVCONTAINER_SETUP.md)
+- [Main Setup Guide](../docs/setup/SETUP_GUIDE.md)
+- [Deployment Guide](../docs/deployment/DEPLOYMENT_GUIDE.md)
+- [DevContainer Setup](../docs/setup/DEVCONTAINER_SETUP.md)
 - [Security Guide](../SECURITY.md)

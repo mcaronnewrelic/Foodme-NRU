@@ -1,53 +1,77 @@
-# Docker Configuration Files
+# Docker Configuration for FoodMe
 
-This directory contains all Docker-related configuration files for the FoodMe application.
+## For New Developers - Quick Start
 
-## Files Overview
+**Use the npm scripts from the main directory instead of Docker commands directly:**
 
-### Dockerfiles
-- **`Dockerfile`** - Main application Dockerfile for production builds
-- **`Dockerfile.secure`** - Security-hardened version with multi-stage build
-- **`nginx.dockerfile`** - Custom Nginx reverse proxy configuration
-- **`newrelic-infra.dockerfile`** - Custom New Relic Infrastructure agent
-- **`Dockerfile.locust`** - Load testing with Locust
-
-### Docker Compose Files
-- **`docker-compose.yml`** - Main production configuration
-- **`docker-compose.dev.yml`** - Development environment overrides
-- **`docker-compose.loadtest.yml`** - Load testing configuration
-
-### Other Files
-- **`.dockerignore`** - Files and directories to exclude from Docker builds
-
-## Quick Start
-
-### Production Deployment
 ```bash
-cd docker
-docker-compose up -d
+# Start simple development environment (recommended)
+npm run docker:dev:simple
+
+# Start full production simulation
+npm run docker:dev:full
+
+# Check status
+npm run docker:status
+
+# View logs
+npm run docker:logs
+
+# Stop everything
+npm run docker:stop
 ```
 
-### Development Environment
-```bash
-cd docker
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+## Development Files (Use These)
+
+### For Daily Development
+- **`docker-compose.dev-simple.yml`** - Lightweight setup (app + database + nginx)
+- **`Dockerfile.simple`** - Basic Node.js application build
+
+### For Production Testing
+- **`docker-compose.arm64.yml`** - Full production simulation with monitoring
+- **`Dockerfile.arm64`** - Production-ready build for ARM64 (Apple Silicon)
+
+### Supporting Files
+- **`nginx.dockerfile`** - Nginx reverse proxy configuration
+- **`postgres-monitoring.dockerfile`** - PostgreSQL with monitoring extensions
+- **`newrelic-infra.arm64.dockerfile`** - New Relic monitoring simulation
+
+## Architecture Overview
+
+### Simple Development Setup
+```
+Browser → nginx:80 → foodme:3000 → postgres:5432
 ```
 
-### Load Testing
+### Full Production Simulation
+```
+Browser → nginx:80/443 → foodme:3000 → postgres:5432
+                                   ↗ newrelic-infra (monitoring)
+```
+
+## Advanced Configuration
+
+If you need to modify Docker settings, see the archived configurations in `archive/` folder.
+
+## Troubleshooting
+
+### Common Issues on Mac:
+- **SSL Certificate Errors**: Normal on ARM64 - automatically handled
+- **Port Conflicts**: Stop other services using ports 80, 443, 3000, 5432
+- **Slow Startup**: Wait 30-60 seconds for all services to initialize
+
+### Reset Everything:
 ```bash
-cd docker
-docker-compose -f docker-compose.loadtest.yml run --rm locust
+npm run docker:clean
 ```
 
 ## Environment Variables
 
-Make sure to set up your environment variables in a `.env` file in the project root:
+Make sure you have a `.env` file in the root directory. Copy from `.env.example` if needed.
 
-```bash
-# New Relic Configuration
-NEW_RELIC_LICENSE_KEY=your_license_key
-NEW_RELIC_API_KEY=your_api_key
-NEW_RELIC_APP_NAME=FoodMe-App
+Required variables:
+- `NEW_RELIC_LICENSE_KEY` - For monitoring (get from New Relic)
+- `DB_PASSWORD` - Database password (auto-generated if not set)
 
 # Database Configuration
 POSTGRES_DB=foodme
@@ -56,6 +80,6 @@ POSTGRES_PASSWORD=your_secure_password
 ```
 
 For more detailed information, see the main project documentation files:
-- [Setup Guide](../SETUP_GUIDE.md)
-- [Docker Comprehensive Guide](../DOCKER_COMPREHENSIVE_GUIDE.md)
-- [Deployment Guide](../DEPLOYMENT_GUIDE.md)
+- [Setup Guide](../docs/setup/SETUP_GUIDE.md)
+- [Docker Comprehensive Guide](../docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)
+- [Deployment Guide](../docs/deployment/DEPLOYMENT_GUIDE.md)

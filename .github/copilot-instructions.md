@@ -56,7 +56,4 @@ When reviewing code, adhere to the following principles derived from Uncle Bob's
 - Use bullet points to list issues.
 - Provide alternatives and improved code suggestions.
 
-The run_in_terminal tool sometimes fails to capture the command output. If
-that happens, use the get_terminal_last_command tool to retrieve the last
-command output from the terminal. If that fails, ask the user to copy-paste
-the output from the terminal.
+The run_in_terminal tool sometimes fails to capture the command output especially with the AWS CLI. If that happens, prefix the command with AWS_PAGER=""
