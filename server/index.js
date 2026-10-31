@@ -372,6 +372,11 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       res.send('Attempting to trigger an uncaught exception...');
   });
 
+  // Lets the Angular "Behind the scenes" callouts build New Relic links for the current account
+  app.get('/api/nr-config', (req, res) => {
+    res.json({ accountId: process.env.NEW_RELIC_ACCOUNT_ID || null });
+  });
+
   // Health check endpoint
   app.get('/health', async function(req, res) {
     try {

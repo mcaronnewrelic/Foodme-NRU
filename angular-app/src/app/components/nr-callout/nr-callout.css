@@ -1,0 +1,54 @@
+.nr-callout {
+  position: relative;
+  margin: 2rem 0 1rem;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 2px dashed #1ce783;
+  border-radius: 0.5rem;
+  background: #0d1b1b;
+  color: #e6f1f1;
+  text-align: left;
+}
+
+.nr-callout-label {
+  position: absolute;
+  top: -0.8rem;
+  left: 1rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 1rem;
+  background: #1ce783;
+  color: #0d1b1b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nr-callout-title {
+  font-size: 1rem;
+  color: #1ce783;
+}
+
+.nr-callout-body {
+  font-size: 0.9rem;
+}
+
+.nr-callout-nrql {
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  background: #071010;
+  color: #9fe8c4;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
+.nr-callout-btn {
+  background: #1ce783;
+  color: #0d1b1b;
+  font-weight: 600;
+}
+
+.nr-callout-btn:hover {
+  background: #4cf0a2;
+  color: #0d1b1b;
+}

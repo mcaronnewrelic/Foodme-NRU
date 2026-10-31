@@ -1,110 +1,110 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
-	"name": "FoodMe Development Container",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.11",
-			"installTools": true
-		},
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"installZsh": "true",
-			"configureZshAsDefaultShell": "true",
-			"installOhMyZsh": "true",
-			"upgradePackages": "true"
-		},
-		"ghcr.io/devcontainers/features/node:1": {
-			"nodeGypDependencies": true,
-			"installYarnUsingApt": true
-		},
-		"ghcr.io/devcontainers/features/git:1": {
-			"ppa": true,
-			"version": "latest"
-		}
-	},
+  "name": "FoodMe Development Container",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "os-provided",
+      "installTools": true
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "configureZshAsDefaultShell": "true",
+      "installOhMyZsh": "true",
+      "upgradePackages": "true"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    }
+  },
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [3000, 3001, 80, 8089, 5432],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [3000, 3001, 80, 8089, 5432],
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "python3 -m venv .venv && .venv/bin/python -m pip install --upgrade pip && .venv/bin/python -m pip install -r requirements.txt && npm install && cd angular-app && npm install",
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "npm install && cd angular-app && npm install",
 
-	// Configure tool-specific properties.
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				// Angular development
-				"angular.ng-template",
-				
-				// JavaScript/TypeScript
-				"ms-vscode.vscode-typescript-next",
-				"dbaeumer.vscode-eslint",
-				
-				// Code formatting
-				"esbenp.prettier-vscode",
-				
-				// Python development
-				"ms-python.python",
-				"ms-python.black-formatter",
-				"ms-python.isort",
-				"ms-python.pylint",
-				"ms-python.vscode-pylance",
-				"ms-python.debugpy",
-				
-				// Docker and containers
-				"ms-vscode.docker",
-				"ms-azuretools.vscode-containers",
-				
-				// Database tools
-				"ms-mssql.mssql",
-				"ckolkman.vscode-postgres",
-				
-				// Git and collaboration
-				"eamodio.gitlens",
-				"github.vscode-pull-request-github",
-				"github.copilot",
-				"github.copilot-chat",
-				
-				// Testing
-				"ms-vscode.test-adapter-converter",
-				"hbenl.vscode-test-explorer",
-				
-				// Utilities
-				"ms-vscode.live-server",
-				"humao.rest-client",
-				"bradlc.vscode-tailwindcss",
-				"redhat.vscode-xml",
-				"yzhang.markdown-all-in-one"
-			],
-			"settings": {
-				"typescript.preferences.quoteStyle": "single",
-				"editor.formatOnSave": true,
-				"python.defaultInterpreterPath": "./.venv/bin/python",
-				"python.terminal.activateEnvironment": true,
-				"docker.showStartPage": false,
-				"git.autofetch": true,
-				"editor.codeActionsOnSave": {
-					"source.organizeImports": "explicit"
-				},
-				"files.exclude": {
-					"**/.angular/cache": true,
-					"**/node_modules": true,
-					"**/__pycache__": true,
-					"**/.pytest_cache": true
-				},
-				"search.exclude": {
-					"**/node_modules": true,
-					"**/.angular": true,
-					"**/dist": true,
-					"**/__pycache__": true
-				}
-			}
-		}
-	}
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Angular development
+        "angular.ng-template",
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+        // JavaScript/TypeScript
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint",
+
+        // Code formatting
+        "esbenp.prettier-vscode",
+
+        // Python development
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.pylint",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+
+        // Docker and containers
+        "ms-vscode.docker",
+        "ms-azuretools.vscode-containers",
+
+        // Database tools
+        "ms-mssql.mssql",
+        "ckolkman.vscode-postgres",
+
+        // Git and collaboration
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "github.copilot",
+        "github.copilot-chat",
+
+        // Testing
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+
+        // Utilities
+        "ms-vscode.live-server",
+        "humao.rest-client",
+        "bradlc.vscode-tailwindcss",
+        "redhat.vscode-xml",
+        "yzhang.markdown-all-in-one"
+      ],
+      "settings": {
+        "js/ts.preferences.quoteStyle": "single",
+        "editor.formatOnSave": true,
+        "python.defaultInterpreterPath": "./.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "docker.showStartPage": false,
+        "git.autofetch": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "files.exclude": {
+          "**/.angular/cache": true,
+          "**/node_modules": true,
+          "**/__pycache__": true,
+          "**/.pytest_cache": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/.angular": true,
+          "**/dist": true,
+          "**/__pycache__": true
+        }
+      }
+    }
+  }
+
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "root"
 }

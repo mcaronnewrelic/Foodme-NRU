@@ -88,26 +88,6 @@ export class NewRelicService {
   }
 
   /**
-   * Start timing for a custom timing event
-   * @param name - The name of the timing event
-   */
-  startTime(name: string): void {
-    if (this.isAvailable() && typeof this.newrelic.startTime === 'function') {
-      this.newrelic.startTime(name);
-    }
-  }
-
-  /**
-   * End timing for a custom timing event
-   * @param name - The name of the timing event
-   */
-  endTime(name: string): void {
-    if (this.isAvailable() && typeof this.newrelic.endTime === 'function') {
-      this.newrelic.endTime(name);
-    }
-  }
-
-  /**
    * Log information about the New Relic browser agent
    */
   logAgentInfo(): void {
