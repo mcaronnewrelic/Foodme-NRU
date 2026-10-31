@@ -124,12 +124,12 @@
         <div class="col-md-6 col-lg-4 mb-4" *ngFor="let restaurant of filteredRestaurants()">
           <div 
             class="card h-100 restaurant-card clickable-card"
-            (click)="viewMenu(restaurant.id)"
+            (click)="viewMenu(restaurant)"
             role="button"
             [attr.aria-label]="'View menu for ' + restaurant.name"
             tabindex="0"
-            (keydown.enter)="viewMenu(restaurant.id)"
-            (keydown.space)="viewMenu(restaurant.id)">
+            (keydown.enter)="viewMenu(restaurant)"
+            (keydown.space)="viewMenu(restaurant)">
             <img 
               [src]="restaurant.image || '/assets/img/restaurants/default.jpg'" 
               [alt]="restaurant.name"
@@ -161,7 +161,7 @@
               
               <button 
                 class="btn btn-primary mt-auto"
-                (click)="viewMenu(restaurant.id); $event.stopPropagation()"
+                (click)="viewMenu(restaurant); $event.stopPropagation()"
                 [attr.aria-label]="'View menu for ' + restaurant.name">
                 View Menu
               </button>

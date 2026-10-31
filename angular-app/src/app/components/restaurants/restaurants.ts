@@ -126,8 +126,9 @@ export class RestaurantsComponent implements OnInit {
     return '$'.repeat(price);
   }
 
-  viewMenu(restaurantId: string) {
-    this.router.navigate(['/menu', restaurantId]);
+  viewMenu(restaurant: Restaurant) {
+    const nameSlug = this.restaurantService.getRestaurantSlug(restaurant);
+    this.router.navigate(['/menu', nameSlug]);
   }
 
   // Expose customer data for the customer card

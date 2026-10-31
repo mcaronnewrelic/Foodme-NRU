@@ -3,6 +3,7 @@ nbproject
 manifest.mf
 build.xml
 newrelic_agent.log
+*.log
 
 .setup/
 .project
@@ -20,3 +21,22 @@ __pycache__/
 db/password.txt
 db/*.txt
 terraform.tfstate*
+
+# SSL certificates (local development)
+ssl/*.crt
+ssl/*.key
+ssl/*.pem
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store

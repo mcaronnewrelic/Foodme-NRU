@@ -52,21 +52,21 @@ export class MenuComponent implements OnInit {
       return;
     }
 
-    // Get restaurant ID from route params
-    const restaurantId = this.route.snapshot.paramMap.get('restaurantId');
-    if (restaurantId) {
-      this.loadRestaurant(restaurantId);
+    // Get restaurant name slug from route params
+    const restaurantName = this.route.snapshot.paramMap.get('restaurantName');
+    if (restaurantName) {
+      this.loadRestaurant(restaurantName);
     } else {
-      this.error.set('No restaurant ID provided');
+      this.error.set('No restaurant name provided');
       this.loading.set(false);
     }
   }
 
-  loadRestaurant(id: string) {
+  loadRestaurant(nameSlug: string) {
     this.loading.set(true);
     this.error.set(null);
     
-    this.restaurantService.getRestaurant(id).subscribe({
+    this.restaurantService.getRestaurantByName(nameSlug).subscribe({
       next: (restaurant) => {
         this.restaurant.set(restaurant);
         this.loading.set(false);
@@ -129,6 +129,18 @@ export class MenuComponent implements OnInit {
 
   getCategoryLink(category: string): string {
     return '#category-' + category.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  scrollToCategory(category: string) {
+    const elementId = this.getCategoryId(category);
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+    }
   }
 
   goBack() {

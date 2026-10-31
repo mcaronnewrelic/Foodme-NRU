@@ -95,11 +95,12 @@
         <!-- Category Navigation -->
         <div class="mb-4">
           <div class="btn-group" role="group">
-            <a *ngFor="let category of getCategoryKeys()" 
-               [href]="getCategoryLink(category)"
-               class="btn btn-outline-primary btn-sm">
+            <button *ngFor="let category of getCategoryKeys()" 
+                    type="button"
+                    (click)="scrollToCategory(category)"
+                    class="btn btn-outline-primary btn-sm">
               {{ category }} ({{ menuCategories()[category].length }})
-            </a>
+            </button>
           </div>
         </div>
 

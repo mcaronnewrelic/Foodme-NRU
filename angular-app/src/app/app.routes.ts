@@ -8,12 +8,16 @@ export const routes: Routes = [
     loadComponent: () => import('./components/restaurants/restaurants').then(m => m.RestaurantsComponent)
   },
   { 
-    path: 'menu/:restaurantId', 
+    path: 'menu/:restaurantName', 
     loadComponent: () => import('./components/menu/menu').then(m => m.MenuComponent)
   },
   { 
     path: 'checkout', 
     loadComponent: () => import('./components/checkout/checkout').then(m => m.CheckoutComponent)
+  },
+  { 
+    path: 'orders', 
+    loadComponent: () => import('./components/orders/orders').then(m => m.OrdersComponent)
   },
   { path: 'customer', component: CustomerComponent },
   { 
