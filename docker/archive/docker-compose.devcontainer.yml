@@ -1,0 +1,62 @@
+# Docker Compose override for dev container environments
+# This file solves mount path issues in dev containers
+
+services:
+  # Override the database service to handle init scripts differently
+  db:
+    # Remove the problematic volume mount and use a different approach
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Comment out the init mount that causes issues in dev containers
+      # - ../db/init:/docker-entrypoint-initdb.d:ro
+    # Instead, we'll copy the init scripts into the container during build
+
+  # Alternative approach: Copy init scripts during container startup
+  db-init:
+    image: postgres:16-alpine
+    container_name: foodme-db-init
+    env_file:
+      - ../.env
+    environment:
+      - POSTGRES_DB=${DB_NAME:-foodme}
+      - POSTGRES_USER=${DB_USER:-foodme_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-foodme_secure_password_2025!}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # Copy init scripts using docker cp instead of volume mount
+    entrypoint: |
+      sh -c "
+        # Wait for database to be ready
+        until pg_isready -h db -U foodme_user -d foodme; do
+          echo 'Waiting for database...'
+          sleep 2
+        done
+        echo 'Database is ready!'
+      "
+    depends_on:
+      - db
+    networks:
+      - foodme_network
+    profiles:
+      - init-only
+
+  # New Relic Infrastructure - configured for dev container environment
+  newrelic-infra:
+    volumes:
+      # Override volume mounts for dev container paths
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/:/host:ro"
+      - "/workspaces/foodme/newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
+    # Uncomment the lines below to disable New Relic in devcontainer (recommended for development)
+    # profiles:
+    #   - disabled
+
+volumes:
+  db-data:
+    driver: local
+    name: foodme-db-data
+
+networks:
+  foodme_network:
+    driver: bridge
+    name: foodme_network

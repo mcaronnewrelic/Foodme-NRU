@@ -6,7 +6,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: foodme-app
     ports:
-      - "${FOODME_PORT:-3000}:3000"
+      - "${PORT:-3000}:3000"
     env_file:
       - ../.env
     environment:
@@ -39,29 +39,46 @@ services:
     depends_on:
       - foodme
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/nginx-health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1/nginx-health",
+        ]
       interval: ${HEALTH_CHECK_INTERVAL:-30s}
       timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
       retries: ${HEALTH_CHECK_RETRIES:-3}
       start_period: ${HEALTH_CHECK_START_PERIOD:-10s}
 
-  # PostgreSQL database
+  # PostgreSQL database with monitoring extensions
   db:
-    image: postgres:16-alpine
+    build:
+      context: ..
+      dockerfile: docker/postgres-monitoring.dockerfile
     restart: unless-stopped
     user: postgres
     container_name: foodme-db
     env_file:
-      - ../.env  
+      - ../.env
     volumes:
       - db-data:/var/lib/postgresql/data
-      # Init scripts temporarily disabled for dev container
-      - ../db/init:/docker-entrypoint-initdb.d:ro
+      # Mount application initialization scripts
+      - ../db/init/01-init-schema.sql:/docker-entrypoint-initdb.d/10-init-schema.sql:ro
+      - ../db/init/02-import-restaurants-uuid.sql:/docker-entrypoint-initdb.d/20-import-restaurants-uuid.sql:ro
+      # Mount monitoring scripts for initialization
+      - ../db/scripts:/docker-entrypoint-initdb.d/scripts:ro
     environment:
       - POSTGRES_DB=${DB_NAME:-foodme}
       - POSTGRES_USER=${DB_USER:-foodme_user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-foodme_secure_password_2025!}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
       - TINI_SUBREAPER=1
+      # PostgreSQL monitoring configuration
+      - POSTGRES_INITDB_ARGS=--data-checksums
+      # Enable additional logging for monitoring
+      - POSTGRES_HOST_AUTH_METHOD=md5
     expose:
       - "5432"
     networks:
@@ -71,22 +88,7 @@ services:
       interval: ${DB_HEALTH_INTERVAL:-10s}
       timeout: ${DB_HEALTH_TIMEOUT:-5s}
       retries: ${DB_HEALTH_RETRIES:-5}
-      start_period: ${DB_HEALTH_START_PERIOD:-30s}
-
-  # Alternative: explicit environment variables (override .env)
-  # foodme-env-vars:
-  #   build: .
-  #   ports:
-  #     - "3001:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     # Pass environment variables from host or .env file
-  #     - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
-  #     - NEW_RELIC_API_KEY=${NEW_RELIC_API_KEY}
-  #     - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME}
-  #   restart: unless-stopped
-  #   networks:
-  #     - foodme_network
+      start_period: ${DB_HEALTH_START_PERIOD:-60s}
 
   # New Relic Infrastructure Agent for container monitoring
   newrelic-infra:
@@ -117,7 +119,7 @@ services:
       - "../newrelic-integrations:/etc/newrelic-infra/integrations.d:ro"
     environment:
       - TINI_SUBREAPER=1
-      - NRIA_DISPLAY_NAME=${MONITORING_DISPLAY_NAME:-FoodMe-Infrastructure}
+      - NRIA_DISPLAY_NAME=${MONITORING_DISPLAY_NAME:-FoodMe-Infra-Docker}
       - NRIA_VERBOSE=${MONITORING_VERBOSE:-1}
       # Enable full monitoring capabilities
       - NRIA_ENABLE_PROCESS_METRICS=true
@@ -126,23 +128,6 @@ services:
       - NRIA_CUSTOM_ATTRIBUTES={"environment":"host","application":"foodme"}
     networks:
       - foodme_network
-
-  # Example with Docker secrets (for Docker Swarm) - DISABLED FOR TESTING
-  # foodme-with-secrets:
-  #   build: .
-  #   ports:
-  #     - "3002:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - NEW_RELIC_APP_NAME=FoodMe-App-Secrets
-  #   secrets:
-  #     - new_relic_license_key
-  #     - new_relic_api_key
-  #   restart: unless-stopped
-  #   networks:
-  #     - foodme_network
-  #   deploy:
-  #     replicas: 1
 
 # Docker volumes for persistent data
 volumes:
@@ -155,4 +140,3 @@ networks:
   foodme_network:
     driver: bridge
     name: foodme_network
-
