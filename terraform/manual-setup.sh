@@ -16,9 +16,9 @@ echo "📦 Installing required packages with conflict resolution..."
 sudo dnf update -y
 sudo dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent --allowerasing
 
-echo "📦 Installing Node.js 22 LTS..."
-curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash -
-sudo dnf install -y nodejs
+echo "📦 Installing Node.js 24..."
+sudo dnf install -y nodejs24 nodejs24-npm
+sudo alternatives --set node /usr/bin/node-24
 
 echo "📦 Installing PM2 for process management..."
 sudo npm install -g pm2

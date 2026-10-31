@@ -1,6 +1,6 @@
 # 🍕 FoodMe - Restaurant Ordering Application
 
-[![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org/)
 [![Angular](https://img.shields.io/badge/Angular-20-red.svg)](https://angular.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/Security-Validated-brightgreen.svg)](#-security-features)
@@ -211,7 +211,7 @@ foodme/
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 22+ (or use the included dev container)
+- Node.js 24+ (or use the included dev container)
 - Docker and Docker Compose
 - Python 3.11+ (for load testing)
 

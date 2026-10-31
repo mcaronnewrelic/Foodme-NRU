@@ -10,7 +10,10 @@ The quick start for running FoodMe on your machine. For what each file in `docke
    ```bash
    npm run build:angular
    ```
-   Do this where `node_modules` was installed for the same platform. If `ng build` fails with an esbuild "another platform" error, build inside the dev container instead.
+   Run it where `node_modules` was installed for the same platform. Outside the dev container, `ng build` can fail with an esbuild "another platform" error. In that case build in a container from your terminal instead:
+   ```bash
+   npm run build:angular:docker
+   ```
 4. **Start.**
    ```bash
    npm run docker:dev:simple
@@ -37,13 +40,14 @@ The quick start for running FoodMe on your machine. For what each file in `docke
 ## Commands
 
 ```bash
-npm run docker:status     # what is running
-npm run docker:logs       # follow the logs
-npm run docker:stop       # stop everything
-npm run docker:clean      # stop and delete containers and volumes (the database is lost)
+npm run docker:dev:simple:build  # build Angular in a container, rebuild the images, recreate everything
+npm run docker:status            # what is running
+npm run docker:logs              # follow the logs
+npm run docker:stop              # stop everything
+npm run docker:clean             # stop and delete containers and volumes (the database is lost)
 
-npm run db:connect:simple # psql into the database (db:connect:full for the full setup)
-npm run db:backup:simple  # write backup_<date>.sql (db:backup:full for the full setup)
+npm run db:connect:simple        # psql into the database (db:connect:full for the full setup)
+npm run db:backup:simple         # write backup_<date>.sql (db:backup:full for the full setup)
 ```
 
 ## Working on code
@@ -56,6 +60,8 @@ What you changed decides what to run. The server code is copied into the image w
 | Server code (`server/`) | `docker-compose -f docker/docker-compose.dev-simple.yml up -d --build --force-recreate foodme` |
 | `.env` | `docker-compose -f docker/docker-compose.dev-simple.yml up -d --force-recreate foodme`. The file is read only when the container is created, so a plain restart does not pick up changes. |
 | Database scripts in `db/init/` | `npm run docker:clean`, then start again. They only run when the database volume is first created. |
+
+From a Mac terminal, `npm run docker:dev:simple:build` covers all of the first three rows at once. It builds Angular in a `node:24` container, rebuilds the images and recreates the containers. The database volume is kept.
 
 ## Using Docker directly
 

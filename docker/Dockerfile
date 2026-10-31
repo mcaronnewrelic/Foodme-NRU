@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Build stage
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 
 # Security updates
 RUN apk update && apk upgrade && apk add --no-cache dumb-init
@@ -29,7 +29,7 @@ WORKDIR /usr/src/app
 RUN npm run build
 
 # Stage 2: Production-ready stage
-FROM node:22-alpine AS production
+FROM node:24-alpine AS production
 
 # Install security updates and dumb-init as root
 RUN apk update && apk upgrade && apk add --no-cache dumb-init

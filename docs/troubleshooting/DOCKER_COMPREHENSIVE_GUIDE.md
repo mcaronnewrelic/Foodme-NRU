@@ -47,7 +47,7 @@ npm run db:restore:simple      # restores backup.sql
 The server cannot find `index.html` in `dist/browser`, because the container serves the Angular build from the mounted `dist/`. Run `npm run build:angular`, then reload. If the folder has files and the error stays, the mount may not resolve. See "Mounts denied" below.
 
 ### `ng build` fails with "You installed esbuild for another platform"
-`node_modules` was installed on a different operating system than the one running the build, for example in the dev container (Linux) and then built on a Mac. Build where `node_modules` was installed, or reinstall there. Switching back and forth breaks it each time.
+`node_modules` was installed on a different operating system than the one running the build, for example in the dev container (Linux) and then built on a Mac. Build where `node_modules` was installed, or reinstall there. Switching back and forth breaks it each time. From a Mac terminal, `npm run build:angular:docker` builds inside a `node:24` container, which matches the Linux `node_modules` the dev container installs.
 
 ### My change doesn't show up
 | You changed | Needed |

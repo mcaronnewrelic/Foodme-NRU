@@ -33,13 +33,12 @@ echo "📦 Updating system packages..."
 dnf update -y
 
 echo "📦 Installing required packages..."
-dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent npm postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing > /dev/null
+dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent postgresql16-server postgresql16 postgresql16-contrib libcap nano --allowerasing > /dev/null
 
-# Install Node.js 22 
-echo "📦 Installing Node.js 22..."
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-dnf install -y nodejs22 || echo "⚠️ Node.js installation failed"
-alternatives --set node /usr/bin/node-22
+# Install Node.js 24 from Amazon Linux 2023's own repository (provides node and npm through alternatives)
+echo "📦 Installing Node.js 24..."
+dnf install -y nodejs24 nodejs24-npm || echo "⚠️ Node.js installation failed"
+alternatives --set node /usr/bin/node-24
 log_progress "Package installation completed, starting New Relic setup"
 
 # Install New Relic Infrastructure Agent

@@ -13,11 +13,11 @@ DB_PORT="${db_port}"
 
 # Update and install packages
 dnf update -y
-dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent nodejs npm postgresql16-server postgresql16 postgresql16-contrib --allowerasing
+dnf install -y git wget nginx htop unzip amazon-cloudwatch-agent postgresql16-server postgresql16 postgresql16-contrib --allowerasing
 
-# Install Node.js 22
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-dnf install -y nodejs
+# Install Node.js 24 from Amazon Linux 2023's own repository
+dnf install -y nodejs24 nodejs24-npm
+alternatives --set node /usr/bin/node-24
 npm install -g pm2
 
 # Install New Relic Infrastructure Agent
