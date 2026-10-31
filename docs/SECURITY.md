@@ -23,6 +23,7 @@ The serious problems are about who can call the API and what it leaves running. 
 | 9 | Medium | Mass assignment from `req.body` onto records | Open |
 | 10 | Low | New Relic keys stored in plaintext in the local `.env` | Open |
 | 11 | Low | Customer PII persisted in `localStorage` | Open |
+| 12 | Medium | SSH (port 22) is open to the whole internet on the CloudFormation EC2 security group | Open (added 2026-10-31) |
 
 The local `.env` is gitignored and not tracked, so its keys are not in the repository. Finding 10 is about the keys being live and on disk in cleartext.
 
@@ -269,6 +270,12 @@ The on-disk `.env` contains a real-looking `NEW_RELIC_LICENSE_KEY`, `NRIA_LICENS
 **Suggested fix:** Store only what is needed, prefer in-memory state for sensitive fields, and consider clearing on logout/session end (the service already exposes `clearCustomer`).
 
 ---
+
+### 12. SSH open to the internet in the CloudFormation template (Medium)
+
+Added 2026-10-31. `EC2SecurityGroup` in `cloudformation/foodme-production-stack.yaml` allows port 22 from `0.0.0.0/0`. The instance can be reached without SSH (Systems Manager Session Manager and Run Command both work, and the deployment workflow uses them), so the rule is not needed for deployments and exposes the host to password-guessing and scanning.
+
+**Suggested fix:** remove the SSH rule and use Session Manager (`aws ssm start-session`), or limit it to your own address with a template parameter such as `AllowedSshCidr`. Changing the rule updates the security group in place.
 
 ## What looked good
 

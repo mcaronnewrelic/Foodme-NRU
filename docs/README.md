@@ -51,8 +51,9 @@ Start with the [main README](../README.md), then use this page to find the one d
 | [Code Deployment Guide](deployment/CODE_DEPLOYMENT_GUIDE.md) | You change only the application and want to skip rebuilding AWS infrastructure. |
 | [ALB Setup Guide](deployment/ALB_SETUP_GUIDE.md) | You work on the load balancer in the CloudFormation template. |
 | [cloudformation/README.md](../cloudformation/README.md) | You need to know which CloudFormation template and script does what. |
-| [terraform/README.md](../terraform/README.md) | You deploy the EC2 host with Terraform. |
-| [Cleanup Guide](../.github/CLEANUP_GUIDE.md) | A deployment failed and you need to remove the AWS resources it left. |
+| [Deploying with GitHub Actions](deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions) | You deploy code or the stack from GitHub, or want to know which secrets it needs. |
+| [Removing a deployment](deployment/DEPLOYMENT_GUIDE.md#removing-a-deployment) | A deployment failed, or you are done with an environment, and you need to remove what it created. |
+| [Node.js version](deployment/DEPLOYMENT_GUIDE.md#nodejs-version) | You need to move an existing instance to Node 24. |
 | [Load Testing](LOAD_TESTING.md) and [CloudFormation Load Testing](LOAD_TESTING_CLOUDFORMATION.md) | You run Locust locally, or from AWS. |
 
 ## Troubleshooting
@@ -60,9 +61,9 @@ Start with the [main README](../README.md), then use this page to find the one d
 | Document | Use it when |
 |---|---|
 | [Docker Comprehensive Guide](troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md) | Docker misbehaves. It covers the services, commands, and fixes for a blank site, stale changes, and "Mounts denied" in the dev container. |
-| [EC2 and Terraform Troubleshooting](troubleshooting/EC2_TROUBLESHOOTING.md) | `terraform plan` or `apply` fails, or the instance is up but the app is not working (service, nginx, Angular routes, health checks, database). |
-| [EC2 Key Pair Setup](../terraform/EC2_KEYPAIR_SETUP.md) | A deployment fails with `InvalidKeyPair.NotFound`. |
-| [New Relic on Amazon Linux 2023](../terraform/NEW_RELIC_AL2023_FIX.md) | The infrastructure agent will not install on Amazon Linux 2023. |
+| [EC2 Troubleshooting](troubleshooting/EC2_TROUBLESHOOTING.md) | The stack fails, the code deployment fails, or the instance is up but the app is not working (PM2, nginx, health checks, database). |
+| [EC2 Key Pair Setup](../archive/terraform/EC2_KEYPAIR_SETUP.md) | A deployment fails with `InvalidKeyPair.NotFound`. Written for Terraform; the key pair advice still applies. |
+| [New Relic on Amazon Linux 2023](../archive/terraform/NEW_RELIC_AL2023_FIX.md) | The infrastructure agent will not install on Amazon Linux 2023. |
 
 ## Security
 
@@ -84,6 +85,10 @@ These live in [docs/archive/](archive/). They describe changes that were made at
 | [PostgreSQL 16 Update](archive/POSTGRESQL_16_UPDATE.md) | The move from PostgreSQL 15 to 16 on EC2 |
 | [PostgreSQL Integration Summary](archive/POSTGRESQL_INTEGRATION_SUMMARY.md) | Adding PostgreSQL to the EC2 deployment |
 | [New Relic Integration Summary](archive/NEW_RELIC_INTEGRATION_SUMMARY.md) | Adding the infrastructure agent to the EC2 deployment |
+
+## Archive
+
+[archive/terraform](../archive/terraform/README.md) holds the Terraform deployment that CloudFormation replaced: the configuration, its scripts, its troubleshooting and cleanup guides, and the three GitHub workflows that ran it. Nothing in it runs any more.
 
 ## For contributors
 
