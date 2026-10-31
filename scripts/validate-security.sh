@@ -104,14 +104,14 @@ else
 fi
 
 # Check 7: .env file is properly ignored
-if [ -f docker/.dockerignore ]; then
-    if grep -q "\.env" docker/.dockerignore; then
+if [ -f .dockerignore ]; then
+    if grep -q "\.env" .dockerignore; then
         report_success ".env file is excluded from Docker context"
     else
         report_warning ".env file not explicitly excluded in .dockerignore"
     fi
 else
-    report_warning "No docker/.dockerignore file found"
+    report_warning "No .dockerignore file found"
 fi
 
 # Check 8: Secrets are not committed to git

@@ -35,10 +35,10 @@ The local `.env` is gitignored and not tracked, so its keys are not in the repos
 
 ### Files kept out of git and images
 - `.gitignore` excludes `.env`, `.env.local` and `newrelic_agent.log`.
-- `docker/.dockerignore` keeps `.env` files and logs out of the Docker build context.
+- `.dockerignore` (at the repository root, which is the build context) keeps `.env` files, logs, `node_modules` and `dist` out of image builds. Docker only reads a `.dockerignore` from the root of the context, so it has to live there. Before 2026-10-31 it sat in `docker/` and was never applied, which let a stale local `node_modules` end up inside the production image.
 
 ### Containers
-- The production Dockerfiles (`docker/Dockerfile`, `docker/Dockerfile.arm64`) are multi-stage builds on `node:22-alpine` and run as the non-root user `node`. The simple development image runs as `nextjs`.
+- The production Dockerfiles (`docker/Dockerfile`, `docker/Dockerfile.arm64`) are multi-stage builds on `node:24-alpine` and run as the non-root user `node`. The simple development image runs as `nextjs`.
 - There are no `ARG` or `ENV` instructions carrying secrets. An earlier version had `ARG` lines for the New Relic keys, which expose secrets in the build cache and image layers. They were removed, and secrets reach containers only at runtime, through `env_file` in the compose files or `--env-file`.
 - Never pass secrets as build arguments.
 
@@ -54,7 +54,7 @@ The local `.env` is gitignored and not tracked, so its keys are not in the repos
 | Dockerfile linting with Hadolint | `npm run security:docker` (lints `docker/Dockerfile`; rules are in `.hadolint.yaml`) |
 | Known-vulnerable dependencies | `npm audit`, in `server/` and in `angular-app/` |
 
-The validation script looks for `ARG` and `ENV` instructions with secrets in `docker/Dockerfile*`, `--build-arg` with secrets in shell scripts, build args in `docker/docker-compose*.yml`, hardcoded keys in `.js` and `.ts` source, and `.env` missing from `.gitignore` or `docker/.dockerignore`. It exits with an error if it finds anything. The review itself did not include a dependency scan, so run `npm audit` too.
+The validation script looks for `ARG` and `ENV` instructions with secrets in `docker/Dockerfile*`, `--build-arg` with secrets in shell scripts, build args in `docker/docker-compose*.yml`, hardcoded keys in `.js` and `.ts` source, and `.env` missing from `.gitignore` or `.dockerignore`. It exits with an error if it finds anything. The review itself did not include a dependency scan, so run `npm audit` too.
 
 ## If a secret is exposed
 

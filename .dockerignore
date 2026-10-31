@@ -1,3 +1,6 @@
+# Docker only reads a .dockerignore from the root of the build context. Every Dockerfile in docker/ builds
+# with the repository root as its context, so this file has to live here.
+
 # Include any files or directories that you don't want to be copied to your
 # container here (e.g., local build artifacts, temporary files, etc.).
 #
@@ -39,8 +42,6 @@ README.md
 **/__pycache__
 **/*.pyc
 **/*.pyo
-**/requirements.txt
-**/locustfile.py
 **/validate-loadtest.sh
 **/LOAD_TESTING.md
 
