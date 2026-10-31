@@ -1,0 +1,231 @@
+# Deploys FoodMe to AWS with CloudFormation. This replaces the Terraform workflows, which are archived in
+# archive/terraform/workflows.
+#
+#   code          Update the running instance with the current server and Angular code (cloudformation/deploy-code.sh).
+#                 Runs by itself on a push to main that changes server/ or angular-app/, for staging.
+#   stack         Create or update the CloudFormation stack (cloudformation/deploy-production.sh). Manual only: a
+#                 template change can interrupt the instance, so someone should choose to do it.
+#   delete-stack  Delete the stack and everything in it. Manual only, and you must type DELETE.
+#
+# Pull requests that change cloudformation/ only get the template checks. See cloudformation/README.md.
+#
+# Secrets:   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, EC2_KEY_NAME (name of an existing EC2 key pair), DB_PASSWORD,
+#            NEW_RELIC_LICENSE_KEY, NEW_RELIC_API_KEY, NEW_RELIC_APP_ID (entity GUID, for deployment markers).
+#            They can be set per GitHub environment (staging, production) or for the whole repository.
+# Variable:  AWS_REGION (optional). Default: us-west-2.
+name: deploy-cloudformation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "angular-app/**"
+      - "cloudformation/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cloudformation/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment
+        type: choice
+        options: [staging, production]
+        default: staging
+      action:
+        description: What to do
+        type: choice
+        options: [code, stack, delete-stack]
+        default: code
+      instance_type:
+        description: Instance type (stack only)
+        type: choice
+        options: [t3.small, t3.medium, t3.large, t3.xlarge]
+        default: t3.medium
+      confirm_delete:
+        description: Type DELETE to confirm (delete-stack only)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foodme-cloudformation-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+  NODE_VERSION: 24
+
+jobs:
+  # Cheap checks that need no AWS access
+  validate:
+    name: Check the template and scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint the CloudFormation templates
+        run: |
+          pip install --quiet cfn-lint
+          cfn-lint cloudformation/foodme-production-stack.yaml
+
+      - name: Check the deployment scripts
+        run: |
+          for script in cloudformation/deploy-production.sh cloudformation/deploy-code.sh cloudformation/install-foodme.sh; do
+            bash -n "$script"
+          done
+
+  # Decides whether a push touched application code
+  changes:
+    name: Find what changed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          code=false
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            # Compare with where main was before this push, so a push of several commits is covered.
+            # If that commit is unknown (a new branch, a force push), assume the code changed.
+            if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+              code=true
+            elif git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE '^(server|angular-app)/'; then
+              code=true
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+  deploy-stack:
+    name: Deploy the stack
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'stack'
+    environment: ${{ inputs.environment || 'staging' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy the stack
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          INSTANCE_TYPE: ${{ inputs.instance_type }}
+          KEY_NAME: ${{ secrets.EC2_KEY_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+        run: |
+          # The script reads the region from the AWS CLI configuration
+          aws configure set region "$AWS_REGION"
+          bash cloudformation/deploy-production.sh "$ENVIRONMENT" "$INSTANCE_TYPE" "$KEY_NAME" "$DB_PASSWORD" "$NEW_RELIC_LICENSE_KEY"
+
+      - name: Summarize
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          # The backticks are JMESPath literals, not command substitution
+          # shellcheck disable=SC2016
+          outputs=$(aws cloudformation describe-stacks --stack-name "foodme-$ENVIRONMENT" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApplicationURL` || OutputKey==`HealthCheckURL`].[OutputKey,OutputValue]' --output text)
+          { echo "### Stack foodme-$ENVIRONMENT deployed"; echo; echo '```'; echo "$outputs"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-code:
+    name: Deploy the code
+    runs-on: ubuntu-latest
+    needs: [validate, changes]
+    if: >-
+      always() && !cancelled() && needs.validate.result == 'success' &&
+      ((github.event_name == 'push' && needs.changes.outputs.code == 'true') ||
+       (github.event_name == 'workflow_dispatch' && inputs.action == 'code'))
+    environment: ${{ inputs.environment || 'staging' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Catch a broken Angular build here, before anything on the instance is touched
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: angular-app/package-lock.json
+
+      - name: Build the Angular app
+        working-directory: angular-app
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to the instance (through SSM, no SSH)
+        env:
+          ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+        run: bash cloudformation/deploy-code.sh -e "$ENVIRONMENT" -r "$AWS_REGION"
+
+      - name: Record the deployment in New Relic
+        uses: newrelic/deployment-marker-action@v2.5.1
+        with:
+          guid: ${{ secrets.NEW_RELIC_APP_ID }}
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          region: US
+          user: ${{ github.actor }}
+          commit: ${{ github.sha }}
+          version: ${{ github.sha }}
+          description: "Code deployed to ${{ inputs.environment || 'staging' }}"
+
+  delete-stack:
+    name: Delete the stack
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'delete-stack'
+    environment: ${{ inputs.environment || 'staging' }}
+    timeout-minutes: 45
+    steps:
+      - name: Check the confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm_delete }}
+        run: |
+          if [ "$CONFIRM" != "DELETE" ]; then
+            echo "::error::Type DELETE in the confirm_delete input to delete the stack."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete foodme-${{ inputs.environment }}
+        env:
+          STACK_NAME: foodme-${{ inputs.environment }}
+        run: |
+          aws cloudformation delete-stack --stack-name "$STACK_NAME"
+          aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME"
+          {
+            echo "### Stack $STACK_NAME deleted"
+            echo
+            echo "The S3 bucket with the deployment packages (foodme-deployments-<account>-<region>) is not part of the stack and was kept."
+          } >> "$GITHUB_STEP_SUMMARY"
