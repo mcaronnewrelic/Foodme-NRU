@@ -17,6 +17,18 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+# Amazon Linux 2023 requires IMDSv2, so plain curl to the metadata service returns nothing
+imds() {
+    local token
+    token=$(curl -s -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
+    curl -s -H "X-aws-ec2-metadata-token: $token" "http://169.254.169.254/latest/meta-data/$1"
+}
+
+# Hostname is ip-10-0-1-x, which tells apart servers that overlap during a redeploy
+host_display_name() {
+    echo "foodme-$(hostname -s)"
+}
+
 log "Starting FoodMe application installation..."
 
 # Update system and install required packages
@@ -183,16 +195,17 @@ NODE_ENV="$node_env"
 PORT=3000
 DATABASE_URL="postgresql://postgres:$db_password@localhost:5432/foodme"
 JWT_SECRET=$(openssl rand -base64 32)
-CORS_ORIGIN="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
+CORS_ORIGIN="http://$(imds public-ipv4)"
 ANGULAR_DIR="/opt/foodme/dist/browser"
 NEW_RELIC_LICENSE_KEY="$new_relic_key"
 NRIA_LICENSE_KEY="$new_relic_key"
-NEW_RELIC_APP_NAME="FoodMe-$environment"
+NEW_RELIC_APP_NAME="FoodMe"
+NEW_RELIC_PROCESS_HOST_DISPLAY_NAME="$(host_display_name)"
 NEW_RELIC_ENABLED=$([[ -n "$new_relic_key" && "$new_relic_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "true" || echo "false")
 NEW_RELIC_LOG_LEVEL="info"
 NEW_RELIC_DISTRIBUTED_TRACING_ENABLED="true"
 NEW_RELIC_SPAN_EVENTS_ENABLED="true"
-AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+AWS_REGION=$(imds placement/region)
 ENVIRONMENT="$environment"
 EOF
     
@@ -391,7 +404,7 @@ configure_new_relic() {
         # Configure New Relic Infrastructure
         cat > /etc/newrelic-infra.yml << EOF
 license_key: $license_key
-display_name: foodme-$environment-$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+display_name: $(host_display_name)
 log_file: /var/log/newrelic-infra/newrelic-infra.log
 verbose: 0
 custom_attributes:

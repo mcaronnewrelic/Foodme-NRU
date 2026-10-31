@@ -9,11 +9,11 @@ The EC2 deployment has been enhanced to include New Relic Infrastructure agent m
 - **Server Monitoring**: CPU, memory, disk, network metrics
 - **Process Monitoring**: Application processes and resource usage
 - **Custom Attributes**: Environment, application name, instance type, region
-- **Display Name**: `FoodMe-EC2-{environment}-{instance-id}`
+- **Display Name**: `foodme-{hostname}` (e.g., `foodme-ip-10-0-1-102`), tagged with `environment`
 
 ### 2. New Relic APM Integration
 - **Application Performance Monitoring**: Node.js application metrics
-- **App Name**: `FoodMe-{environment}` (e.g., `FoodMe-staging`, `FoodMe-production`)
+- **App Name**: `FoodMe` (staging and production are told apart by the `environment` tag on the host)
 - **Transaction Tracing**: Web transactions, database queries, external services
 - **Error Tracking**: Application errors and exceptions
 

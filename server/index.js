@@ -114,16 +114,15 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   app.locals.newrelic = newrelic;
   
   // Serve Angular app static files (excluding index.html)
-  // Determine Angular dist directory based on environment
-  // In dev: server runs from /server/, Angular build is in /dist/browser/
-  // In prod: server runs from /dist/server/, Angular build is in /dist/browser/
-  // In Docker: server runs from /foodme/app/server/, Angular build is in /foodme/app/browser/
+  // The Angular build lands in a different place per layout, so use whichever exists:
+  // ../browser      production image: /foodme/app/server/ -> /foodme/app/browser/
+  // ../dist/browser local dev, local Docker mount, and EC2 (/opt/foodme/backend -> /opt/foodme/dist/browser)
   const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
-  let ANGULAR_DIST_DIR;
-  ANGULAR_DIST_DIR = path.join(__dirname, '../browser'); // Docker: /foodme/app/server/ -> /foodme/app/browser/
-  if (process.env.NODE_ENV == 'development') {
-     ANGULAR_DIST_DIR = path.join(__dirname, '../dist/browser'); // Dev: /server/ -> /dist/browser/
-  }
+  const ANGULAR_DIST_CANDIDATES = [
+    path.join(__dirname, '../browser'),
+    path.join(__dirname, '../dist/browser')
+  ];
+  const ANGULAR_DIST_DIR = ANGULAR_DIST_CANDIDATES.find(dir => fs.existsSync(dir)) || ANGULAR_DIST_CANDIDATES[0];
   logger.info({
     angularDir: ANGULAR_DIST_DIR,
     directoryExists: fs.existsSync(ANGULAR_DIST_DIR)
@@ -1148,13 +1147,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     }
     
     // Read Angular's built index.html and inject New Relic
-    // Use the same logic as ANGULAR_DIST_DIR to determine the correct path
-    let indexPath;
-    indexPath = path.join(__dirname, '../browser/index.html'); // Docker: /foodme/app/server/ -> /foodme/app/browser/index.html   
-    // console.log('Index.html exists:', fs.existsSync(indexPath));
-    if (process.env.NODE_ENV == 'development') {
-      indexPath = path.join(__dirname, '../dist/browser/index.html'); // Dev: /server/ -> /dist/browser/index.html
-    }
+    const indexPath = path.join(ANGULAR_DIST_DIR, 'index.html');
     fs.readFile(indexPath, 'utf8', async function(err, htmlContent) {
       if (err) {
         logger.error({ err }, 'Error reading index.html file');
