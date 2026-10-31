@@ -1,61 +1,90 @@
 # FoodMe Documentation
 
-Welcome to the FoodMe documentation! This directory contains organized guides for development, deployment, and troubleshooting.
+Start with the [main README](../README.md), then use this page to find the one document you need.
 
-## 📚 Quick Navigation
+## Which document do I need?
 
-### 🚀 Getting Started
-- **[Main README](../README.md)** - Project overview and quick start
-- **[Docker Development Guide](../DOCKER_DEVELOPMENT_GUIDE.md)** - **START HERE** for local development
+| I want to... | Read |
+|---|---|
+| Run the app on my machine | [Docker Development Guide](../DOCKER_DEVELOPMENT_GUIDE.md) |
+| Use the dev container | [DevContainer Setup](setup/DEVCONTAINER_SETUP.md) |
+| Know what is in `.env` | [Environment Variables](setup/ENVIRONMENT_VARIABLES.md), and `.env.example` |
+| Keep secrets out of git | [Secret Management](setup/SECRET_MANAGEMENT.md) |
+| Set up or reset the database | [Database Guide](setup/DATABASE_GUIDE.md) |
+| Find a file or folder in the repo | [Project Structure](../PROJECT_STRUCTURE.md) |
+| Use the "Behind the scenes" callouts, planned failures or source maps | [New Relic Demo Features](NEW_RELIC_DEMO.md) |
+| Create the New Relic dashboard, service levels and alerts | [newrelic/README.md](../newrelic/README.md) |
+| Monitor the EC2 host and Postgres with New Relic | [New Relic Infrastructure Setup](NEW_RELIC_INFRA_SETUP.md) |
+| Record deployments in New Relic | [scripts/README.md](../scripts/README.md) |
+| Deploy to AWS | [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md), then see "Deployment" below |
+| Fix a deployment that failed | See "Troubleshooting" below |
+| Run a load test | [Load Testing](LOAD_TESTING.md) |
+| Understand the security posture and open findings | [Security](SECURITY.md) |
 
-### 🛠️ Setup & Configuration
-- **[Setup Guide](setup/SETUP_GUIDE.md)** - Comprehensive setup instructions
-- **[Database Guide](setup/DATABASE_GUIDE.md)** - Database configuration and management
-- **[Environment Variables](setup/ENVIRONMENT_VARIABLES.md)** - Environment configuration
-- **[Secret Management](setup/SECRET_MANAGEMENT.md)** - Managing sensitive data
-- **[DevContainer Setup](setup/DEVCONTAINER_SETUP.md)** - VS Code DevContainer configuration
+## Local development
 
-### 🚀 Deployment
-- **[Deployment Guide](deployment/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
-- **[ALB Setup Guide](deployment/ALB_SETUP_GUIDE.md)** - Application Load Balancer configuration
-- **[Code Deployment Guide](deployment/CODE_DEPLOYMENT_GUIDE.md)** - CI/CD and deployment automation
-- **[Deployment Status](deployment/DEPLOYMENT_STATUS.md)** - Current deployment information
+| Document | Use it when |
+|---|---|
+| [Docker Development Guide](../DOCKER_DEVELOPMENT_GUIDE.md) | You want the app running. The quick start. |
+| [docker/README.md](../docker/README.md) | You need to know which compose file and Dockerfile does what. |
+| [DevContainer Setup](setup/DEVCONTAINER_SETUP.md) | You work in VS Code's dev container, or in an environment with restricted Docker access. |
+| [Setup Guide](setup/SETUP_GUIDE.md) | You want to set up the HTTPS development environment with the setup script. |
+| [Environment Variables](setup/ENVIRONMENT_VARIABLES.md) | You deploy with CloudFormation and need to know which variables it reads. |
+| [Secret Management](setup/SECRET_MANAGEMENT.md) | You handle API keys, license keys or database passwords. |
+| [Database Guide](setup/DATABASE_GUIDE.md) | You work with PostgreSQL, its initialization scripts or its data. |
 
-### 🔧 Troubleshooting
-- **[EC2 Troubleshooting](troubleshooting/EC2_TROUBLESHOOTING.md)** - AWS EC2 deployment issues
-- **[EC2 Deployment Fix](troubleshooting/EC2_DEPLOYMENT_FIX.md)** - Common EC2 deployment fixes
-- **[Docker Issues](troubleshooting/DOCKER_MOUNT_FIX.md)** - Docker mounting and permission issues
-- **[Docker Comprehensive Guide](troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)** - Advanced Docker troubleshooting
+## New Relic
 
-### 📊 Monitoring & Testing
-- **[New Relic Infrastructure Setup](NEW_RELIC_INFRA_SETUP.md)** - Infrastructure monitoring
-- **[New Relic Integrations](NEW_RELIC_INTEGRATIONS_SETUP.md)** - Application monitoring integrations
-- **[Load Testing](LOAD_TESTING.md)** - Performance testing guide
-- **[CloudFormation Load Testing](LOAD_TESTING_CLOUDFORMATION.md)** - Cloud-based load testing
+| Document | Use it when |
+|---|---|
+| [New Relic Demo Features](NEW_RELIC_DEMO.md) | You teach with the app: callouts, planned failures, source maps. |
+| [newrelic/README.md](../newrelic/README.md) | You create or rebuild the dashboard, service levels, alerts and workload. |
+| [New Relic Infrastructure Setup](NEW_RELIC_INFRA_SETUP.md) | You install the infrastructure agent on the EC2 host. |
+| [New Relic Integrations](NEW_RELIC_INTEGRATIONS_SETUP.md) and [newrelic-integrations/README.md](../newrelic-integrations/README.md) | You monitor PostgreSQL and nginx. |
+| [scripts/README.md](../scripts/README.md) | You create deployment markers for the entity. |
 
-### 🔒 Security
-- **[Security Guide](SECURITY.md)** - Security best practices and implementation
-- **[Security Compliance](SECURITY_COMPLIANCE.md)** - Compliance requirements and validation
+## Deployment
 
-## 🎯 For New Developers
+| Document | Use it when |
+|---|---|
+| [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md) | You want the list of deployment commands. |
+| [Code Deployment Guide](deployment/CODE_DEPLOYMENT_GUIDE.md) | You change only the application and want to skip rebuilding AWS infrastructure. |
+| [ALB Setup Guide](deployment/ALB_SETUP_GUIDE.md) | You work on the load balancer in the CloudFormation template. |
+| [cloudformation/README.md](../cloudformation/README.md) | You need to know which CloudFormation template and script does what. |
+| [terraform/README.md](../terraform/README.md) | You deploy the EC2 host with Terraform. |
+| [Cleanup Guide](../.github/CLEANUP_GUIDE.md) | A deployment failed and you need to remove the AWS resources it left. |
+| [Load Testing](LOAD_TESTING.md) and [CloudFormation Load Testing](LOAD_TESTING_CLOUDFORMATION.md) | You run Locust locally, or from AWS. |
 
-**Just want to start developing?** Follow this simple path:
+## Troubleshooting
 
-1. **[Main README](../README.md)** - Overview and context
-2. **[Docker Development Guide](../DOCKER_DEVELOPMENT_GUIDE.md)** - Quick start with Docker
-3. **[Setup Guide](setup/SETUP_GUIDE.md)** - Detailed setup if needed
+| Document | Use it when |
+|---|---|
+| [Docker Comprehensive Guide](troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md) | Docker misbehaves. It covers the services, commands, and fixes for a blank site, stale changes, and "Mounts denied" in the dev container. |
+| [EC2 and Terraform Troubleshooting](troubleshooting/EC2_TROUBLESHOOTING.md) | `terraform plan` or `apply` fails, or the instance is up but the app is not working (service, nginx, Angular routes, health checks, database). |
+| [EC2 Key Pair Setup](../terraform/EC2_KEYPAIR_SETUP.md) | A deployment fails with `InvalidKeyPair.NotFound`. |
+| [New Relic on Amazon Linux 2023](../terraform/NEW_RELIC_AL2023_FIX.md) | The infrastructure agent will not install on Amazon Linux 2023. |
 
-## 🤔 Need Help?
+## Security
 
-- **Start with**: [Docker Development Guide](../DOCKER_DEVELOPMENT_GUIDE.md)
-- **Docker issues**: [Troubleshooting section](#-troubleshooting)
-- **Deployment problems**: [Deployment section](#-deployment)
-- **Environment setup**: [Setup & Configuration section](#️-setup--configuration)
+| Document | Use it when |
+|---|---|
+| [Security](SECURITY.md) | You want the practices the project follows, the checks you can run, or the open findings from the 2026-06-02 source review. |
 
-## 🗂️ Archive
+## History, not instructions
 
-Advanced and legacy documentation is available in the main project's `scripts/archive/` directory for reference.
+These live in [docs/archive/](archive/). They describe changes that were made at one point in time. They explain why things look the way they do, but they are not guides, and they can be out of date.
 
-## 📋 Project Maintenance
+| Document | What it records |
+|---|---|
+| [Root Cleanup Summary](archive/ROOT_CLEANUP_SUMMARY.md) | How the repository root was tidied |
+| [Documentation Verification Report](archive/DOCUMENTATION_VERIFICATION_REPORT.md) | A link check after that reorganization |
+| [Docker Simplification Summary](archive/DOCKER_SIMPLIFICATION_SUMMARY.md) | How the Docker npm scripts were reduced |
+| [ARM64 Docker Setup](archive/ARM64_DOCKER_SETUP.md) | How the ARM64 compose files were created |
+| [Deployment Status](archive/DEPLOYMENT_STATUS.md) | Deployment problems that were resolved |
+| [PostgreSQL 16 Update](archive/POSTGRESQL_16_UPDATE.md) | The move from PostgreSQL 15 to 16 on EC2 |
+| [PostgreSQL Integration Summary](archive/POSTGRESQL_INTEGRATION_SUMMARY.md) | Adding PostgreSQL to the EC2 deployment |
+| [New Relic Integration Summary](archive/NEW_RELIC_INTEGRATION_SUMMARY.md) | Adding the infrastructure agent to the EC2 deployment |
 
-- **[Root Cleanup Summary](ROOT_CLEANUP_SUMMARY.md)** - How the project was organized and cleaned up for new developers
+## For contributors
+
+[.github/copilot-instructions.md](../.github/copilot-instructions.md) holds the code review guidelines used by GitHub Copilot.

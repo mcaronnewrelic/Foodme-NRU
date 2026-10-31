@@ -206,8 +206,7 @@ After cleanup:
 
 If cleanup issues persist:
 
-1. Check the [main troubleshooting guide](../docs/troubleshooting/EC2_TROUBLESHOOTING.md)
+1. Check the [EC2 and Terraform troubleshooting guide](../docs/troubleshooting/EC2_TROUBLESHOOTING.md)
 2. Review the [EC2 setup guide](../terraform/EC2_KEYPAIR_SETUP.md)
-3. Check [GitHub Actions permissions guide](./GITHUB_ACTIONS_PERMISSIONS.md) for workflow issues
-4. Examine AWS CloudWatch logs for the instance
-5. Consider using the alternative deployment methods mentioned above
+3. Examine AWS CloudWatch logs for the instance
+4. Consider using the alternative deployment methods mentioned above
