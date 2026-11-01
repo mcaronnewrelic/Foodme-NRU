@@ -45,7 +45,10 @@ alternatives --set node /usr/bin/node-24
 log "Installing New Relic Infrastructure agent..."
 curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/amazonlinux/2023/x86_64/newrelic-infra.repo
 dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
-dnf install -y newrelic-infra
+# Pinned to the version the README badge advertises - bump both together.
+# (Older versions stay in the New Relic yum repo; if the pin ever goes
+# missing, fall back to latest rather than failing the install.)
+dnf install -y 'newrelic-infra-1.81.0-1.amazonlinux-2023' || dnf install -y newrelic-infra
 
 # Initialize PostgreSQL
 log "Initializing PostgreSQL..."
