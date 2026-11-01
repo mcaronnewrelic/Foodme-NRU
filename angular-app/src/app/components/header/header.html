@@ -47,6 +47,15 @@
       </ul>
 
       <ul class="navbar-nav">
+        <!-- The visitor's demoCode, shown with the callouts (spec section 1) -->
+        @if (nrConfig.showCallouts()) {
+          <li class="nav-item">
+            <span class="nav-link disabled" title="Your data in New Relic carries this code as demoCode">
+              Your code: <strong>{{ demoIdentity.code() }}</strong>
+            </span>
+          </li>
+        }
+
         <!-- Show or hide the New Relic "Behind the scenes" callouts -->
         <li class="nav-item">
           <a class="nav-link nr-toggle" [class.nr-toggle-on]="nrConfig.showCallouts()" href="#" role="button"

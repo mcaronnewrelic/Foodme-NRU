@@ -75,6 +75,6 @@
 
 <div class="container mb-5">
   <app-nr-callout title="Who you are to New Relic" [nrql]="userNrql" buttonLabel="See your sessions">
-    When you continue, the browser agent calls <code>setUserId()</code> with your name. Every page view, AJAX call, action and error after that carries it as <code>enduser.id</code>. Your name never goes to the server as an account, only as that attribute.
+    When you continue, the browser agent calls <code>setUserId()</code> with your name. Every page view, AJAX call, action and error after that carries it as <code>enduser.id</code>. Your name never goes to the server as an account, only as that attribute. You also have a short session code (in the header) stamped on the same data as <code>demoCode</code> — names collide in a workshop, codes don't.
   </app-nr-callout>
 </div>
