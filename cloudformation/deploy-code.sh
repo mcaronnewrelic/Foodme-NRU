@@ -33,7 +33,7 @@ usage() {
     echo ""
     echo "Environment values synced to the instance .env when set in the caller's"
     echo "environment (CI passes them from GitHub secrets/variables):"
-    echo "  NEW_RELIC_ACCOUNT_ID, NEW_RELIC_BROWSER_ENTITY_GUID"
+    echo "  NEW_RELIC_ACCOUNT_ID, NEW_RELIC_BROWSER_ENTITY_GUID, NEW_RELIC_LICENSE_KEY"
     echo ""
     echo "Examples:"
     echo "  $0 -e staging                    # Update both frontend and backend"
@@ -381,9 +381,15 @@ fi
 # instance configuration (the .env exists only on the instance, and the code
 # zip excludes it on purpose). Set a variable in the caller's environment to
 # sync it; unset or empty variables leave the instance value exactly as it is.
-# This mechanism is for non-secret configuration only: values travel as SSM
-# command parameters. Secrets stay in stack parameters / instance-only config.
-SYNC_ENV_KEYS=("NEW_RELIC_ACCOUNT_ID" "NEW_RELIC_BROWSER_ENTITY_GUID")
+# Values travel as SSM command parameters and are never echoed by this
+# script (only the count synced is printed). One deliberate exception to
+# the non-secret rule: NEW_RELIC_LICENSE_KEY. The instance .env is its
+# only home and no other deploy-time path can update it (stack UserData
+# runs only at first launch), so when the account's ingest key is rotated
+# the running agent's key can only be refreshed from here. CI sources it
+# from the NEW_RELIC_LICENSE_KEY GitHub secret, the same secret the stack
+# deploy installs from.
+SYNC_ENV_KEYS=("NEW_RELIC_ACCOUNT_ID" "NEW_RELIC_BROWSER_ENTITY_GUID" "NEW_RELIC_LICENSE_KEY")
 sync_assignments=()
 for key in "${SYNC_ENV_KEYS[@]}"; do
     if [ -n "${!key:-}" ]; then
