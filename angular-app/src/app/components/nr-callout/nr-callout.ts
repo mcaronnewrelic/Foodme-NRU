@@ -1,5 +1,6 @@
-import { Component, ElementRef, Input, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NrConfigService } from '../../nr-config';
+import { DemoIdentityService } from '../../services/demo-identity.service';
 
 @Component({
   selector: 'app-nr-callout',
@@ -7,19 +8,46 @@ import { NrConfigService } from '../../nr-config';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './nr-callout.css'
 })
-export class NrCalloutComponent {
+export class NrCalloutComponent implements OnInit {
   protected config = inject(NrConfigService);
+  private identity = inject(DemoIdentityService);
 
   @Input({ required: true }) title!: string;
   @Input({ required: true }) nrql!: string;
   @Input() buttonLabel = 'Open in New Relic';
   @Input() showBrowserErrors = false;
+  /** 'cohort' callouts show a "Shows everyone's data" chip (spec 5.3). */
+  @Input() scope: 'personal' | 'cohort' = 'personal';
+  /**
+   * Extra placeholder values for the NRQL (spec 5.2): a token written as
+   * <key> in the nrql input is replaced by tokens[key]. The visitor's
+   * demoCode is always available as <code>; pass e.g. { requestId } for
+   * <requestId> when the page knows it.
+   */
+  @Input() tokens: Record<string, string> = {};
+
+  protected showAccountNote = false;
+
+  ngOnInit(): void {
+    if (this.config.showCallouts()) {
+      this.showAccountNote = this.config.claimAccountNote();
+    }
+  }
+
+  /** The NRQL with every placeholder resolved - what is printed, copied and opened. */
+  get resolvedNrql(): string {
+    let query = this.nrql.replaceAll('<code>', this.identity.code());
+    for (const [key, value] of Object.entries(this.tokens)) {
+      query = query.replaceAll(`<${key}>`, value);
+    }
+    return query;
+  }
 
   protected copyState: 'idle' | 'copied' | 'selected' = 'idle';
   private readonly nrqlText = viewChild<ElementRef<HTMLElement>>('nrqlText');
 
   get url(): string | null {
-    return this.config.nrqlUrl(this.nrql);
+    return this.config.nrqlUrl(this.resolvedNrql);
   }
 
   // The printed NRQL is the permanent fallback if a query link ever breaks,
@@ -29,7 +57,7 @@ export class NrCalloutComponent {
   // navigator.clipboard is simply undefined and the first version of this
   // button silently did nothing there.
   protected async copyNrql(): Promise<void> {
-    if ((await this.tryClipboardApi()) || this.tryLegacyCopy()) {
+    if ((await this.tryClipboardApi(this.resolvedNrql)) || this.tryLegacyCopy(this.resolvedNrql)) {
       this.flashCopyState('copied');
     } else if (this.selectPrintedNrql()) {
       // Last resort: leave the text selected so the browser's own
@@ -38,19 +66,19 @@ export class NrCalloutComponent {
     }
   }
 
-  private async tryClipboardApi(): Promise<boolean> {
+  private async tryClipboardApi(text: string): Promise<boolean> {
     try {
       if (!navigator.clipboard?.writeText) return false;
-      await navigator.clipboard.writeText(this.nrql);
+      await navigator.clipboard.writeText(text);
       return true;
     } catch {
       return false;
     }
   }
 
-  private tryLegacyCopy(): boolean {
+  private tryLegacyCopy(text: string): boolean {
     const textarea = document.createElement('textarea');
-    textarea.value = this.nrql;
+    textarea.value = text;
     textarea.readOnly = true;
     // On-screen but invisible: mobile browsers refuse to copy from
     // display:none or far-off-screen elements, and a font under 16px makes

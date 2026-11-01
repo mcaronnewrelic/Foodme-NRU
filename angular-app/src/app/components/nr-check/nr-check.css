@@ -1,0 +1,71 @@
+.nr-check {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(28, 231, 131, 0.4);
+  text-align: left;
+}
+
+.nr-check-question {
+  margin-bottom: 0.6rem;
+  color: #e6f1f1;
+}
+
+.nr-check-question .fas {
+  color: #1ce783;
+}
+
+.nr-check-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.nr-check-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #cfe3e3;
+}
+
+.nr-check-entry {
+  max-width: 22rem;
+  margin-bottom: 0.7rem;
+  background: #0d1b1b;
+  color: #e6f1f1;
+  border-color: rgba(28, 231, 131, 0.5);
+}
+
+.nr-check-btn {
+  background: #1ce783;
+  color: #0d1b1b;
+  font-weight: 600;
+}
+
+.nr-check-btn:disabled {
+  background: rgba(28, 231, 131, 0.35);
+  color: rgba(13, 27, 27, 0.7);
+}
+
+.nr-check-result {
+  margin-top: 0.6rem;
+  margin-bottom: 0;
+}
+
+.nr-check-correct {
+  color: #1ce783;
+}
+
+.nr-check-wrong {
+  color: #ffb454;
+}
+
+.nr-check-proves {
+  color: #e6f1f1;
+}
+
+.nr-check-attempts {
+  color: #9fb8b8;
+  font-size: 0.85em;
+}

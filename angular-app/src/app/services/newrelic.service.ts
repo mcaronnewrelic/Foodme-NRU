@@ -62,6 +62,23 @@ export class NewRelicService {
   }
 
   /**
+   * Record a custom event of the given type (e.g. OrderupQuizAnswer).
+   * Falls back to a PageAction named after the type if the agent build
+   * has no recordCustomEvent, so the data lands either way.
+   */
+  recordCustomEvent(eventType: string, attributes?: Record<string, any>): void {
+    if (!this.isAvailable()) {
+      console.warn('New Relic browser agent not available for custom event logging');
+      return;
+    }
+    if (typeof this.newrelic.recordCustomEvent === 'function') {
+      this.newrelic.recordCustomEvent(eventType, attributes);
+    } else if (typeof this.newrelic.addPageAction === 'function') {
+      this.newrelic.addPageAction(eventType, attributes);
+    }
+  }
+
+  /**
    * Set custom attributes for the current page view
    * @param attributes - Object containing key-value pairs of attributes
    */

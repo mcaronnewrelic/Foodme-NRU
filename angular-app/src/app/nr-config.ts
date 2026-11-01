@@ -91,6 +91,19 @@ export class NrConfigService {
     this.armedScenario.set(state.armed ? { ...state.armed, source: state.source as ArmedScenario['source'] } : null);
   }
 
+  private accountNoteClaimed = false;
+
+  /**
+   * The spec section 5.4 account note ("opens in the shared demo account")
+   * is shown once per page, under the first callout's Find button. The
+   * first callout to ask claims it; later callouts on the page get false.
+   */
+  claimAccountNote(): boolean {
+    if (this.accountNoteClaimed) return false;
+    this.accountNoteClaimed = true;
+    return true;
+  }
+
   toggleCallouts(): void {
     this.showCallouts.update(shown => !shown);
     localStorage.setItem(CALLOUTS_STORAGE_KEY, String(this.showCallouts()));
