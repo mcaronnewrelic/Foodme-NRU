@@ -1,32 +1,6 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
-<<<<<<< HEAD
-	"name": "FoodMe Development Container",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.11",
-			"installTools": true
-		},
-		"ghcr.io/devcontainers/features/common-utils:2": {
-			"installZsh": "true",
-			"configureZshAsDefaultShell": "true",
-			"installOhMyZsh": "true",
-			"upgradePackages": "true"
-		},
-		"ghcr.io/devcontainers/features/node:2": {
-			"nodeGypDependencies": true,
-			"installYarnUsingApt": true
-		},
-		"ghcr.io/devcontainers/features/git:1": {
-			"ppa": true,
-			"version": "latest"
-		}
-	},
-=======
   "name": "FoodMe Development Container",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
@@ -42,7 +16,7 @@
       "installOhMyZsh": "true",
       "upgradePackages": "true"
     },
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2": {
       "nodeGypDependencies": true,
       "installYarnUsingApt": true
     },
@@ -51,7 +25,6 @@
       "version": "latest"
     }
   },
->>>>>>> origin/main
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [3000, 3001, 80, 8089, 5432],
