@@ -30,6 +30,14 @@ export class NrConfigService {
   }
 
   private loadShowCallouts(): boolean {
+    // Instructor override (spec section 7): ?callouts=1 on a handout or QR
+    // link shows the callouts for this visit without changing the visitor's
+    // stored preference; ?callouts=0 forces them off the same way.
+    if (typeof location !== 'undefined') {
+      const param = new URLSearchParams(location.search).get('callouts');
+      if (param === '1' || param === 'true') return true;
+      if (param === '0' || param === 'false') return false;
+    }
     const stored = typeof localStorage === 'undefined' ? null : localStorage.getItem(CALLOUTS_STORAGE_KEY);
     return stored === null ? CALLOUTS_SHOWN_BY_DEFAULT : stored === 'true';
   }
