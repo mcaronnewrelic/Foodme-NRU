@@ -12,6 +12,7 @@ UPDATE_FRONTEND=true
 UPDATE_BACKEND=true
 RESTART_SERVICES=true
 SHOW_LOGS=false
+DIAGNOSE=false
 
 # Function to show usage
 usage() {
@@ -26,6 +27,8 @@ usage() {
     echo "  --backend-only    Update only Node.js backend"
     echo "  --no-restart      Skip restarting services"
     echo "  --logs            Show recent backend and nginx logs at the end"
+  echo "  --diagnose        Read-only: print instance diagnostics (PM2 state,"
+  echo "                    .env key check, New Relic agent log) and exit"
     echo "  -h                Show this help message"
     echo ""
     echo "Environment values synced to the instance .env when set in the caller's"
@@ -63,6 +66,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --logs)
             SHOW_LOGS=true
+            shift
+            ;;
+        --diagnose)
+            DIAGNOSE=true
             shift
             ;;
         --no-restart)
@@ -235,6 +242,53 @@ wait_for_command() {
     echo "❌ Command timed out after $max_wait seconds"
     return 1
 }
+
+# Diagnostics (read-only): collect the state that decides most incidents
+# and print it into the caller's log, then exit without changing anything.
+# Built for exactly the situation where the operator only has a phone:
+# run the workflow, read the output. Values are never printed - the .env
+# check compares key NAMES only.
+if [ "$DIAGNOSE" = true ]; then
+    echo ""
+    echo "🩺 Collecting diagnostics from the instance (read-only)..."
+    DIAGNOSE_COMMANDS="
+        cd /opt/foodme/backend
+        echo '===== PM2 STATUS ====='
+        sudo -u ec2-user pm2 list 2>/dev/null | grep -E 'status|foodme' || echo '(pm2 list unavailable)'
+        echo ''
+        echo '===== .env KEY CHECK (names only) ====='
+        if [ -f .env.bak ]; then
+            cut -d= -f1 .env | grep -a . | sort -u > /tmp/env-keys.txt
+            cut -d= -f1 .env.bak | grep -a . | sort -u > /tmp/bak-keys.txt
+            echo 'Keys in .env.bak but missing from .env:'
+            comm -13 /tmp/env-keys.txt /tmp/bak-keys.txt
+            echo '(end of missing list)'
+        else
+            echo '(no .env.bak present)'
+        fi
+        grep -aq '^NEW_RELIC_LICENSE_KEY=.' .env && echo 'NEW_RELIC_LICENSE_KEY: present with a value' || echo 'NEW_RELIC_LICENSE_KEY: MISSING or empty'
+        grep -a '^NEW_RELIC_ENABLED=' .env || echo 'NEW_RELIC_ENABLED: not set in .env'
+        echo ''
+        echo '===== NEW RELIC AGENT LOG (last 50 lines) ====='
+        tail -50 newrelic_agent.log 2>/dev/null || echo '(newrelic_agent.log not found in the backend directory)'
+        echo ''
+        echo '===== BACKEND ERROR LOG (last 25 lines) ====='
+        tail -25 /opt/foodme/logs/foodme-backend-error.log 2>/dev/null || echo '(no backend error log)'
+        echo ''
+        echo '===== EMPTY NEW RELIC HEADER WARNINGS (count in combined log) ====='
+        grep -ac 'New Relic header is empty' /opt/foodme/logs/foodme-backend-combined.log 2>/dev/null || echo '0'
+    "
+    COMMAND_ID=$(execute_on_ec2 "$DIAGNOSE_COMMANDS")
+    wait_for_command "$COMMAND_ID"
+    aws ssm get-command-invocation \
+        --command-id "$COMMAND_ID" \
+        --instance-id "$INSTANCE_ID" \
+        --region "$AWS_REGION" \
+        --query 'StandardOutputContent' \
+        --output text
+    echo "🩺 Diagnostics complete"
+    exit 0
+fi
 
 # Backend deployment
 if [ "$UPDATE_BACKEND" = true ]; then
