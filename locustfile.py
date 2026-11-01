@@ -16,10 +16,14 @@ class Order:
             return dict(name=self.name, address=self.address)
 
     class Restaurant:
+        id = ""
         name = ""
 
         def to_json(self):
-            return dict(name=self.name)
+            data = dict(name=self.name)
+            if self.id:
+                data["id"] = self.id
+            return data
 
     class Payment:
         cvc = "456"
@@ -89,8 +93,27 @@ def get_restaurants(l):
     l.client.get("/api/restaurant")
 
 
+# The API resolves orders against the database, where a restaurant is
+# identified by its UUID id, not its name (in database mode an order
+# without a restaurant id is rejected server-side). Resolve the sample
+# restaurants' ids from the API once and reuse them.
+_restaurant_ids = {}
+
+
+def restaurant_id(l, name):
+    if not _restaurant_ids:
+        resp = l.client.get("/api/restaurant")
+        try:
+            for r in resp.json():
+                _restaurant_ids[r["name"]] = r["id"]
+        except Exception:
+            pass
+    return _restaurant_ids.get(name, "")
+
+
 def place_order(l):
     selected_order = random.choice(orders)
+    selected_order.restaurant.id = restaurant_id(l, selected_order.restaurant.name)
     selected_order.deliver_to.name = random.choice(customers)
     selected_order.deliver_to.address = (
         fake.street_address() + " " + fake.city() + ", " +
