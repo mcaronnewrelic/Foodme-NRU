@@ -40,7 +40,7 @@ on:
       action:
         description: What to do
         type: choice
-        options: [code, stack, delete-stack]
+        options: [code, stack, diagnose, delete-stack]
         default: code
       instance_type:
         description: Instance type (stack only)
@@ -206,6 +206,30 @@ jobs:
           commit: ${{ github.sha }}
           version: ${{ github.sha }}
           description: "Code deployed to ${{ inputs.environment || 'staging' }}"
+
+  diagnose:
+    name: Diagnose the instance
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'diagnose'
+    environment: ${{ inputs.environment || 'staging' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Collect diagnostics (read-only, through SSM)
+        env:
+          ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+        run: |
+          aws configure set region "$AWS_REGION"
+          bash cloudformation/deploy-code.sh -e "$ENVIRONMENT" -r "$AWS_REGION" --diagnose
 
   delete-stack:
     name: Delete the stack
