@@ -13,6 +13,7 @@ import { DemoIdentityService } from '../../services/demo-identity.service';
   styleUrl: './header.css'
 })
 export class HeaderComponent {
+  protected readonly NrConfigService = NrConfigService;
   showCartDropdown = false;
   showHelpDropdown = false;
   showMobileMenu = false;

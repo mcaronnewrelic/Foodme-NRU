@@ -53,6 +53,57 @@
           </a>
         </div>
         
+        <!-- Demo failure scenario: instructor controls (behind the scenes only) -->
+        @if (nrConfig.showCallouts()) {
+          <div class="mt-5 pt-4 border-top">
+            <h4 class="text-center mb-3 text-muted">
+              <i class="fas fa-clapperboard me-2"></i>
+              Demo failure scenario
+            </h4>
+            <p class="text-muted small text-center mb-3">
+              One thing in this demo is always failing on purpose, so there is an error to hunt.
+              It rotates weekly; an instructor can override it here, live — no deploy, and it
+              applies to every visitor until it is changed again.
+            </p>
+            @if (nrConfig.demoState(); as state) {
+              <p class="text-center mb-3">
+                @if (state.armed) {
+                  <strong>Right now:</strong> {{ currentDescription() }}
+                  <span class="text-muted">({{ state.source === 'rotation' ? 'weekly rotation, week ' + state.week : state.source === 'manual' ? 'instructor override' : 'server environment' }})</span>
+                } @else {
+                  <strong>Right now:</strong> nothing is failing
+                  <span class="text-muted">({{ state.source === 'manual' ? 'instructor override' : state.source }})</span>
+                }
+              </p>
+            }
+            <div class="row justify-content-center g-2 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label small" for="scenarioKind">What fails</label>
+                <select id="scenarioKind" class="form-select" [ngModel]="selectedKind()" (ngModelChange)="onKindChange($event)">
+                  <option value="restaurant">A restaurant page</option>
+                  <option value="order-restaurant">Orders to a restaurant</option>
+                  <option value="order-item">Orders with an item</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small" for="scenarioTarget">Which one</label>
+                <select id="scenarioTarget" class="form-select" [ngModel]="selectedTarget()" (ngModelChange)="selectedTarget.set($event)">
+                  @for (name of targetsForKind(); track name) {
+                    <option [value]="name">{{ name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-auto">
+                <button type="button" class="btn btn-outline-danger" (click)="armSelected()">Arm this scenario</button>
+              </div>
+            </div>
+            <div class="text-center mt-3">
+              <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="nrConfig.disarmScenario()">Nothing fails</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="nrConfig.clearScenarioOverride()">Back to weekly rotation</button>
+            </div>
+          </div>
+        }
+
         <!-- APM Testing Section -->
         <div class="mt-5 pt-4 border-top">
           <h4 class="text-center mb-3 text-muted">

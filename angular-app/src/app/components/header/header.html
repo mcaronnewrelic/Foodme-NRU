@@ -123,3 +123,18 @@
     </div>
   </div>
 </nav>
+
+<!-- Behind-the-scenes only: which demo failure is armed, so nobody has to guess -->
+@if (nrConfig.showCallouts() && nrConfig.armedScenario(); as scenario) {
+  <div class="scenario-banner">
+    <i class="fas fa-clapperboard me-2"></i>
+    <span>
+      <strong>Behind the scenes:</strong> {{ NrConfigService.describeScenario(scenario) }}
+      @switch (scenario.source) {
+        @case ('rotation') { <span class="scenario-source">(this week's rotation — it changes weekly)</span> }
+        @case ('manual') { <span class="scenario-source">(set by the instructor)</span> }
+        @case ('env') { <span class="scenario-source">(set in the server environment)</span> }
+      }
+    </span>
+  </div>
+}

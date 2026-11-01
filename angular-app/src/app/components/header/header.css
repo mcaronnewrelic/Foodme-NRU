@@ -1,3 +1,16 @@
+.scenario-banner {
+  background: #1f2937;
+  color: #f9fafb;
+  text-align: center;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+}
+
+.scenario-banner .scenario-source {
+  opacity: 0.75;
+  margin-left: 0.35rem;
+}
+
 .navbar-brand {
   font-size: 1.5rem;
   font-weight: 700;
