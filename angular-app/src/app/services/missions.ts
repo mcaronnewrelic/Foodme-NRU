@@ -6,6 +6,8 @@ export interface Mission {
   link: string;
   /** The mission's check question id - a mission counts as checked when that question is solved. */
   questionId: string;
+  /** An alternative check that also completes the mission (Mission 5's two halves). */
+  altQuestionId?: string;
 }
 
 /** The five missions of spec section 2, in journey order. */
@@ -14,7 +16,7 @@ export const MISSIONS: Mission[] = [
   { id: 'mission-2', number: 2, title: 'Find a menu in the data', link: '/restaurants', questionId: 'filter-no-request' },
   { id: 'mission-3', number: 3, title: 'Place the order, keep the receipt', link: '/checkout', questionId: 'request-id-tail' },
   { id: 'mission-4', number: 4, title: 'Find it again later', link: '/orders', questionId: 'join-keys' },
-  { id: 'mission-5', number: 5, title: 'Break it on purpose', link: '/how-it-works', questionId: 'simulated-error-type' },
+  { id: 'mission-5', number: 5, title: 'Break it on purpose', link: '/how-it-works', questionId: 'simulated-error-type', altQuestionId: 'armed-error-message' },
 ];
 
 export function missionById(id: string): Mission | undefined {

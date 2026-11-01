@@ -5,13 +5,16 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
+import { NrCheckComponent } from '../nr-check/nr-check';
+import { MissionProgressService } from '../../services/mission-progress.service';
+import { MISSIONS } from '../../services/missions';
 import { NewRelicService } from '../../services/newrelic.service';
 import { NrConfigService, ScenarioKind, ArmedScenario } from '../../nr-config';
 import { errorToJson, flattenError, getErrorSummary, getUserFriendlyErrorMessage } from '../../utils/error.utils';
 
 @Component({
   selector: 'app-how-it-works',
-  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent],
   templateUrl: './how-it-works.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './how-it-works.css'
@@ -24,6 +27,10 @@ export class HowItWorksComponent {
     "SELECT timestamp, actionName, errorType, endpoint, errorSummary FROM PageAction WHERE actionName = 'error_simulation_triggered' SINCE 1 hour ago";
   readonly timingNrql =
     "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE actionName = 'error_simulation_triggered' TIMESERIES SINCE 1 hour ago";
+  readonly huntNrql =
+    "SELECT timestamp, error.message, transactionName, requestId FROM TransactionError SINCE 1 day ago";
+
+  protected readonly missions = MISSIONS;
 
   // Instructor controls for the demo failure scenario
   readonly restaurantNames = signal<string[]>([]);
@@ -34,7 +41,8 @@ export class HowItWorksComponent {
   constructor(
     private http: HttpClient,
     private newRelicService: NewRelicService,
-    public nrConfig: NrConfigService
+    public nrConfig: NrConfigService,
+    public progress: MissionProgressService
   ) {
     // Log New Relic agent info when component initializes
     this.newRelicService.logAgentInfo();
@@ -52,6 +60,31 @@ export class HowItWorksComponent {
       },
       error: () => {}
     });
+  }
+
+  /** The armed scenario in plain language, from the app-wide nr-config signal. */
+  armedDescription(): string | null {
+    const scenario = this.nrConfig.armedScenario();
+    return scenario ? NrConfigService.describeScenario(scenario) : null;
+  }
+
+  /**
+   * The exact error message the armed failure throws, built from the same
+   * templates the server uses (server/index.js): the menu failure embeds
+   * the route slug it was called with; the order failures embed the
+   * restaurant / item display names.
+   */
+  get armedErrorMessage(): string {
+    const s = this.nrConfig.armedScenario();
+    if (!s) return '';
+    switch (s.kind) {
+      case 'restaurant':
+        return `Menu data for "${s.target}" is corrupted: menu_items.category is null for 3 rows`;
+      case 'order-restaurant':
+        return `Kitchen at "${s.targetName}" is not accepting orders: ticket printer offline`;
+      case 'order-item':
+        return `Inventory check failed for "${s.targetName}": stock count is -2`;
+    }
   }
 
   currentDescription(): string | null {
@@ -91,6 +124,8 @@ export class HowItWorksComponent {
           errorSummary: getErrorSummary(error),
           durationMs: Math.round(performance.now() - startedAt)
         });
+        // Triggering the simulated error is Mission 5's Try (spec section 2).
+        this.progress.markTried('mission-5');
         
         // Show user-friendly message
         const userMessage = getUserFriendlyErrorMessage(error);
