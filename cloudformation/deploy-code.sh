@@ -345,17 +345,59 @@ if [ "$UPDATE_BACKEND" = true ] && [ ${#sync_assignments[@]} -gt 0 ]; then
         set -e
         cd /opt/foodme/backend
         touch .env
+
+        # Repair first: an earlier version of this sync rewrote .env with a
+        # plain grep -v pipeline, which can drop lines (for example if the
+        # file is ever treated as binary). The install-time backup .env.bak
+        # predates the sync, so restore any key it has that .env has lost.
+        # Only missing keys are appended; existing values are never
+        # overwritten, and key names (never values) are logged.
+        if [ -f .env.bak ]; then
+            while IFS='=' read -r bkey bvalue; do
+                case \"\$bkey\" in ''|'#'*) continue ;; esac
+                [ -z \"\$bvalue\" ] && continue
+                if ! grep -aq \"^\${bkey}=\" .env; then
+                    grep -a \"^\${bkey}=\" .env.bak | head -1 >> .env
+                    echo \"Restored \$bkey from .env.bak\"
+                fi
+            done < .env.bak
+        fi
+        if grep -aq '^NEW_RELIC_LICENSE_KEY=.' .env; then
+            echo 'NEW_RELIC_LICENSE_KEY present in .env'
+        else
+            echo 'WARNING: NEW_RELIC_LICENSE_KEY missing from .env - New Relic reporting will be down'
+        fi
+
+        # Back up the (now repaired) file before modifying it.
         cp .env .env.bak
+
+        # Hardened sync: force text mode (grep -a), verify each write, and
+        # refuse to let the file shrink. Replacing a key keeps the line
+        # count, adding one grows it, so any shrink means something was
+        # lost: restore the backup and fail the deploy loudly.
+        before=\$(grep -ac '' .env || true)
         while IFS='=' read -r key value; do
             [ -z \"\$key\" ] && continue
-            grep -v \"^\${key}=\" .env > .env.tmp || true
+            grep -av \"^\${key}=\" .env > .env.tmp || true
             printf '%s=%s\n' \"\$key\" \"\$value\" >> .env.tmp
+            if ! grep -aq \"^\${key}=\" .env.tmp; then
+                echo \"ERROR: sync verification failed for \$key; .env left unchanged\"
+                rm -f .env.tmp
+                exit 1
+            fi
             mv .env.tmp .env
         done <<'SYNC_EOF'
 $assignments
 SYNC_EOF
+        after=\$(grep -ac '' .env || true)
+        if [ \"\$after\" -lt \"\$before\" ]; then
+            echo \"ERROR: .env shrank (\$before -> \$after lines); restoring backup\"
+            cp .env.bak .env
+            exit 1
+        fi
         chown ec2-user:ec2-user .env
-        echo 'Instance .env updated'
+        echo \"Instance .env updated (\$before -> \$after lines)\"
+
     "
     COMMAND_ID=$(execute_on_ec2 "$ENV_SYNC_COMMANDS")
     wait_for_command "$COMMAND_ID"
