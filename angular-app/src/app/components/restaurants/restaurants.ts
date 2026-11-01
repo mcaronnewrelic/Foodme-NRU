@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { Restaurant } from '../../models/restaurant.model';
 import { CustomerCardComponent } from '../customer-card/customer-card';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
+import { MissionProgressService } from '../../services/mission-progress.service';
 
 @Component({
   selector: 'app-restaurants',
@@ -86,11 +87,15 @@ export class RestaurantsComponent implements OnInit {
     });
   }
 
+  private progress = inject(MissionProgressService);
+
   updateFilter(key: string, value: any) {
+    this.progress.markTried('mission-2');
     this.filter.update(current => ({ ...current, [key]: value }));
   }
 
   toggleCuisine(cuisine: string) {
+    this.progress.markTried('mission-2');
     this.filter.update(current => {
       const newCuisines = current.cuisine.includes(cuisine)
         ? current.cuisine.filter(c => c !== cuisine)

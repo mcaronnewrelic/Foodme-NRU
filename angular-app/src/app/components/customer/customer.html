@@ -68,7 +68,14 @@
 </div>
 
 <div class="container mb-5">
-  <app-nr-callout title="Who you are to New Relic" [nrql]="userNrql" buttonLabel="See your sessions">
-    When you continue, the browser agent calls <code>setUserId()</code> with your name. Every page view, AJAX call, action and error after that carries it as <code>enduser.id</code>. Your name never goes to the server as an account, only as that attribute. You also have a short session code (in the header) stamped on the same data as <code>demoCode</code> — names collide in a workshop, codes don't.
+  <app-nr-callout title="Who you are to New Relic" [nrql]="userNrql" buttonLabel="See your sessions"
+    missionId="mission-1"
+    tryText="Your sample customer is already filled in above — press Continue to Restaurants.">
+    When you continue, the browser agent calls <code>setUserId()</code> with your name. Every page view, AJAX call, action and error after that carries it as <code>enduser.id</code>. Your name never goes to the server as an account, only as that attribute. You also have a short session code (in the header) stamped on the same data as <code>demoCode</code> — names collide in a workshop, codes don't. The query below counts the data by your code instead: one row per event type that carries it.
+    <app-nr-check missionId="mission-1" questionId="event-type-count" kind="choice"
+      question="Open 'See your sessions'. How many event types carry your code so far?"
+      [options]="['1', '2', '3 or more']"
+      [answer]="eventTypeAnswer"
+      proves="Every one of those event types carries your demoCode — that's what makes your data findable in a shared account."></app-nr-check>
   </app-nr-callout>
 </div>

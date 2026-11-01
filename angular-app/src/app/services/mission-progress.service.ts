@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { MISSIONS, missionById } from './missions';
 
 const STORAGE_KEY = 'orderup-missions';
 
@@ -7,8 +8,16 @@ export interface QuestionProgress {
   solved: boolean;
 }
 
+export interface MissionState {
+  /** The mission's Try action was observed (spec section 2). */
+  tried: boolean;
+  /** The mission's Find link was clicked. */
+  found: boolean;
+}
+
 interface ProgressFile {
   questions: Record<string, QuestionProgress>;
+  missions: Record<string, MissionState>;
 }
 
 /**
@@ -42,7 +51,7 @@ export class MissionProgressService {
       attempts: current.attempts + 1,
       solved: current.solved || correct,
     };
-    this.state.update(file => ({ questions: { ...file.questions, [k]: updated } }));
+    this.state.update(file => ({ ...file, questions: { ...file.questions, [k]: updated } }));
     this.save();
     return updated.attempts;
   }
@@ -52,15 +61,47 @@ export class MissionProgressService {
     return Object.values(this.state().questions).filter(q => q.solved).length;
   }
 
+  missionState(missionId: string): MissionState {
+    return this.state().missions[missionId] ?? { tried: false, found: false };
+  }
+
+  markTried(missionId: string): void {
+    this.markMission(missionId, { tried: true });
+  }
+
+  markFound(missionId: string): void {
+    this.markMission(missionId, { found: true });
+  }
+
+  private markMission(missionId: string, patch: Partial<MissionState>): void {
+    const current = this.missionState(missionId);
+    if ((patch.tried && current.tried) || (patch.found && current.found)) return;
+    const updated = { ...current, ...patch };
+    this.state.update(file => ({ ...file, missions: { ...file.missions, [missionId]: updated } }));
+    this.save();
+  }
+
+  /** A mission is checked when its check question is solved. */
+  isChecked(missionId: string): boolean {
+    const mission = missionById(missionId);
+    return mission ? this.isSolved(missionId, mission.questionId) : false;
+  }
+
+  checkedCount(): number {
+    return MISSIONS.filter(m => this.isChecked(m.id)).length;
+  }
+
   private load(): ProgressFile {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as ProgressFile;
-        if (parsed && typeof parsed === 'object' && parsed.questions) return parsed;
+        if (parsed && typeof parsed === 'object' && parsed.questions) {
+          return { questions: parsed.questions, missions: parsed.missions ?? {} };
+        }
       }
     } catch { /* fall through to a fresh file */ }
-    return { questions: {} };
+    return { questions: {}, missions: {} };
   }
 
   private save(): void {

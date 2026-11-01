@@ -1,0 +1,27 @@
+@if (config.showCallouts()) {
+  <div class="mission-strip">
+    <span class="mission-strip-label">
+      @if (current; as mission) {
+        Mission {{ mission.number }} of 5 · {{ mission.title }}
+      } @else {
+        Your missions · {{ checkedCount }} of 5 checked
+      }
+    </span>
+    <span class="mission-strip-ticks">
+      @for (mission of missions; track mission.id) {
+        <a class="mission-tick"
+           [class.checked]="tickState(mission) === 'checked'"
+           [class.started]="tickState(mission) === 'started'"
+           [class.current]="current?.id === mission.id"
+           [routerLink]="mission.link"
+           [title]="'Mission ' + mission.number + ': ' + mission.title">
+          @if (tickState(mission) === 'checked') {
+            <i class="fas fa-check"></i>
+          } @else {
+            {{ mission.number }}
+          }
+        </a>
+      }
+    </span>
+  </div>
+}
