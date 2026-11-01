@@ -33,6 +33,11 @@ let storage = null;
 let dbService = null;
 let useDatabase = false;
 
+// Which demo failure scenario is armed (env > manual override > weekly
+// rotation). See demo-failures.js.
+const DemoFailures = require('./demo-failures');
+const demoFailures = new DemoFailures(logger);
+
 // Utility function to generate consistent user IDs for New Relic tracking
 function generateUserID(customerData) {
   if (!customerData) return null;
@@ -324,10 +329,48 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
   // Lets the Angular "Behind the scenes" callouts build New Relic links for the current account
   app.get('/api/nr-config', (req, res) => {
+    const scenario = demoFailures.getState();
     res.json({
       accountId: process.env.NEW_RELIC_ACCOUNT_ID || null,
-      browserEntityGuid: process.env.NEW_RELIC_BROWSER_ENTITY_GUID || null
+      browserEntityGuid: process.env.NEW_RELIC_BROWSER_ENTITY_GUID || null,
+      // Shown in the site's behind-the-scenes content so learners are not
+      // guessing which target fails; the checks still have to find the
+      // failure in the data. Null when nothing is armed.
+      armedScenario: scenario.armed
+        ? { ...scenario.armed, source: scenario.source }
+        : null
     });
+  });
+
+  // Demo failure scenarios: read the current state, arm one manually, or
+  // clear the manual override (back to env / weekly rotation). Deliberately
+  // unauthenticated — a teaching demo; changes are logged. See
+  // demo-failures.js for the priority rules.
+  app.get('/api/demo/failures', (req, res) => {
+    res.json(demoFailures.getState());
+  });
+
+  app.post('/api/demo/failures', jsonParser, (req, res) => {
+    const { kind, target } = req.body || {};
+    if (kind === 'off') {
+      const state = demoFailures.setManual('off');
+      logger.info({ ip: req.ip }, 'Demo failure scenario disarmed by manual override');
+      return res.json(state);
+    }
+    if (!['restaurant', 'order-restaurant', 'order-item'].includes(kind) || !target) {
+      return res.status(400).json({
+        error: 'Body must be {kind: "restaurant" | "order-restaurant" | "order-item", target: "<name or slug>"}, or {kind: "off"}'
+      });
+    }
+    const state = demoFailures.setManual(kind, String(target));
+    logger.info({ kind, target: state.armed?.target, ip: req.ip }, 'Demo failure scenario armed by manual override');
+    return res.json(state);
+  });
+
+  app.delete('/api/demo/failures', (req, res) => {
+    const state = demoFailures.clearManual();
+    logger.info({ ip: req.ip }, 'Demo failure manual override cleared');
+    res.json(state);
   });
 
   // Health check endpoint
@@ -592,12 +635,15 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       // They run after the attributes above, so the failed transaction still says who ordered what, and before the
       // Order event and metrics below, so a failed order isn't counted as a sale.
       const { nameToSlug } = require('./url-utils');
-      const failingItem = order.items.find(item => nameToSlug(item.name) === process.env.DEMO_FAILING_ORDER_ITEM);
+      const failing = demoFailures.getFailing();
+      const failingItem = failing.orderItem
+        ? order.items.find(item => nameToSlug(item.name) === failing.orderItem)
+        : undefined;
       if (failingItem) {
         newrelic.addCustomAttributes({ failedItem: failingItem.name });
         throw new Error(`Inventory check failed for "${failingItem.name}": stock count is -2`);
       }
-      if (nameToSlug(order.restaurant?.name || '') === process.env.DEMO_FAILING_ORDER_RESTAURANT) {
+      if (failing.orderRestaurant && nameToSlug(order.restaurant?.name || '') === failing.orderRestaurant) {
         throw new Error(`Kitchen at "${order.restaurant.name}" is not accepting orders: ticket printer offline`);
       }
 
@@ -782,8 +828,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   app.get('/api/restaurant/by-name/:name', async function(req, res, next) {
     newrelic.addCustomAttributes({ restaurantSlug: req.params.name });
     try {
-      // Planned failure for the "find the error in New Relic" exercise; off unless the variable is set
-      if (process.env.DEMO_FAILING_RESTAURANT === req.params.name) {
+      // Planned failure for the "find the error in New Relic" exercise;
+      // armed dynamically (env, instructor override, or weekly rotation)
+      if (demoFailures.getFailing().restaurant === req.params.name) {
         throw new Error(`Menu data for "${req.params.name}" is corrupted: menu_items.category is null for 3 rows`);
       }
       if (useDatabase) {

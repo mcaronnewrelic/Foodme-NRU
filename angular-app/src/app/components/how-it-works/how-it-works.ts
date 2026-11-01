@@ -1,20 +1,23 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { NewRelicService } from '../../services/newrelic.service';
+import { NrConfigService, ScenarioKind, ArmedScenario } from '../../nr-config';
 import { errorToJson, flattenError, getErrorSummary, getUserFriendlyErrorMessage } from '../../utils/error.utils';
 
 @Component({
   selector: 'app-how-it-works',
-  imports: [RouterModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
   templateUrl: './how-it-works.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './how-it-works.css'
 })
 export class HowItWorksComponent {
+  protected readonly NrConfigService = NrConfigService;
   readonly errorNrql =
     "SELECT timestamp, errorMessage, pageUrl FROM JavaScriptError WHERE pageUrl LIKE '%how-it-works%' SINCE 1 hour ago";
   readonly actionNrql =
@@ -22,15 +25,54 @@ export class HowItWorksComponent {
   readonly timingNrql =
     "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE actionName = 'error_simulation_triggered' TIMESERIES SINCE 1 hour ago";
 
+  // Instructor controls for the demo failure scenario
+  readonly restaurantNames = signal<string[]>([]);
+  readonly itemNames = signal<string[]>([]);
+  readonly selectedKind = signal<ScenarioKind>('order-item');
+  readonly selectedTarget = signal<string>('');
+
   constructor(
     private http: HttpClient,
-    private newRelicService: NewRelicService
+    private newRelicService: NewRelicService,
+    public nrConfig: NrConfigService
   ) {
     // Log New Relic agent info when component initializes
     this.newRelicService.logAgentInfo();
-    
+
     // Set a custom attribute for this page
     this.newRelicService.setCustomAttribute('page', 'how-it-works');
+
+    // Current scenario state, and the pick-lists for arming a different one
+    this.nrConfig.refreshDemoState();
+    this.http.get<{ name: string; menuItems?: { name: string }[] }[]>('/api/restaurant').subscribe({
+      next: restaurants => {
+        this.restaurantNames.set(restaurants.map(r => r.name));
+        this.itemNames.set([...new Set(restaurants.flatMap(r => (r.menuItems || []).map(m => m.name)))]);
+        this.selectedTarget.set(this.targetsForKind()[0] || '');
+      },
+      error: () => {}
+    });
+  }
+
+  currentDescription(): string | null {
+    const state = this.nrConfig.demoState();
+    if (!state?.armed) return null;
+    return NrConfigService.describeScenario({ ...state.armed, source: state.source as ArmedScenario['source'] });
+  }
+
+  targetsForKind(): string[] {
+    return this.selectedKind() === 'order-item' ? this.itemNames() : this.restaurantNames();
+  }
+
+  onKindChange(kind: ScenarioKind) {
+    this.selectedKind.set(kind);
+    this.selectedTarget.set(this.targetsForKind()[0] || '');
+  }
+
+  armSelected() {
+    if (this.selectedTarget()) {
+      this.nrConfig.armScenario(this.selectedKind(), this.selectedTarget());
+    }
   }
 
   simulateError() {

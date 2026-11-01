@@ -12,6 +12,7 @@ import { NrConfigService } from '../../nr-config';
   styleUrl: './header.css'
 })
 export class HeaderComponent {
+  protected readonly NrConfigService = NrConfigService;
   showCartDropdown = false;
   showHelpDropdown = false;
   showMobileMenu = false;
