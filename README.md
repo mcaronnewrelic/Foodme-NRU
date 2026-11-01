@@ -1,12 +1,13 @@
 # 🍕 FoodMe - Restaurant Ordering Application
 
 [![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org/)
-[![Angular](https://img.shields.io/badge/Angular-20-red.svg)](https://angular.io/)
+[![Angular](https://img.shields.io/badge/Angular-22-red.svg)](https://angular.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/Security-Validated-brightgreen.svg)](#-security-features)
-[![New Relic](https://img.shields.io/badge/New%20Relic-Integrated-purple.svg)](https://newrelic.com/)
+[![New Relic APM](https://img.shields.io/badge/New%20Relic%20APM-14.10.0-purple.svg)](https://newrelic.com/)
+[![New Relic Infrastructure](https://img.shields.io/badge/New%20Relic%20Infrastructure-1.81.0-purple.svg)](https://newrelic.com/)
 
-A modern, full-stack restaurant ordering application built with Angular 20 frontend and Node.js backend, featuring comprehensive monitoring, security, and deployment automation.
+A modern, full-stack restaurant ordering application built with Angular 22 frontend and Node.js backend, featuring comprehensive monitoring, security, and deployment automation.
 
 ## 📋 Table of Contents
 
@@ -26,7 +27,7 @@ A modern, full-stack restaurant ordering application built with Angular 20 front
 
 FoodMe is a demonstration application that showcases modern web development practices, security implementations, and operational excellence. Originally designed as an educational workshop application, it has evolved into a production-ready example of:
 
-- **Modern Frontend**: Angular 20 with TypeScript, responsive design, and component-based architecture
+- **Modern Frontend**: Angular 22 with TypeScript, responsive design, and component-based architecture
 - **Robust Backend**: Node.js/Express server with RESTful APIs and structured data handling
 - **Monitoring Integration**: New Relic APM for performance monitoring and observability
 - **Security First**: Comprehensive secret management and security validation
