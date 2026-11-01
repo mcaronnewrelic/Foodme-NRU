@@ -310,6 +310,22 @@ Small, shared, do once:
   readable URL parameter (verified 2026-10-28); the page copy says “pick your
   code at the top”.
 
+**Update (2026-11-01, PR #28 — §8 built):** the demoCode variable and
+both pages were added to newrelic/dashboards/orderup-overview.json,
+and the How It Works hub link copy now says to pick your code at the
+top. One tooling prerequisite fell out of it: Foodme's dashboards.sh
+was create-only, so the pages could never have reached the existing
+dashboard (and delete-and-recreate would have changed its GUID and
+broken the hub's links) — the PR therefore also ports the opt-in
+DASHBOARD_UPDATE=1 update mode from BrowserAgentPlayground PR #1,
+plus the setup workflow's 'update' boolean. Live application: merge,
+then run the setup workflow with step=dashboards and update ticked.
+The funnel is four billboards in distinct demoCodes (started ->
+ordered -> checked a mission -> completed Mission 5) rather than a
+single funnel widget — NRQL cannot express "correct on all five
+missions" per code, and the billboards don't pretend otherwise.
+That leaves §11 Investigations as the only unbuilt section.
+
 ## 9. Build order
 
 1. P1 link-pattern fix + P2 env (unblocks every Find button).
