@@ -42,12 +42,14 @@ export class NrConfigService {
   nrqlUrl(nrql: string): string | null {
     const accountId = Number(this.accountId());
     if (!accountId) return null;
-    const pane = {
-      nerdletId: 'data-exploration.query-builder',
-      initialActiveInterface: 'nrqlEditor',
-      initialQueries: [{ accountId, nrql }],
-      initialAccountId: accountId
-    };
-    return `${NR_BASE_URL}/launcher/data-exploration.query-builder?pane=${btoa(JSON.stringify(pane))}`;
+    // The legacy Insights query URL is the pattern verified working on
+    // browser.nru.to (2026-10-28): it redirects into one.newrelic.com with the
+    // query pre-filled and scoped to this account. The NR1 launcher `pane=`
+    // form was tested the same day and failed - the URL is rewritten to an
+    // opaque state= form, the query does not pre-fill, and the UI can land in
+    // the wrong account. Keep all query-link building in this one function so
+    // a future pattern change stays a one-place change; the printed NRQL and
+    // its Copy button are the permanent fallback if this surface is retired.
+    return `https://insights.newrelic.com/accounts/${accountId}/query?query=${encodeURIComponent(nrql)}`;
   }
 }
