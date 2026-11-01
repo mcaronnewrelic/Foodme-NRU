@@ -397,6 +397,53 @@ while building (nri-nginx → `NginxSample` + parsed access logs; nri-postgresql
 Placement: linked from How It Works under “Investigations”, shown only in
 callout mode; the customer experience is untouched.
 
+### 11.0 Integration prerequisites
+
+*(Added 2026-11-01.)* What the investigations stand on, checked against
+`newrelic-integrations/` in this repo before any §11 build starts.
+
+**Already in place — do not re-add.** `nri-nginx` (stub_status) and
+`nri-postgresql` with `COLLECT_DB_LOCK_METRICS` and
+`COLLECT_BLOAT_METRICS` on (I7, I9) plus the custom queries emitting
+`database_size` and active/idle connection counts (I6);
+`pg_stat_statements` is preloaded by `cloudformation/install-foodme.sh`
+(the data source I8 stands on). Log forwarding covers nginx, Postgres,
+**and the PM2 app logs** — I5's "the app logs nothing" checkpoint is
+only honest because those app logs are actually in New Relic.
+
+**The one addition: the AWS linked-account integration, for the ALB.**
+Nothing AWS-side reports today, and I5's opening move — split the 502s
+by source: ALB vs nginx vs app — currently has no ALB leg; students
+would have to infer it from absent evidence. The linked account
+supplies `AlbSample` (ELB-generated vs target-generated 5XX counts,
+target health, ALB latency), making that checkpoint direct evidence.
+Classic API polling is enough (minutes of lag against 3-hour
+investigation windows); Metric Streams is not worth its setup here.
+The link is cloud-side (IAM role + account linking) — no host change.
+
+**Verify, don't add: Postgres query-performance data.** The extension
+is preloaded, but I8's rows-examined-vs-returned evidence needs the
+`pg_stat_statements`-backed data actually flowing into the account.
+Five-minute check before building I8; if absent, it is a config fix
+in the integration already installed, not a new integration.
+
+**Optional: `nri-flex` for demo state.** A Flex config polling
+`/api/demo/failures` and `/api/nr-config` can emit the armed scenario
+as infrastructure data, letting an Evidence Board widget show what is
+armed from New Relic itself. YAML only, no app code; nice-to-have,
+nothing depends on it.
+
+**Deliberately not used:** RDS / ECS / ElastiCache integrations (none
+of those services are in the live stack — ECS rides this same linked
+account if the Locust-on-Fargate work is ever ported), container or
+Kubernetes integrations (the app runs under PM2 on the host), and the
+CloudWatch agent (redundant beside the infra agent).
+
+**Sequencing:** host-side integration config changes bundle naturally
+with the pending stack rebuild (the infra agent's stale license key
+and the 1.81.0 pin ride the same run); the AWS account link can happen
+any time, independently.
+
 ### 11.1 The four ports
 
 **I1 · Who's stealing the CPU?** — identical chain, real cast: symptom
@@ -587,3 +634,6 @@ investigation, not a fault) *(Added 2026-11-01.)*
   names appear; with it on, the `Custom/Orders/%` name count is exactly
   2 + 2 × the seeded restaurant count, and I10's per-visitor checkpoint
   is answerable only from the `Order` event, never from `Metric`.
+- **A15** With the AWS account linked, `AlbSample` data exists for the
+  staging ALB and I5's source-split checkpoint (ELB vs target 5XX) is
+  answerable from it directly.
