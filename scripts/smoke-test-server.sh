@@ -41,7 +41,7 @@ check "menu, name with apostrophe" 200 /api/restaurant/by-name/tropical_jeeves_c
 check "menu, unknown name"        404 /api/restaurant/by-name/no_such_place
 check "new relic config"          200 /api/nr-config
 check "place an order"            201 /api/order -H "Content-Type: application/json" \
-  -d "{\"deliverTo\":{\"name\":\"Smoke\",\"email\":\"smoke@example.com\"},\"restaurant\":{\"id\":\"x\",\"name\":\"BBQ Tofu Paradise\"},\"items\":[{\"id\":\"1\",\"name\":\"Taco\",\"price\":5,\"qty\":2}],\"total\":10}"
+  -d "{\"deliverTo\":{\"name\":\"Smoke\",\"phone\":\"(503) 555-0100\"},\"restaurant\":{\"id\":\"x\",\"name\":\"BBQ Tofu Paradise\"},\"items\":[{\"id\":\"1\",\"name\":\"Taco\",\"price\":5,\"qty\":2}],\"total\":10}"
 check "simulated error is a 500"  500 /simulate/error/sync
 
 echo; echo "Error response format:"

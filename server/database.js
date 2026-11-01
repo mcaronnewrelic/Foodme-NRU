@@ -435,26 +435,27 @@ class DatabaseService {
     }
 
     /**
-     * Create or get customer by email
+     * Create or get customer by name. In this demo the name is the
+     * visitor's demoCode, which is unique per visitor; email is never
+     * collected, so it cannot be the key.
      */
     async createOrGetCustomer(customerData) {
         await this.connect();
-        
+
         try {
-            // First check if customer exists by email
-            const existingCustomerQuery = 'SELECT * FROM customers WHERE email = $1';
-            const existingResult = await this.client.query(existingCustomerQuery, [customerData.email]);
-            
+            // First check if customer exists by name
+            const existingCustomerQuery = 'SELECT * FROM customers WHERE name = $1';
+            const existingResult = await this.client.query(existingCustomerQuery, [customerData.name]);
+
             if (existingResult.rows.length > 0) {
                 // Update existing customer with latest info
                 const updateQuery = `
-                    UPDATE customers 
-                    SET name = $2, phone = $3, address = $4, updated_at = CURRENT_TIMESTAMP
-                    WHERE email = $1
+                    UPDATE customers
+                    SET phone = $2, address = $3, updated_at = CURRENT_TIMESTAMP
+                    WHERE name = $1
                     RETURNING *
                 `;
                 const updateValues = [
-                    customerData.email,
                     customerData.name,
                     customerData.phone || null,
                     customerData.address || null
@@ -464,13 +465,12 @@ class DatabaseService {
             } else {
                 // Create new customer
                 const insertQuery = `
-                    INSERT INTO customers (name, email, phone, address)
-                    VALUES ($1, $2, $3, $4)
+                    INSERT INTO customers (name, phone, address)
+                    VALUES ($1, $2, $3)
                     RETURNING *
                 `;
                 const insertValues = [
                     customerData.name,
-                    customerData.email,
                     customerData.phone || null,
                     customerData.address || null
                 ];
@@ -639,7 +639,6 @@ class DatabaseService {
                 SELECT 
                     o.*,
                     c.name as customer_name,
-                    c.email as customer_email,
                     c.phone as customer_phone,
                     r.name as restaurant_name,
                     r.original_id as restaurant_original_id
@@ -695,87 +694,6 @@ class DatabaseService {
     /**
      * Close database connection
      */
-    /**
-     * Get orders for a customer by email
-     */
-    async getOrdersByCustomerEmail(email) {
-        await this.connect();
-        
-        try {
-            const query = `
-                SELECT 
-                    o.id,
-                    o.order_number,
-                    o.restaurant_id,
-                    r.name as restaurant_name,
-                    o.status,
-                    o.total_amount,
-                    o.delivery_address,
-                    o.delivery_fee,
-                    o.tax_amount,
-                    o.special_instructions,
-                    o.estimated_delivery_time,
-                    o.created_at,
-                    o.updated_at
-                FROM orders o
-                JOIN restaurants r ON o.restaurant_id = r.id
-                JOIN customers c ON o.customer_id = c.id
-                WHERE LOWER(c.email) = LOWER($1)
-                ORDER BY o.created_at DESC
-            `;
-            
-            const ordersResult = await this.client.query(query, [email]);
-            
-            // Get order items for each order
-            const orders = [];
-            for (const order of ordersResult.rows) {
-                const itemsQuery = `
-                    SELECT 
-                        oi.id,
-                        oi.menu_item_id,
-                        oi.item_name,
-                        oi.quantity,
-                        oi.unit_price,
-                        oi.special_instructions
-                    FROM order_items oi
-                    WHERE oi.order_id = $1
-                    ORDER BY oi.created_at
-                `;
-                
-                const itemsResult = await this.client.query(itemsQuery, [order.id]);
-                
-                orders.push({
-                    id: order.id,
-                    orderNumber: order.order_number,
-                    restaurantId: order.restaurant_id,
-                    restaurantName: order.restaurant_name,
-                    status: order.status,
-                    totalAmount: parseFloat(order.total_amount),
-                    deliveryAddress: order.delivery_address,
-                    deliveryFee: parseFloat(order.delivery_fee) || 0,
-                    taxAmount: parseFloat(order.tax_amount) || 0,
-                    specialInstructions: order.special_instructions,
-                    estimatedDeliveryTime: order.estimated_delivery_time,
-                    createdAt: order.created_at,
-                    updatedAt: order.updated_at,
-                    items: itemsResult.rows.map(item => ({
-                        id: item.id,
-                        menuItemId: item.menu_item_id,
-                        itemName: item.item_name,
-                        quantity: parseInt(item.quantity),
-                        unitPrice: parseFloat(item.unit_price),
-                        specialInstructions: item.special_instructions
-                    }))
-                });
-            }
-            
-            return orders;
-        } catch (error) {
-            logger.error({ err: error, operation: 'getOrdersByCustomerEmail', customerEmail: email }, 'Error fetching orders by customer email');
-            throw error;
-        }
-    }
-
     /**
      * Get orders for a customer by phone number
      */
