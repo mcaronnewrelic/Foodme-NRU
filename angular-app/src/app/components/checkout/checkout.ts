@@ -95,11 +95,6 @@ export class CheckoutComponent implements OnInit {
     this.updateCustomerField('name', target.value);
   }
 
-  onCustomerEmailChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    this.updateCustomerField('email', target.value);
-  }
-
   onCustomerPhoneChange(event: Event) {
     const target = event.target as HTMLInputElement;
     this.updateCustomerField('phone', target.value);
@@ -168,7 +163,6 @@ export class CheckoutComponent implements OnInit {
       paymentCvc: this.payment.cvc.length >= 3,
       paymentName: this.payment.name.length > 0,
       customerName: (customerData.name?.length || 0) > 0,
-      customerEmail: (customerData.email?.length || 0) > 0,
       customerPhone: (customerData.phone?.length || 0) > 0,
       customerAddress: (customerData.address?.length || 0) > 0,
       cartItems: this.cartService.totalItems() > 0,
@@ -182,7 +176,6 @@ export class CheckoutComponent implements OnInit {
            this.payment.cvc.length >= 3 &&
            this.payment.name.length > 0 &&
            (customerData.name?.length || 0) > 0 &&
-           (customerData.email?.length || 0) > 0 &&
            (customerData.phone?.length || 0) > 0 &&
            (customerData.address?.length || 0) > 0 &&
            this.cartService.totalItems() > 0;

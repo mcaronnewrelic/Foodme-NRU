@@ -10,28 +10,22 @@
       <div class="card">
         <div class="card-body">
           <h2 class="card-title text-center mb-4">Your Information</h2>
+          <p class="text-muted text-center mb-4">
+            This demo runs on a shared account, so we've filled this in with
+            made-up details for your visit. Edit them if you like — but please
+            don't replace them with your real information.
+          </p>
           
           <form (ngSubmit)="onSubmit()">
             <div class="form-group mb-3">
               <label for="name" class="form-label">Name</label>
-              <input 
-                type="text" 
-                class="form-control" 
+              <input
+                type="text"
+                class="form-control"
                 id="name"
                 [value]="customerForm().name"
-                (input)="updateForm('name', $any($event.target).value)"
-                placeholder="Enter your name">
-            </div>
-
-            <div class="form-group mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input 
-                type="email" 
-                class="form-control" 
-                id="email"
-                [value]="customerForm().email"
-                (input)="updateForm('email', $any($event.target).value)"
-                placeholder="Enter your email">
+                disabled>
+              <small class="form-text text-muted">For this demo, your name is your session code — it's how your data is labelled in New Relic.</small>
             </div>
 
             <div class="form-group mb-3">

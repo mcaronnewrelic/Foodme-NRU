@@ -37,19 +37,15 @@ let useDatabase = false;
 function generateUserID(customerData) {
   if (!customerData) return null;
   
-  // Prefer email as the primary identifier
-  if (customerData.email) {
-    return `user_${customerData.email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+  // The customer's name is their demoCode in this app (sample data only;
+  // email is never collected, so it can never be an identifier here).
+  if (customerData.name) {
+    return `user_${customerData.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
   }
-  
+
   // Fallback to phone if available
   if (customerData.phone) {
     return `user_phone_${customerData.phone.replace(/[^0-9]/g, '')}`;
-  }
-  
-  // Fallback to name if available
-  if (customerData.name) {
-    return `user_name_${customerData.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
   }
   
   return null;
@@ -573,7 +569,6 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       logger.info({
         requestId: req.requestId,
         userID: userID,
-        customerEmail: customerData?.email,
         customerName: customerData?.name
       }, 'User ID set for order creation transaction');
 
@@ -586,7 +581,6 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       newrelic.addCustomAttributes({
         ...(demoCode ? { demoCode } : {}),
         'customer': order.deliverTo?.name || order.customer?.name || 'Unknown',
-        'customerEmail': order.deliverTo?.email || order.customer?.email || 'Unknown',
         'userID': userID || 'anonymous',
         'restaurant': order.restaurant?.name || 'Unknown',
         'itemCount': itemCount,
@@ -613,7 +607,6 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       newrelic.recordCustomEvent('Order', {
         ...(demoCode ? { demoCode } : {}),
         customer: order.deliverTo?.name || order.customer?.name || 'Unknown',
-        customerEmail: order.deliverTo?.email || order.customer?.email || 'Unknown',
         userID: userID || 'anonymous',
         restaurant: order.restaurant?.name || 'Unknown',
         itemCount: itemCount,
@@ -871,76 +864,6 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   });
 
   // Orders API endpoints
-  app.get('/api/orders/customer/:email', async function(req, res, next) {
-    const startTime = Date.now();
-    const customerEmail = req.params.email;
-    
-    // Set New Relic user ID for transaction tracking
-    const userID = setNewRelicUserID({ email: customerEmail }, 'orders_by_email');
-    
-    logger.info({
-      requestId: req.requestId,
-      endpoint: 'GET /api/orders/customer/:email',
-      customerEmail,
-      userID,
-      useDatabase
-    }, 'Fetching orders by customer email');
-    
-    // Add New Relic custom attributes for this transaction
-    newrelic.addCustomAttributes({
-      'customerEmail': customerEmail,
-      'userID': userID || 'anonymous',
-      'requestId': req.requestId,
-      'operation': 'get_orders_by_email'
-    });
-    
-    try {
-      if (useDatabase) {
-        const dbStartTime = Date.now();
-        const orders = await dbService.getOrdersByCustomerEmail(customerEmail);
-        const dbDuration = Date.now() - dbStartTime;
-        
-        logger.info({
-          requestId: req.requestId,
-          operation: 'database.getOrdersByCustomerEmail',
-          customerEmail,
-          orderCount: orders.length,
-          duration: dbDuration
-        }, 'Orders retrieved from database');
-        
-        const totalDuration = Date.now() - startTime;
-        logger.info({
-          requestId: req.requestId,
-          endpoint: 'GET /api/orders/customer/:email',
-          statusCode: 200,
-          customerEmail,
-          orderCount: orders.length,
-          duration: totalDuration
-        }, 'Successfully fetched customer orders');
-        
-        return res.status(200).send(orders);
-      } else {
-        logger.info({
-          requestId: req.requestId,
-          operation: 'memory.getOrders',
-          customerEmail
-        }, 'Using memory mode - returning empty orders');
-        
-        return res.status(200).send([]);
-      }
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      logger.error({ 
-        requestId: req.requestId,
-        endpoint: 'GET /api/orders/customer/:email',
-        customerEmail,
-        err: error,
-        duration
-      }, 'Failed to fetch orders by customer email');
-      res.status(500).send({ error: 'Failed to fetch orders' });
-    }
-  });
-
   app.get('/api/orders/customer/phone/:phone', async function(req, res, next) {
     const startTime = Date.now();
     const customerPhone = req.params.phone;
@@ -1037,16 +960,14 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         
         if (order) {
           // Set user ID if we have customer information in the order
-          if (order.customer_email || order.customer_phone || order.customer_name) {
+          if (order.customer_phone || order.customer_name) {
             const userID = setNewRelicUserID({
-              email: order.customer_email,
               phone: order.customer_phone,
               name: order.customer_name
             }, 'order_by_id');
             
             // Update New Relic attributes with user information
             newrelic.addCustomAttributes({
-              'customerEmail': order.customer_email,
               'customerPhone': order.customer_phone,
               'userID': userID || 'anonymous'
             });
@@ -1057,7 +978,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
             operation: 'database.getOrderById',
             orderId,
             duration: dbDuration,
-            hasCustomerInfo: !!(order.customer_email || order.customer_phone)
+            hasCustomerInfo: !!(order.customer_phone || order.customer_name)
           }, 'Order retrieved from database');
           
           const totalDuration = Date.now() - startTime;

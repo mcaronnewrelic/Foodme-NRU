@@ -22,7 +22,6 @@ export class CustomerComponent {
 
   customerForm = signal<Customer>({
     name: '',
-    email: '',
     phone: '',
     address: ''
   });
@@ -38,7 +37,6 @@ export class CustomerComponent {
     if (existingCustomer) {
       this.customerForm.set({
         name: existingCustomer.name || '',
-        email: existingCustomer.email || '',
         phone: existingCustomer.phone || '',
         address: existingCustomer.address || ''
       });
