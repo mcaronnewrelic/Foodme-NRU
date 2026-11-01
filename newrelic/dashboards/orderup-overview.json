@@ -460,6 +460,488 @@
           }
         }
       ]
+    },
+    {
+      "name": "Knowledge checks",
+      "description": "What the class answered in the mission checks (OrderupQuizAnswer), and \u2014 with your code picked at the top \u2014 your own journey.",
+      "widgets": [
+        {
+          "title": "Answers",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Answers', uniqueCount(demoCode) AS 'Visitor codes' FROM OrderupQuizAnswer SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Right on the first try",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT percentage(count(*), WHERE outcome = 'correct') AS 'Right on the first try' FROM OrderupQuizAnswer WHERE attempt = 1 SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": null,
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "## Knowledge checks\nEvery answer to a mission check lands here as an `OrderupQuizAnswer` event \u2014 right or wrong, with its attempt number. **Students: pick your code in the variable bar at the top of this dashboard** to fill in the Your journey section below."
+          }
+        },
+        {
+          "title": "Answers over time",
+          "layout": {
+            "column": 1,
+            "row": 2,
+            "width": 8,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM OrderupQuizAnswer FACET outcome TIMESERIES AUTO SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "First-try accuracy by mission",
+          "layout": {
+            "column": 9,
+            "row": 2,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT percentage(count(*), WHERE outcome = 'correct') AS 'Right first try (%)' FROM OrderupQuizAnswer WHERE attempt = 1 FACET missionId SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Hardest questions (most wrong on the first try)",
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT percentage(count(*), WHERE outcome = 'incorrect') AS 'Wrong first try (%)', count(*) AS 'First tries' FROM OrderupQuizAnswer WHERE attempt = 1 FACET missionId, questionId LIMIT 20 SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Most-picked wrong answers",
+          "layout": {
+            "column": 7,
+            "row": 3,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Times picked' FROM OrderupQuizAnswer WHERE outcome = 'incorrect' FACET missionId, questionId, answer LIMIT 20 SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Tries needed to get it right",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT average(attempt) AS 'Average tries', max(attempt) AS 'Most tries' FROM OrderupQuizAnswer WHERE outcome = 'correct' FACET missionId, questionId LIMIT 20 SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Solved on attempt\u2026",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Solved' FROM OrderupQuizAnswer WHERE outcome = 'correct' FACET attempt SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": null,
+          "layout": {
+            "column": 1,
+            "row": 5,
+            "width": 12,
+            "height": 2
+          },
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "## Your journey\nThe widgets below answer to the **demoCode variable at the top of this dashboard** \u2014 pick your code (it appears in the list after your first check answer) and they show only your data."
+          }
+        },
+        {
+          "title": "Your answers",
+          "layout": {
+            "column": 1,
+            "row": 6,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Your answers' FROM OrderupQuizAnswer WHERE demoCode = {{demoCode}} SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Your first-try score",
+          "layout": {
+            "column": 5,
+            "row": 6,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT percentage(count(*), WHERE outcome = 'correct') AS 'Right on the first try' FROM OrderupQuizAnswer WHERE attempt = 1 AND demoCode = {{demoCode}} SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Your orders",
+          "layout": {
+            "column": 9,
+            "row": 6,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Your orders' FROM `Order` WHERE demoCode = {{demoCode}} SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Your answer history",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT timestamp, missionId, question, answer, outcome, attempt FROM OrderupQuizAnswer WHERE demoCode = {{demoCode}} LIMIT 50 SINCE 1 week ago"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missions",
+      "description": "The mission funnel across all visitors: who started, who ordered, who checked a mission, who finished.",
+      "widgets": [
+        {
+          "title": "Started",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(demoCode) AS 'Started (answered a check)' FROM OrderupQuizAnswer SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Placed an order",
+          "layout": {
+            "column": 4,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(demoCode) AS 'Placed an order' FROM `Order` SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Checked a mission",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(demoCode) AS 'Checked a mission' FROM OrderupQuizAnswer WHERE outcome = 'correct' SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Completed Mission 5",
+          "layout": {
+            "column": 10,
+            "row": 1,
+            "width": 3,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(demoCode) AS 'Completed Mission 5' FROM OrderupQuizAnswer WHERE outcome = 'correct' AND missionId = 'mission-5' SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Mission completions (visitors)",
+          "layout": {
+            "column": 1,
+            "row": 2,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT uniqueCount(demoCode) AS 'Visitors' FROM OrderupQuizAnswer WHERE outcome = 'correct' FACET missionId SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Answers by mission",
+          "layout": {
+            "column": 7,
+            "row": 2,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) FROM OrderupQuizAnswer FACET missionId, outcome SINCE 1 week ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Per-mission detail",
+          "layout": {
+            "column": 1,
+            "row": 3,
+            "width": 12,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Answers', percentage(count(*), WHERE outcome = 'correct') AS 'Correct (%)', average(attempt) AS 'Avg attempts' FROM OrderupQuizAnswer FACET missionId SINCE 1 week ago"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "demoCode",
+      "items": null,
+      "defaultValues": [],
+      "nrqlQuery": {
+        "accountIds": [
+          1352811
+        ],
+        "query": "SELECT uniques(demoCode) FROM OrderupQuizAnswer SINCE 1 week ago"
+      },
+      "options": {
+        "hiddenOnVariablesBar": false,
+        "ignoreTimeRange": true,
+        "excluded": false
+      },
+      "title": "Your code (demoCode)",
+      "type": "NRQL",
+      "isMultiSelection": false,
+      "replacementStrategy": "STRING"
     }
   ]
 }
