@@ -22,15 +22,24 @@
         </div>
 
         @if (requestId) {
-          <app-nr-callout title="Your order, as a custom event" [nrql]="orderEventNrql" buttonLabel="See your Order event">
+          <app-nr-callout title="Your order, as a custom event" [nrql]="orderEventNrql" buttonLabel="See your Order event"
+            missionId="mission-3"
+            tryText="Check out with any cart and reach this page — done. The three records below are that one order.">
             The server records an <b>Order</b> event with the customer, restaurant, item count and total.
-            This query finds yours by its request ID, <code>{{ requestId }}</code>.
+            This query finds yours by its request ID, <code>{{ requestId }}</code>. One order, three records
+            (this event, the transaction below, and the metrics): the requestId is the thread that stitches them together.
+            <app-nr-check missionId="mission-3" questionId="request-id-tail" kind="text"
+              question="Paste the last 4 characters of this order's requestId."
+              [answer]="requestIdTail"
+              proves="That requestId is the join key — it finds this order's event, transaction and trace, and nothing else's."></app-nr-check>
           </app-nr-callout>
-          <app-nr-callout title="Your order, as transaction attributes" [nrql]="transactionNrql" buttonLabel="See your transaction">
+          <app-nr-callout title="Your order, as transaction attributes" [nrql]="transactionNrql" buttonLabel="See your transaction"
+            missionId="mission-3">
             The same details are attached to the <b>POST /api/order</b> transaction as custom attributes,
             along with the new order ID ({{ orderId }}). Open it to see them next to the trace.
           </app-nr-callout>
-          <app-nr-callout title="Order metrics for everyone" [nrql]="metricsNrql" buttonLabel="See the metrics">
+          <app-nr-callout title="Order metrics for everyone" [nrql]="metricsNrql" buttonLabel="See the metrics"
+            missionId="mission-3" scope="cohort">
             <b>Orders/count</b> and <b>Orders/total</b> are custom metrics. They roll up every order
             in a minute, so this chart includes orders from other visitors too.
           </app-nr-callout>

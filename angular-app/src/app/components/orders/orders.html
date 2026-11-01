@@ -116,7 +116,15 @@
 </div>
 
 <div class="container mb-5">
-  <app-nr-callout title="Looking up past orders" [nrql]="ordersNrql" buttonLabel="See the lookups">
-    The server tags each lookup with a <code>userID</code> and an <code>operation</code> custom attribute. Lookups run on the sample phone number from the Customer page — the demo never collects an email, so there is no real address in this data to show.
+  <app-nr-callout title="Looking up past orders" [nrql]="ordersNrql" buttonLabel="See the lookups"
+    missionId="mission-4"
+    tryText="Look up the order you just placed — this page already did, from your sample phone number alone."
+    [tokens]="lookupTokens">
+    The server tags each lookup with a <code>userID</code> and an <code>operation</code> custom attribute. Lookups run on the sample phone number from the Customer page — the demo never collects an email, so there is no real address in this data to show. The query is filtered to your <code>userID</code>, which is your demoCode in disguise (<code>user_</code> + your code, lowercased) — so this Find shows only your lookups.
+    <app-nr-check missionId="mission-4" questionId="join-keys" kind="multi"
+      question="The Orders lookup works without your email. Which two values actually identify your order in the data?"
+      [options]="['requestId', 'demoCode', 'Email address', 'IP address', 'Browser type']"
+      [answer]="['requestId', 'demoCode']"
+      proves="requestId ties the records of one order together; your demoCode ties your orders to you — no personal data needed."></app-nr-check>
   </app-nr-callout>
 </div>
