@@ -128,6 +128,9 @@ deploy_production_stack() {
     local key_pair_name="$3"
     local db_password="$4"
     local new_relic_license_key="${5:-${NEW_RELIC_LICENSE_KEY:-}}"
+    # Optional ACM certificate ARN (6th arg or CERTIFICATE_ARN env). Empty
+    # means HTTP only; see the CertificateArn parameter in the template.
+    local certificate_arn="${6:-${CERTIFICATE_ARN:-}}"
     
     if [ -z "$key_pair_name" ] || [ -z "$db_password" ]; then
         echo "❌ Missing required parameters"
@@ -150,6 +153,12 @@ deploy_production_stack() {
     echo "🔍 Using Amazon Linux 2023 (AL2023)"
     echo "🛠️  Includes: Proper Angular routing, Nginx port 8080, PM2 backend management"
     
+    if [ -n "$certificate_arn" ]; then
+        echo "🔒 HTTPS: ENABLED (certificate $certificate_arn)"
+    else
+        echo "🔓 HTTPS: disabled (no certificate ARN supplied)"
+    fi
+
     # Display New Relic configuration
     if [ -n "$new_relic_license_key" ]; then
         echo "🔍 New Relic monitoring: ENABLED"
@@ -167,6 +176,7 @@ deploy_production_stack() {
             KeyPairName="$key_pair_name" \
             DatabasePassword="$db_password" \
             NewRelicLicenseKey="$new_relic_license_key" \
+            CertificateArn="$certificate_arn" \
             S3BucketName="$bucket_name" \
         --capabilities CAPABILITY_NAMED_IAM \
         --tags \
