@@ -145,8 +145,8 @@ deploy_stack() {
     upload_application_code "$bucket_name"
     
     # Build and push load test image to ECR
-    echo "🔨 Skipping load test container image build (commented out temporarily)"
-    # "$SCRIPT_DIR/build-loadtest-image.sh" -e "$environment" -r "$aws_region"
+    echo "🔨 Building and pushing load test container image"
+    "$SCRIPT_DIR/build-loadtest-image.sh" -e "$environment" -r "$aws_region"
     
     echo "🚀 Deploying CloudFormation stack: $stack_name"
     
