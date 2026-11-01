@@ -87,7 +87,6 @@ export class CartService {
     const order = {
       deliverTo: {
         name: customer.name || '',
-        email: customer.email || '',
         phone: customer.phone || '',
         address: customer.address || ''
       },

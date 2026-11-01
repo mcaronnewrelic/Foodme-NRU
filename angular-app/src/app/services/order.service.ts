@@ -12,13 +12,6 @@ export class OrderService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Get orders for a customer by their email address
-   */
-  getOrdersByCustomerEmail(email: string): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.apiUrl}/customer/${encodeURIComponent(email)}`);
-  }
-
-  /**
    * Get a specific order by ID
    */
   getOrderById(orderId: string): Observable<Order> {
