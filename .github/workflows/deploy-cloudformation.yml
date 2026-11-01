@@ -135,10 +135,14 @@ jobs:
           KEY_NAME: ${{ secrets.EC2_KEY_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          # Optional: ACM certificate ARN for HTTPS (per-environment variable;
+          # empty leaves the site HTTP-only). See the template's
+          # CertificateArn parameter.
+          CERTIFICATE_ARN: ${{ vars.CERTIFICATE_ARN }}
         run: |
           # The script reads the region from the AWS CLI configuration
           aws configure set region "$AWS_REGION"
-          bash cloudformation/deploy-production.sh "$ENVIRONMENT" "$INSTANCE_TYPE" "$KEY_NAME" "$DB_PASSWORD" "$NEW_RELIC_LICENSE_KEY"
+          bash cloudformation/deploy-production.sh "$ENVIRONMENT" "$INSTANCE_TYPE" "$KEY_NAME" "$DB_PASSWORD" "$NEW_RELIC_LICENSE_KEY" "$CERTIFICATE_ARN"
 
       - name: Summarize
         env:

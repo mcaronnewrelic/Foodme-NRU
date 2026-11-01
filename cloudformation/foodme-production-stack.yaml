@@ -38,6 +38,17 @@ Parameters:
     Type: String
     Description: S3 bucket containing deployment artifacts
 
+  CertificateArn:
+    Type: String
+    Default: ''
+    Description: >-
+      Optional ACM certificate ARN for the site's hostname (e.g. for
+      orderup.nru.to). When set, the load balancer serves HTTPS on 443 and
+      redirects HTTP to it. When empty (default), the site is HTTP only and
+      nothing changes. The certificate must be ISSUED in ACM (same region)
+      before it is passed here; DNS validation records are handled outside
+      this template.
+
 Mappings:
   RegionConfig:
     us-east-1:
@@ -330,19 +341,59 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref FrontendTargetGroup
+      # With a certificate, port 80 only redirects to HTTPS; without one it
+      # serves the site as before.
+      DefaultActions: !If
+        - HasCertificate
+        - - Type: redirect
+            RedirectConfig:
+              Protocol: HTTPS
+              Port: '443'
+              StatusCode: HTTP_301
+        - - Type: forward
+            TargetGroupArn: !Ref FrontendTargetGroup
       
   # ALB Listener Rules for API routing
   ApiListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: NoCertificate
     Properties:
       ListenerArn: !Ref LoadBalancerListener
       Priority: 100
       Conditions:
         - Field: path-pattern
           Values: 
+            - '/api/*'
+            - '/health'
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+  # HTTPS listener (only when a certificate is supplied). The instance side
+  # is unchanged: the load balancer terminates TLS and forwards plain HTTP.
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: HasCertificate
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+
+  HttpsApiListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasCertificate
+    Properties:
+      ListenerArn: !Ref HttpsListener
+      Priority: 100
+      Conditions:
+        - Field: path-pattern
+          Values:
             - '/api/*'
             - '/health'
       Actions:
@@ -364,15 +415,24 @@ Outputs:
 
   ApplicationURL:
     Description: Application URL
-    Value: !Sub http://${LoadBalancer.DNSName}
+    Value: !If
+      - HasCertificate
+      - !Sub https://${LoadBalancer.DNSName}
+      - !Sub http://${LoadBalancer.DNSName}
 
   HealthCheckURL:
     Description: Health check URL
-    Value: !Sub http://${LoadBalancer.DNSName}/health
+    Value: !If
+      - HasCertificate
+      - !Sub https://${LoadBalancer.DNSName}/health
+      - !Sub http://${LoadBalancer.DNSName}/health
 
   ApiBaseURL:
     Description: API base URL
-    Value: !Sub http://${LoadBalancer.DNSName}/api
+    Value: !If
+      - HasCertificate
+      - !Sub https://${LoadBalancer.DNSName}/api
+      - !Sub http://${LoadBalancer.DNSName}/api
 
   EC2InstanceId:
     Description: EC2 Instance ID
@@ -399,3 +459,5 @@ Outputs:
 
 Conditions:
   HasNewRelicKey: !Not [!Equals [!Ref NewRelicLicenseKey, '']]
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+  NoCertificate: !Equals [!Ref CertificateArn, '']
