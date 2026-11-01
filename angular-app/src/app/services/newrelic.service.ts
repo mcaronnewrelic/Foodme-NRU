@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { EventTypesService } from './event-types.service';
 
 // Declare the global newrelic object
 declare global {
@@ -11,6 +12,8 @@ declare global {
   providedIn: 'root'
 })
 export class NewRelicService {
+  private eventTypes = inject(EventTypesService);
+
   private get newrelic() {
     return window.newrelic;
   }
@@ -30,6 +33,7 @@ export class NewRelicService {
     if (this.isAvailable() && typeof this.newrelic.noticeError === 'function') {
       this.newrelic.log(error); // Log the error to New Relic
       this.newrelic.noticeError(error);
+      this.eventTypes.mark('JavaScriptError');
       console.log('Error logged to New Relic browser agent');
     } else {
       console.warn('New Relic browser agent not available for error logging');
@@ -55,6 +59,7 @@ export class NewRelicService {
   addPageAction(actionName: string, attributes?: Record<string, any>): void {
     if (this.isAvailable() && typeof this.newrelic.addPageAction === 'function') {
       this.newrelic.addPageAction(actionName, attributes);
+      this.eventTypes.mark('PageAction');
       console.log(`Page action '${actionName}' logged to New Relic`);
     } else {
       console.warn('New Relic browser agent not available for page action logging');

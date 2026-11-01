@@ -1,0 +1,50 @@
+.mission-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 1rem;
+  background: #0d1b1b;
+  color: #e6f1f1;
+  border-bottom: 2px dashed #1ce783;
+  font-size: 0.85rem;
+}
+
+.mission-strip-label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.mission-strip-ticks {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.mission-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid #1ce783;
+  border-radius: 50%;
+  color: #e6f1f1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mission-tick.started {
+  border-style: dashed;
+  color: #ffb454;
+  border-color: #ffb454;
+}
+
+.mission-tick.checked {
+  background: #1ce783;
+  color: #0d1b1b;
+}
+
+.mission-tick.current {
+  box-shadow: 0 0 0 2px #0d1b1b, 0 0 0 4px #1ce783;
+}

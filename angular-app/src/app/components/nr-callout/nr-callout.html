@@ -5,13 +5,18 @@
       <span class="nr-callout-scope"><i class="fas fa-users me-1"></i>Shows everyone's data</span>
     }
     <h5 class="nr-callout-title">{{ title }}</h5>
-    <div class="nr-callout-body"><ng-content></ng-content></div>
+    <div class="nr-callout-body">
+      @if (tryText) {
+        <p class="nr-callout-try"><strong>Try it:</strong> {{ tryText }}</p>
+      }
+      <ng-content></ng-content>
+    </div>
     <pre #nrqlText class="nr-callout-nrql">{{ resolvedNrql }}</pre>
     <button type="button" class="btn btn-sm nr-callout-btn nr-callout-btn-alt me-2" (click)="copyNrql()">
       {{ copyState === 'copied' ? 'Copied' : copyState === 'selected' ? 'Selected — hold to copy' : 'Copy NRQL' }} <i class="fas fa-copy ms-1"></i>
     </button>
     @if (url; as link) {
-      <a class="btn btn-sm nr-callout-btn" [href]="link" target="newrelic">
+      <a class="btn btn-sm nr-callout-btn" [href]="link" target="newrelic" (click)="onFindClick()">
         {{ buttonLabel }} <i class="fas fa-arrow-up-right-from-square ms-1"></i>
       </a>
     }

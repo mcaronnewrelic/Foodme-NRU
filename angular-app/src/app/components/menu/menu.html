@@ -217,7 +217,9 @@
     </div>
 
     <div class="container mb-5">
-      <app-nr-callout title="Each menu is its own request" [nrql]="menuNrql" buttonLabel="See menu requests" scope="cohort">
+      <app-nr-callout title="Each menu is its own request" [nrql]="menuNrql" buttonLabel="See menu requests" scope="cohort"
+        missionId="mission-2"
+        tryText="On the Restaurants page, use one of the filters — then look for that action in this data.">
         Opening a restaurant calls <code>GET /api/restaurant/by-name/:name</code>. New Relic groups them under one transaction name and keeps the real URL, so you can see which restaurants get the most visits.
         <app-nr-check missionId="mission-2" questionId="filter-no-request" kind="choice"
           question="You filtered the list and no new request appeared in the data. Why?"
@@ -225,7 +227,8 @@
           answer="The filter runs in your browser"
           proves="Filtering is client-side, so it never reaches the API — the absence in the data is the evidence."></app-nr-check>
       </app-nr-callout>
-      <app-nr-callout title="Does every menu load?" [nrql]="menuStatusNrql" buttonLabel="Check the status codes" scope="cohort">
+      <app-nr-callout title="Does every menu load?" [nrql]="menuStatusNrql" buttonLabel="Check the status codes" scope="cohort"
+        missionId="mission-2">
         Not every request has to succeed. This groups the same requests by HTTP status code.
         If a menu ever fails to load, it shows up here before anyone tells you.
       </app-nr-callout>

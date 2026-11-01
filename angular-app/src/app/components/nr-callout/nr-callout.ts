@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnInit, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NrConfigService } from '../../nr-config';
 import { DemoIdentityService } from '../../services/demo-identity.service';
+import { MissionProgressService } from '../../services/mission-progress.service';
 
 @Component({
   selector: 'app-nr-callout',
@@ -11,6 +12,7 @@ import { DemoIdentityService } from '../../services/demo-identity.service';
 export class NrCalloutComponent implements OnInit {
   protected config = inject(NrConfigService);
   private identity = inject(DemoIdentityService);
+  private progress = inject(MissionProgressService);
 
   @Input({ required: true }) title!: string;
   @Input({ required: true }) nrql!: string;
@@ -25,6 +27,14 @@ export class NrCalloutComponent implements OnInit {
    * <requestId> when the page knows it.
    */
   @Input() tokens: Record<string, string> = {};
+  /** Mission framing (spec section 2): the mission this callout belongs to, if any. */
+  @Input() missionId = '';
+  /** The mission's Try line, rendered first in the callout body. */
+  @Input() tryText = '';
+
+  protected onFindClick(): void {
+    if (this.missionId) this.progress.markFound(this.missionId);
+  }
 
   protected showAccountNote = false;
 

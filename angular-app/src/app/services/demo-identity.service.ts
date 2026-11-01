@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { EventTypesService } from './event-types.service';
 import { NewRelicService } from './newrelic.service';
 
 const DEMO_CODE_STORAGE_KEY = 'orderup-demo-code';
@@ -22,17 +23,22 @@ const CODE_PATTERN = /^OU-[A-Z0-9]{4}$/;
 })
 export class DemoIdentityService {
   private newRelicService = inject(NewRelicService);
+  private eventTypes = inject(EventTypesService);
   private router = inject(Router);
 
   readonly code = signal(this.loadOrCreateCode());
 
   constructor() {
     this.stamp();
+    this.eventTypes.mark('PageView');
     // SPA route changes create new page views; re-stamp so every view and
     // everything under it carries the code.
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => this.stamp());
+      .subscribe(() => {
+        this.stamp();
+        this.eventTypes.mark('PageView');
+      });
   }
 
   private stamp(): void {
