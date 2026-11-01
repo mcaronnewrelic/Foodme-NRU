@@ -12,7 +12,7 @@ import { DemoIdentityService } from './services/demo-identity.service';
   styleUrl: './app.css'
 })
 export class App {
-  protected title = 'FoodMe - Angular v20';
+  protected title = 'OrderUp - Angular v22';
 
   constructor(
     public cartService: CartService,

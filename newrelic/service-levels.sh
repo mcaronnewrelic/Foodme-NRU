@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Creates service levels for the FoodMe APM app and browser app, unless they exist (by exact name).
+# Creates service levels for the OrderUp APM app and browser app, unless they exist (by exact name).
 # Each has a 7-day rolling objective.
 #
 #   NEW_RELIC_API_KEY=NRAK-... bash newrelic/service-levels.sh
 #
 # Environment (all optional):
-#   BROWSER_ENTITY_GUID  default: the FoodMe browser app
-#   APM_ENTITY_GUID      default: the FoodMe APM app
+#   BROWSER_ENTITY_GUID  default: the OrderUp browser app
+#   APM_ENTITY_GUID      default: the OrderUp APM app
 #
 # The success ones leave out the deliberate failures (/simulate/* and the how-it-works error button), so
 # they show whether the site works rather than how often someone presses the button. The planned menu
@@ -15,8 +15,15 @@
 # shellcheck disable=SC2016
 source "$(dirname "$0")/lib.sh"
 
-BROWSER_ENTITY_GUID="${BROWSER_ENTITY_GUID:-MTM1MjgxMXxCUk9XU0VSfEFQUExJQ0FUSU9OfDkzMjM5Nzg4}"
-APM_ENTITY_GUID="${APM_ENTITY_GUID:-MTM1MjgxMXxBUE18QVBQTElDQVRJT058OTI2MzIxNzQ}"
+BROWSER_ENTITY_GUID="${BROWSER_ENTITY_GUID:-$(entity_guid 'OrderUp' "domain = 'BROWSER' AND type = 'APPLICATION'")}"
+APM_ENTITY_GUID="${APM_ENTITY_GUID:-$(entity_guid 'OrderUp' "domain = 'APM' AND type = 'APPLICATION'")}"
+
+# The entities must exist before their service levels / workload can be
+# created: deploy the renamed app once so it reports, then run setup.
+if [[ -z "$BROWSER_ENTITY_GUID" || -z "$APM_ENTITY_GUID" ]]; then
+  log "Could not find the OrderUp APM/browser entities by name - has the renamed app reported to New Relic yet?"
+  exit 1
+fi
 MENU='WebTransaction/Expressjs/GET//api/restaurant/by-name/:name'
 ORDER='WebTransaction/Expressjs/POST//api/order'
 
@@ -45,30 +52,30 @@ query() { jq -n --arg from "$1" --arg where "$2" '{from: $from, where: $where}';
 
 apm_web="entityGuid = '$APM_ENTITY_GUID' AND transactionType = 'Web' AND name NOT LIKE '%/simulate/%'"
 
-create_service_level "$APM_ENTITY_GUID" 'FoodMe Menu - Success' \
+create_service_level "$APM_ENTITY_GUID" 'OrderUp Menu - Success' \
   'Menu requests that end without a server error. Includes the planned menu failure, which is what this measures.' 99 \
   "$(query Transaction "entityGuid = '$APM_ENTITY_GUID' AND name = '$MENU'")" bad \
   "$(query TransactionError "entityGuid = '$APM_ENTITY_GUID' AND transactionName = '$MENU' AND error.expected IS FALSE")"
 
-create_service_level "$APM_ENTITY_GUID" 'FoodMe Checkout - Latency' \
+create_service_level "$APM_ENTITY_GUID" 'OrderUp Checkout - Latency' \
   'Orders the server accepts in under half a second.' 95 \
   "$(query Transaction "entityGuid = '$APM_ENTITY_GUID' AND name = '$ORDER'")" good \
   "$(query Transaction "entityGuid = '$APM_ENTITY_GUID' AND name = '$ORDER' AND duration < 0.5")"
 
-create_service_level "$APM_ENTITY_GUID" 'FoodMe API - Success' \
+create_service_level "$APM_ENTITY_GUID" 'OrderUp API - Success' \
   "Web requests that end without an unexpected error. Leaves out /simulate/*, which fails on purpose." 99 \
   "$(query Transaction "$apm_web")" bad \
   "$(query TransactionError "entityGuid = '$APM_ENTITY_GUID' AND error.expected IS FALSE AND transactionName NOT LIKE '%/simulate/%'")"
 
 # ---- Browser: what visitors' browsers see ----------------------------------------------------------------
 
-create_service_level "$BROWSER_ENTITY_GUID" 'FoodMe Browser - Latency (LCP)' \
+create_service_level "$BROWSER_ENTITY_GUID" 'OrderUp Browser - Latency (LCP)' \
   'Page loads whose Largest Contentful Paint is under 2.5 seconds (the "good" Core Web Vitals threshold).' 95 \
   "$(query PageViewTiming "entityGuid = '$BROWSER_ENTITY_GUID' AND timingName = 'largestContentfulPaint'")" good \
   "$(query PageViewTiming "entityGuid = '$BROWSER_ENTITY_GUID' AND timingName = 'largestContentfulPaint' AND largestContentfulPaint < 2.5")"
 
 browser_ajax="entityGuid = '$BROWSER_ENTITY_GUID' AND requestUrl NOT LIKE '%/simulate/%'"
-create_service_level "$BROWSER_ENTITY_GUID" 'FoodMe Browser - Availability (AJAX)' \
+create_service_level "$BROWSER_ENTITY_GUID" 'OrderUp Browser - Availability (AJAX)' \
   'AJAX requests from the pages that get an answer (not a 5xx or a network failure). Leaves out /simulate/*, which fails on purpose.' 99 \
   "$(query AjaxRequest "$browser_ajax")" bad \
   "$(query AjaxRequest "$browser_ajax AND (httpResponseCode >= 500 OR httpResponseCode = 0)")"

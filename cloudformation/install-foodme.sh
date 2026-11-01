@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# FoodMe Application Installation Script
-# This script installs and configures the complete FoodMe application stack
+# OrderUp Application Installation Script
+# This script installs and configures the complete OrderUp application stack
 #
 # Key Fixes Applied:
 # - Fixed Angular build output path handling (outputs to /opt/foodme/dist directly)
@@ -29,7 +29,7 @@ host_display_name() {
     echo "foodme-$(hostname -s)"
 }
 
-log "Starting FoodMe application installation..."
+log "Starting OrderUp application installation..."
 
 # Update system and install required packages
 log "Updating system and installing packages..."
@@ -202,7 +202,7 @@ CORS_ORIGIN="http://$(imds public-ipv4)"
 ANGULAR_DIR="/opt/foodme/dist/browser"
 NEW_RELIC_LICENSE_KEY="$new_relic_key"
 NRIA_LICENSE_KEY="$new_relic_key"
-NEW_RELIC_APP_NAME="FoodMe"
+NEW_RELIC_APP_NAME="OrderUp"
 NEW_RELIC_PROCESS_HOST_DISPLAY_NAME="$(host_display_name)"
 NEW_RELIC_ENABLED=$([[ -n "$new_relic_key" && "$new_relic_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "true" || echo "false")
 NEW_RELIC_LOG_LEVEL="info"
@@ -753,7 +753,7 @@ main() {
     local environment="$4"
     local node_env="$5"
     
-    log "=== FoodMe Application Deployment Starting ==="
+    log "=== OrderUp Application Deployment Starting ==="
     log "Environment: $environment"
     log "S3 Bucket: $s3_bucket"
     log "New Relic: $([[ -n "$new_relic_key" && "$new_relic_key" != "REPLACE_WITH_YOUR_LICENSE_KEY" ]] && echo "Enabled" || echo "Disabled")"
@@ -798,7 +798,7 @@ main() {
     log "🔍 Verifying deployment..."
     verify_deployment
     
-    log "=== FoodMe Application Deployment Completed Successfully ==="
+    log "=== OrderUp Application Deployment Completed Successfully ==="
 }
 
 # Execute main function with parameters

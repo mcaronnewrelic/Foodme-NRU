@@ -3,16 +3,16 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { NewRelicService } from './newrelic.service';
 
-const DEMO_CODE_STORAGE_KEY = 'foodme-demo-code';
+const DEMO_CODE_STORAGE_KEY = 'orderup-demo-code';
 // Unambiguous alphabet: no 0/O, 1/I/L to confuse when read aloud or copied.
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_PATTERN = /^FM-[A-Z0-9]{4}$/;
+const CODE_PATTERN = /^OU-[A-Z0-9]{4}$/;
 
 /**
  * The visitor's demoCode (spec: try-learn-find-spec.md section 1).
  *
  * Names collide in a workshop and several event types are easier to filter
- * by a short code, so every visitor gets an FM-XXXX code alongside their
+ * by a short code, so every visitor gets an OU-XXXX code alongside their
  * enduser.id. It is stamped on everything the browser agent sends, and the
  * cart service includes it in orders so the server can stamp it on the
  * order transaction and the Order event too.
@@ -58,6 +58,6 @@ export class DemoIdentityService {
     for (let i = 0; i < 4; i++) {
       suffix += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
     }
-    return `FM-${suffix}`;
+    return `OU-${suffix}`;
   }
 }

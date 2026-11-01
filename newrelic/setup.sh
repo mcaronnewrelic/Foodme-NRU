@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates everything FoodMe needs in New Relic that is missing: the dashboard, service levels, alerts and the
+# Creates everything OrderUp needs in New Relic that is missing: the dashboard, service levels, alerts and the
 # workload. Safe to run any number of times: existing items are left alone.
 #
 #   NEW_RELIC_API_KEY=NRAK-... bash newrelic/setup.sh

@@ -1,6 +1,6 @@
 {
-    "name": "FoodMe - Food Delivery Service",
-    "short_name": "FoodMe",
+    "name": "OrderUp - Food Delivery Service",
+    "short_name": "OrderUp",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
@@ -17,5 +17,5 @@
     "background_color": "#ffffff",
     "display": "standalone",
     "start_url": "/",
-    "description": "Order delicious food from your favorite local restaurants with FoodMe"
+    "description": "Order delicious food from your favorite local restaurants with OrderUp"
 }

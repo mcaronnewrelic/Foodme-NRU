@@ -1,4 +1,4 @@
-# Creates whatever is missing in New Relic: the FoodMe dashboard, service levels, alerts and workload
+# Creates whatever is missing in New Relic: the OrderUp dashboard, service levels, alerts and workload
 # (newrelic/setup.sh). Existing items are left alone, so it is safe to run any time. To rebuild something
 # that was changed by hand, delete it in New Relic, then run this again.
 #

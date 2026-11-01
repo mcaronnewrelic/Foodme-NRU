@@ -18,7 +18,7 @@ import { NrCalloutComponent } from '../nr-callout/nr-callout';
 })
 export class RestaurantsComponent implements OnInit {
   readonly listNrql =
-    "SELECT count(*), average(duration), percentile(duration, 95) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' SINCE 1 day ago";
+    "SELECT count(*), average(duration), percentile(duration, 95) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' SINCE 1 day ago";
 
   allRestaurants = signal<Restaurant[]>([]);
   

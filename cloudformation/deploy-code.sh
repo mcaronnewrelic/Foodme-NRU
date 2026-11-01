@@ -389,7 +389,7 @@ fi
 # the running agent's key can only be refreshed from here. CI sources it
 # from the NEW_RELIC_LICENSE_KEY GitHub secret, the same secret the stack
 # deploy installs from.
-SYNC_ENV_KEYS=("NEW_RELIC_ACCOUNT_ID" "NEW_RELIC_BROWSER_ENTITY_GUID" "NEW_RELIC_LICENSE_KEY")
+SYNC_ENV_KEYS=("NEW_RELIC_ACCOUNT_ID" "NEW_RELIC_BROWSER_ENTITY_GUID" "NEW_RELIC_LICENSE_KEY" "NEW_RELIC_APP_NAME")
 sync_assignments=()
 for key in "${SYNC_ENV_KEYS[@]}"; do
     if [ -n "${!key:-}" ]; then

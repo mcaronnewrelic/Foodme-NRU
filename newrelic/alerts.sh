@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates an alert policy for FoodMe with two conditions, unless they exist (by exact name):
+# Creates an alert policy for OrderUp with two conditions, unless they exist (by exact name):
 #   - Menu failed to load:  any server error on GET /api/restaurant/by-name/:name. This is the condition the
 #                           planned failure (DEMO_FAILING_RESTAURANT) trips.
 #   - Order failed:         any server error on POST /api/order.
@@ -16,10 +16,10 @@ source "$(dirname "$0")/lib.sh"
 
 ALERT_EMAIL="${ALERT_EMAIL:-demo@newrelicuniversity.com}"
 
-POLICY_NAME='FoodMe - Menus and orders'
-DESTINATION_NAME='FoodMe alert email'
-CHANNEL_NAME='FoodMe alert email'
-WORKFLOW_NAME='FoodMe - Menu and order alerts'
+POLICY_NAME='OrderUp - Menus and orders'
+DESTINATION_NAME='OrderUp alert email'
+CHANNEL_NAME='OrderUp alert email'
+WORKFLOW_NAME='OrderUp - Menu and order alerts'
 MENU='WebTransaction/Expressjs/GET//api/restaurant/by-name/:name'
 ORDER='WebTransaction/Expressjs/POST//api/order'
 
@@ -66,9 +66,9 @@ create_condition() {
 }
 
 create_condition 'Menu failed to load' \
-  "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = '$MENU'"
+  "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = '$MENU'"
 create_condition 'Order failed' \
-  "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = '$ORDER'"
+  "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = '$ORDER'"
 
 # ---- Email: destination, channel, then a workflow for this policy ---------------------------------------------
 
