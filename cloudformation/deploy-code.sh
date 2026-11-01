@@ -28,6 +28,10 @@ usage() {
     echo "  --logs            Show recent backend and nginx logs at the end"
     echo "  -h                Show this help message"
     echo ""
+    echo "Environment values synced to the instance .env when set in the caller's"
+    echo "environment (CI passes them from GitHub secrets/variables):"
+    echo "  NEW_RELIC_ACCOUNT_ID, NEW_RELIC_BROWSER_ENTITY_GUID"
+    echo ""
     echo "Examples:"
     echo "  $0 -e staging                    # Update both frontend and backend"
     echo "  $0 -e staging --frontend-only    # Update only frontend"
@@ -315,6 +319,47 @@ if [ "$UPDATE_FRONTEND" = true ]; then
     wait_for_command "$COMMAND_ID"
     
     echo "✅ Frontend deployment completed"
+fi
+
+# Environment sync
+# A small set of non-secret values is managed outside the instance and synced
+# into the instance .env here, because code deploys otherwise never change
+# instance configuration (the .env exists only on the instance, and the code
+# zip excludes it on purpose). Set a variable in the caller's environment to
+# sync it; unset or empty variables leave the instance value exactly as it is.
+# This mechanism is for non-secret configuration only: values travel as SSM
+# command parameters. Secrets stay in stack parameters / instance-only config.
+SYNC_ENV_KEYS=("NEW_RELIC_ACCOUNT_ID" "NEW_RELIC_BROWSER_ENTITY_GUID")
+sync_assignments=()
+for key in "${SYNC_ENV_KEYS[@]}"; do
+    if [ -n "${!key:-}" ]; then
+        sync_assignments+=("$key=${!key}")
+    fi
+done
+
+if [ "$UPDATE_BACKEND" = true ] && [ ${#sync_assignments[@]} -gt 0 ]; then
+    echo ""
+    echo "🔐 Syncing environment values to the instance .env..."
+    assignments=$(printf '%s\n' "${sync_assignments[@]}")
+    ENV_SYNC_COMMANDS="
+        set -e
+        cd /opt/foodme/backend
+        touch .env
+        cp .env .env.bak
+        while IFS='=' read -r key value; do
+            [ -z \"\$key\" ] && continue
+            grep -v \"^\${key}=\" .env > .env.tmp || true
+            printf '%s=%s\n' \"\$key\" \"\$value\" >> .env.tmp
+            mv .env.tmp .env
+        done <<'SYNC_EOF'
+$assignments
+SYNC_EOF
+        chown ec2-user:ec2-user .env
+        echo 'Instance .env updated'
+    "
+    COMMAND_ID=$(execute_on_ec2 "$ENV_SYNC_COMMANDS")
+    wait_for_command "$COMMAND_ID"
+    echo "✅ Environment synced (${#sync_assignments[@]} value(s)); applies on the restart below"
 fi
 
 # Restart services
