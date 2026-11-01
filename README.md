@@ -12,6 +12,7 @@ A modern, full-stack restaurant ordering application built with Angular 22 front
 ## 📋 Table of Contents
 
 - [🎯 Project Overview](#-project-overview)
+- [🎓 The Missions (Behind the Scenes)](#-the-missions-behind-the-scenes)
 - [🚀 Quick Start](#-quick-start)
 - [🏗️ Architecture](#️-architecture)
 - [� Project Structure](#-project-structure)
@@ -55,6 +56,20 @@ OrderUp is a demonstration application that showcases modern web development pra
 - 📋 **Documentation**: Comprehensive guides for setup, deployment, and maintenance
 - 🔐 **Security Validation**: Automated security scanning and compliance checks
 - 📈 **Monitoring**: Integrated observability with New Relic APM
+
+## 🎓 The Missions (Behind the Scenes)
+
+OrderUp is a teaching app. Turn on **Behind the scenes** (or visit any page with `?callouts=1`) and the ordinary ordering flow becomes a five-mission observability exercise — on every page a callout runs the same loop: **Try** an action, **Learn** what data it created, **Find** that data in New Relic with one click, **Check** yourself with a question only the data can answer. A progress strip tracks the five stops; the journey recap lives on How It Works.
+
+| # | Mission | Page | The lesson |
+|---|---------|------|------------|
+| 1 | Say who you are | Customer | Your name becomes `enduser.id`, and a session code (`OU-XXXX`) is stamped on everything |
+| 2 | Find a menu in the data | Restaurants → Menu | Every menu load is a transaction — and filtering creates no request at all |
+| 3 | Place the order, keep the receipt | Checkout → Thank You | One order, three records, stitched together by its `requestId` |
+| 4 | Find it again later | Orders | Lookup with no email: `requestId` and your code are the join keys |
+| 5 | Break it on purpose | How It Works | Read a simulated error's shape — then hunt a planted failure to its exact message |
+
+The missions are self-explanatory for students in the app. Instructors and maintainers get the map, the answer keys and the plumbing in **[The Missions guide](./docs/MISSIONS.md)**; the full design record is the **[Try / Learn / Find / Check spec](./docs/try-learn-find-spec.md)**.
 
 ## 🚀 Quick Start
 
@@ -186,6 +201,8 @@ foodme/
 
 #### 📊 Monitoring & Testing
 - **[New Relic Demo Features](./docs/NEW_RELIC_DEMO.md)** - "Behind the scenes" callouts, planned failures and source maps
+- **[The Missions](./docs/MISSIONS.md)** - The five-mission teaching path: map, answer keys and plumbing
+- **[Try / Learn / Find / Check Spec](./docs/try-learn-find-spec.md)** - The design record for the missions and callouts
 - **[New Relic Setup Scripts](./newrelic/README.md)** - Dashboard, service levels, alerts and workload
 - **[New Relic Infrastructure Setup](./docs/NEW_RELIC_INFRA_SETUP.md)** - Host and database monitoring
 - **[Load Testing](./docs/LOAD_TESTING.md)** - Performance testing with Locust
