@@ -15,8 +15,23 @@ export class NrCalloutComponent {
   @Input() buttonLabel = 'Open in New Relic';
   @Input() showBrowserErrors = false;
 
+  protected copied = false;
+
   get url(): string | null {
     return this.config.nrqlUrl(this.nrql);
+  }
+
+  // The printed NRQL is the permanent fallback if a query link ever breaks,
+  // so it must be copyable even when no button is shown (spec section 5.1).
+  protected async copyNrql(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.nrql);
+      this.copied = true;
+      setTimeout(() => (this.copied = false), 2000);
+    } catch {
+      // Clipboard unavailable (permissions / insecure context): the NRQL
+      // stays on screen to copy by hand.
+    }
   }
 
   get browserErrorsUrl(): string | null {

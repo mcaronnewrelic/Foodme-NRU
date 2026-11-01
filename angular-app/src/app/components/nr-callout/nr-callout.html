@@ -4,6 +4,9 @@
     <h5 class="nr-callout-title">{{ title }}</h5>
     <div class="nr-callout-body"><ng-content></ng-content></div>
     <pre class="nr-callout-nrql">{{ nrql }}</pre>
+    <button type="button" class="btn btn-sm nr-callout-btn nr-callout-btn-alt me-2" (click)="copyNrql()">
+      {{ copied ? 'Copied' : 'Copy NRQL' }} <i class="fas fa-copy ms-1"></i>
+    </button>
     @if (url; as link) {
       <a class="btn btn-sm nr-callout-btn" [href]="link" target="newrelic">
         {{ buttonLabel }} <i class="fas fa-arrow-up-right-from-square ms-1"></i>
