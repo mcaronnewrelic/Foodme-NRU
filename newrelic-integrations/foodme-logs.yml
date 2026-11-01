@@ -1,0 +1,36 @@
+logs:
+  - name: foodme-backend-output
+    file: /home/ec2-user/.pm2/logs/foodme-backend-out.log
+    attributes:
+      logtype: foodme-application
+      service: foodme-backend
+      environment: production
+      component: nodejs-backend
+      log_level: info
+    
+  - name: foodme-backend-errors
+    file: /home/ec2-user/.pm2/logs/foodme-backend-error.log
+    attributes:
+      logtype: foodme-application
+      service: foodme-backend
+      environment: production
+      component: nodejs-backend
+      log_level: error
+      
+  - name: foodme-backend-simple-output
+    file: /home/ec2-user/.pm2/logs/foodme-backend-simple-out.log
+    attributes:
+      logtype: foodme-application
+      service: foodme-backend
+      environment: production
+      component: nodejs-backend
+      log_level: info
+      
+  - name: foodme-backend-simple-errors
+    file: /home/ec2-user/.pm2/logs/foodme-backend-simple-error.log
+    attributes:
+      logtype: foodme-application
+      service: foodme-backend
+      environment: production
+      component: nodejs-backend
+      log_level: error

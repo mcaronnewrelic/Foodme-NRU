@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STACK_NAME_PREFIX="foodme"
-TEMPLATE_FILE="$SCRIPT_DIR/foodme-stack.yaml"
+TEMPLATE_FILE="$SCRIPT_DIR/foodme-production-stack.yaml"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Function to load environment variables from .env file
@@ -98,16 +98,6 @@ upload_application_code() {
         echo "  ⚠️  Warning: db/init directory not found, skipping database scripts"
     fi
     
-    # Package New Relic integration configurations
-    echo "  📁 Packaging New Relic integration configs..."
-    if [ -d "$PROJECT_ROOT/newrelic-integrations" ]; then
-        cd "$PROJECT_ROOT"
-        zip -r "$temp_dir/newrelic-integrations.zip" newrelic-integrations/
-        echo "  ✅ New Relic integration configs packaged successfully"
-    else
-        echo "  ⚠️  Warning: newrelic-integrations directory not found, skipping integration configs"
-    fi
-    
     # Upload to S3
     echo "  ⬆️  Uploading server.zip..."
     aws s3 cp "$temp_dir/server.zip" "s3://$bucket_name/server.zip"
@@ -121,11 +111,9 @@ upload_application_code() {
         aws s3 cp "$temp_dir/db-init.zip" "s3://$bucket_name/db-init.zip"
     fi
     
-    # Upload New Relic integration configs if they exist
-    if [ -f "$temp_dir/newrelic-integrations.zip" ]; then
-        echo "  ⬆️  Uploading newrelic-integrations.zip..."
-        aws s3 cp "$temp_dir/newrelic-integrations.zip" "s3://$bucket_name/newrelic-integrations.zip"
-    fi
+    # Upload the install script with monitoring enhancements
+    echo "  ⬆️  Uploading install-foodme.sh..."
+    aws s3 cp "$SCRIPT_DIR/install-foodme.sh" "s3://$bucket_name/install-foodme.sh"
     
     # Cleanup
     rm -rf "$temp_dir"
@@ -155,6 +143,10 @@ deploy_stack() {
     # Create S3 bucket and upload code
     create_s3_bucket "$bucket_name" "$aws_region"
     upload_application_code "$bucket_name"
+    
+    # Build and push load test image to ECR
+    echo "🔨 Building and pushing load test container image"
+    "$SCRIPT_DIR/build-loadtest-image.sh" -e "$environment" -r "$aws_region"
     
     echo "🚀 Deploying CloudFormation stack: $stack_name"
     

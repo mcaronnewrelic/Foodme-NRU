@@ -71,6 +71,17 @@
               Simulate Synchronous Error
             </button>
           </div>
+
+          <app-nr-callout title="The error you just caused" [nrql]="errorNrql" [showBrowserErrors]="true">
+            The button calls <code>noticeError()</code> after the server returns a 500.
+            The error lands in <b>JavaScriptError</b>, and in Errors Inbox.
+          </app-nr-callout>
+          <app-nr-callout title="The page action" [nrql]="actionNrql" buttonLabel="See the page action">
+            <code>addPageAction('error_simulation_triggered')</code> records which endpoint failed and why.
+          </app-nr-callout>
+          <app-nr-callout title="How long it took" [nrql]="timingNrql" buttonLabel="See the timing">
+            The page action also carries <b>durationMs</b>, the time from click to the failed response.
+          </app-nr-callout>
         </div>
       </div>
     </div>

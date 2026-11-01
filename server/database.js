@@ -7,6 +7,7 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const logger = require('pino')();
 
 class DatabaseService {
     constructor() {
@@ -39,7 +40,7 @@ class DatabaseService {
                 try {
                     dbPassword = fs.readFileSync(passwordFile, 'utf8').trim();
                 } catch (error) {
-                    console.error('Error reading database password file:', error.message);
+                    logger.error({ err: error }, 'Error reading database password file');
                 }
             }
             
@@ -61,20 +62,28 @@ class DatabaseService {
         try {
             await this.client.connect();
             this.isConnected = true;
-            console.log('✅ Database connected successfully');
+            logger.info({
+                host: this.client.host,
+                database: this.client.database,
+                user: this.client.user
+            }, '✅ Database connected successfully');
         } catch (error) {
-            console.error('❌ Database connection failed:', error.message);
+            logger.error({ err: error }, '❌ Database connection failed');
             throw error;
         }
     }
 
     /**
-     * Get all restaurants (equivalent to JSON file structure)
+     * Get all restaurants (basic info only, no menu items)
      */
     async getAllRestaurants() {
+        const startTime = Date.now();
+        logger.debug({ operation: 'getAllRestaurants' }, 'Starting restaurant query');
+        
         await this.connect();
         
         try {
+            const queryStartTime = Date.now();
             const restaurantsQuery = `
                 SELECT 
                     r.id,
@@ -86,48 +95,59 @@ class DatabaseService {
                     r.delivery_time,
                     r.delivery_fee,
                     r.min_order,
-                    r.is_active
+                    r.is_active,
+                    -- Calculate average price from menu items without fetching all items
+                    CASE 
+                        WHEN AVG(mi.price) IS NULL THEN 3
+                        WHEN AVG(mi.price) < 8 THEN 1
+                        WHEN AVG(mi.price) < 12 THEN 2
+                        WHEN AVG(mi.price) < 16 THEN 3
+                        WHEN AVG(mi.price) < 20 THEN 4
+                        ELSE 5
+                    END as price_level
                 FROM restaurants r
+                LEFT JOIN menu_items mi ON r.id = mi.restaurant_id AND mi.is_available = true
                 WHERE r.is_active = true
+                GROUP BY r.id, r.original_id, r.name, r.description, r.cuisine_type, 
+                         r.rating, r.delivery_time, r.delivery_fee, r.min_order, r.is_active
                 ORDER BY r.name
             `;
             
             const restaurantsResult = await this.client.query(restaurantsQuery);
+            const queryDuration = Date.now() - queryStartTime;
             
-            // For each restaurant, get menu items
-            const restaurants = await Promise.all(restaurantsResult.rows.map(async (restaurant) => {
-                const menuItemsQuery = `
-                    SELECT name, price, category
-                    FROM menu_items
-                    WHERE restaurant_id = $1 AND is_available = true
-                    ORDER BY category, name
-                `;
-                
-                const menuItemsResult = await this.client.query(menuItemsQuery, [restaurant.id]);
-                
-                // Transform to match JSON structure
-                return {
-                    id: restaurant.id,
-                    original_id: restaurant.original_id,
-                    name: restaurant.name,
-                    description: restaurant.description,
-                    cuisine: restaurant.cuisine,
-                    rating: parseFloat(restaurant.rating) || 0,
-                    price: this.calculatePriceLevel(menuItemsResult.rows),
-                    menuItems: menuItemsResult.rows.map(item => ({
-                        name: item.name,
-                        price: parseFloat(item.price)
-                    })),
-                    // Additional fields that might be used by the frontend
-                    deliveryTime: restaurant.delivery_time,
-                    deliveryFee: parseFloat(restaurant.delivery_fee),
-                    minOrder: parseFloat(restaurant.min_order)
-                };
+            logger.debug({
+                operation: 'getAllRestaurants',
+                queryDuration,
+                rowCount: restaurantsResult.rows.length
+            }, 'Database query completed');
+            
+            // Transform to match expected frontend structure
+            const restaurants = restaurantsResult.rows.map(restaurant => ({
+                id: restaurant.id,
+                original_id: restaurant.original_id,
+                name: restaurant.name,
+                description: restaurant.description,
+                cuisine: restaurant.cuisine,
+                rating: parseFloat(restaurant.rating) || 0,
+                price: parseInt(restaurant.price_level) || 3,
+                // No menuItems - these are fetched separately when needed
+                deliveryTime: restaurant.delivery_time,
+                deliveryFee: parseFloat(restaurant.delivery_fee),
+                minOrder: parseFloat(restaurant.min_order)
             }));
+            
+            const totalDuration = Date.now() - startTime;
+            logger.info({
+                operation: 'getAllRestaurants',
+                resultCount: restaurants.length,
+                totalDuration,
+                queryDuration
+            }, 'Successfully retrieved all restaurants');
             
             return restaurants;
         } catch (error) {
-            console.error('Error fetching restaurants from database:', error);
+            logger.error({ err: error, operation: 'getAllRestaurants' }, 'Error fetching restaurants from database');
             throw error;
         }
     }
@@ -165,7 +185,7 @@ class DatabaseService {
             
             // Get menu items
             const menuItemsQuery = `
-                SELECT name, price, category
+                SELECT name, price, category, description
                 FROM menu_items
                 WHERE restaurant_id = $1 AND is_available = true
                 ORDER BY category, name
@@ -184,20 +204,115 @@ class DatabaseService {
                 menuItems: menuItemsResult.rows.map(item => ({
                     name: item.name,
                     price: parseFloat(item.price),
-                    category: item.category
+                    category: item.category,
+                    description: item.description
                 })),
                 deliveryTime: restaurant.delivery_time,
                 deliveryFee: parseFloat(restaurant.delivery_fee),
                 minOrder: parseFloat(restaurant.min_order)
             };
         } catch (error) {
-            console.error('Error fetching restaurant by ID:', error);
+            logger.error({ err: error, operation: 'getRestaurantById', restaurantId: id }, 'Error fetching restaurant by ID');
+            throw error;
+        }
+    }
+
+    /**
+     * Get a single restaurant by name slug
+     */
+    async getRestaurantByName(nameSlug) {
+        // Mirrors nameToSlug() in url-utils.js (minus the underscores), so names with punctuation still match
+        const NAME_AS_SLUG_TEXT = `btrim(regexp_replace(regexp_replace(LOWER(r.name), '[^a-z0-9 ]', '', 'g'), ' +', ' ', 'g'))`;
+        await this.connect();
+        
+        const { slugToSearchPattern } = require('./url-utils');
+        const searchPattern = slugToSearchPattern(nameSlug);
+        
+        try {
+            // First try exact match (case-insensitive)
+            const exactQuery = `
+                SELECT 
+                    r.id,
+                    r.original_id,
+                    r.name,
+                    r.description,
+                    r.cuisine_type as cuisine,
+                    r.rating,
+                    r.delivery_time,
+                    r.delivery_fee,
+                    r.min_order,
+                    r.is_active
+                FROM restaurants r
+                WHERE ${NAME_AS_SLUG_TEXT} = $1 AND r.is_active = true
+            `;
+            
+            let restaurantResult = await this.client.query(exactQuery, [searchPattern.replace(/_/g, ' ')]);
+            
+            // If no exact match, try fuzzy search with LIKE
+            if (restaurantResult.rows.length === 0) {
+                const fuzzyQuery = `
+                    SELECT 
+                        r.id,
+                        r.original_id,
+                        r.name,
+                        r.description,
+                        r.cuisine_type as cuisine,
+                        r.rating,
+                        r.delivery_time,
+                        r.delivery_fee,
+                        r.min_order,
+                        r.is_active
+                    FROM restaurants r
+                    WHERE ${NAME_AS_SLUG_TEXT} LIKE $1 AND r.is_active = true
+                    LIMIT 1
+                `;
+                
+                restaurantResult = await this.client.query(fuzzyQuery, [`%${searchPattern.replace(/_/g, ' ')}%`]);
+            }
+            
+            if (restaurantResult.rows.length === 0) {
+                return null;
+            }
+            
+            const restaurant = restaurantResult.rows[0];
+            
+            // Get menu items
+            const menuItemsQuery = `
+                SELECT name, price, category, description
+                FROM menu_items
+                WHERE restaurant_id = $1 AND is_available = true
+                ORDER BY category, name
+            `;
+            
+            const menuItemsResult = await this.client.query(menuItemsQuery, [restaurant.id]);
+            
+            return {
+                id: restaurant.id,
+                original_id: restaurant.original_id,
+                name: restaurant.name,
+                description: restaurant.description,
+                cuisine: restaurant.cuisine,
+                rating: parseFloat(restaurant.rating) || 0,
+                price: this.calculatePriceLevel(menuItemsResult.rows),
+                menuItems: menuItemsResult.rows.map(item => ({
+                    name: item.name,
+                    price: parseFloat(item.price),
+                    category: item.category,
+                    description: item.description
+                })),
+                deliveryTime: restaurant.delivery_time,
+                deliveryFee: parseFloat(restaurant.delivery_fee),
+                minOrder: parseFloat(restaurant.min_order)
+            };
+        } catch (error) {
+            logger.error({ err: error, operation: 'getRestaurantByName', restaurantName: nameSlug }, 'Error fetching restaurant by name');
             throw error;
         }
     }
 
     /**
      * Calculate price level based on menu items (1-5 scale)
+     * Used by getRestaurantById when menu items are already loaded
      */
     calculatePriceLevel(menuItems) {
         if (!menuItems || menuItems.length === 0) {
@@ -241,7 +356,7 @@ class DatabaseService {
             const result = await this.client.query(insertQuery, values);
             return result.rows[0];
         } catch (error) {
-            console.error('Error adding restaurant:', error);
+            logger.error({ err: error, operation: 'addRestaurant', restaurantName: restaurantData.name }, 'Error adding restaurant');
             throw error;
         }
     }
@@ -275,7 +390,7 @@ class DatabaseService {
             const result = await this.client.query(updateQuery, values);
             return result.rows[0];
         } catch (error) {
-            console.error('Error updating restaurant:', error);
+            logger.error({ err: error, operation: 'updateRestaurant', restaurantId: id }, 'Error updating restaurant');
             throw error;
         }
     }
@@ -291,7 +406,7 @@ class DatabaseService {
             await this.client.query(deleteQuery, [id]);
             return true;
         } catch (error) {
-            console.error('Error deleting restaurant:', error);
+            logger.error({ err: error, operation: 'deleteRestaurant', restaurantId: id }, 'Error deleting restaurant');
             throw error;
         }
     }
@@ -314,7 +429,7 @@ class DatabaseService {
             await this.client.query('SELECT 1');
             return true;
         } catch (error) {
-            console.error('Database not available:', error.message);
+            logger.warn({ err: error }, 'Database not available during health check');
             return false;
         }
     }
@@ -363,7 +478,7 @@ class DatabaseService {
                 return insertResult.rows[0];
             }
         } catch (error) {
-            console.error('Error creating/getting customer:', error);
+            logger.error({ err: error, operation: 'createOrGetCustomer' }, 'Error creating/getting customer');
             throw error;
         }
     }
@@ -508,7 +623,7 @@ class DatabaseService {
         } catch (error) {
             // Rollback transaction on error
             await this.client.query('ROLLBACK');
-            console.error('Error creating order:', error);
+            logger.error({ err: error, operation: 'createOrder' }, 'Error creating order');
             throw error;
         }
     }
@@ -558,7 +673,7 @@ class DatabaseService {
             
             return order;
         } catch (error) {
-            console.error('Error getting order:', error);
+            logger.error({ err: error, operation: 'getOrder', orderId: id }, 'Error getting order');
             throw error;
         }
     }
@@ -580,14 +695,259 @@ class DatabaseService {
     /**
      * Close database connection
      */
+    /**
+     * Get orders for a customer by email
+     */
+    async getOrdersByCustomerEmail(email) {
+        await this.connect();
+        
+        try {
+            const query = `
+                SELECT 
+                    o.id,
+                    o.order_number,
+                    o.restaurant_id,
+                    r.name as restaurant_name,
+                    o.status,
+                    o.total_amount,
+                    o.delivery_address,
+                    o.delivery_fee,
+                    o.tax_amount,
+                    o.special_instructions,
+                    o.estimated_delivery_time,
+                    o.created_at,
+                    o.updated_at
+                FROM orders o
+                JOIN restaurants r ON o.restaurant_id = r.id
+                JOIN customers c ON o.customer_id = c.id
+                WHERE LOWER(c.email) = LOWER($1)
+                ORDER BY o.created_at DESC
+            `;
+            
+            const ordersResult = await this.client.query(query, [email]);
+            
+            // Get order items for each order
+            const orders = [];
+            for (const order of ordersResult.rows) {
+                const itemsQuery = `
+                    SELECT 
+                        oi.id,
+                        oi.menu_item_id,
+                        oi.item_name,
+                        oi.quantity,
+                        oi.unit_price,
+                        oi.special_instructions
+                    FROM order_items oi
+                    WHERE oi.order_id = $1
+                    ORDER BY oi.created_at
+                `;
+                
+                const itemsResult = await this.client.query(itemsQuery, [order.id]);
+                
+                orders.push({
+                    id: order.id,
+                    orderNumber: order.order_number,
+                    restaurantId: order.restaurant_id,
+                    restaurantName: order.restaurant_name,
+                    status: order.status,
+                    totalAmount: parseFloat(order.total_amount),
+                    deliveryAddress: order.delivery_address,
+                    deliveryFee: parseFloat(order.delivery_fee) || 0,
+                    taxAmount: parseFloat(order.tax_amount) || 0,
+                    specialInstructions: order.special_instructions,
+                    estimatedDeliveryTime: order.estimated_delivery_time,
+                    createdAt: order.created_at,
+                    updatedAt: order.updated_at,
+                    items: itemsResult.rows.map(item => ({
+                        id: item.id,
+                        menuItemId: item.menu_item_id,
+                        itemName: item.item_name,
+                        quantity: parseInt(item.quantity),
+                        unitPrice: parseFloat(item.unit_price),
+                        specialInstructions: item.special_instructions
+                    }))
+                });
+            }
+            
+            return orders;
+        } catch (error) {
+            logger.error({ err: error, operation: 'getOrdersByCustomerEmail', customerEmail: email }, 'Error fetching orders by customer email');
+            throw error;
+        }
+    }
+
+    /**
+     * Get orders for a customer by phone number
+     */
+    async getOrdersByCustomerPhone(phone) {
+        await this.connect();
+        
+        try {
+            const query = `
+                SELECT 
+                    o.id,
+                    o.order_number,
+                    o.restaurant_id,
+                    r.name as restaurant_name,
+                    o.status,
+                    o.total_amount,
+                    o.delivery_address,
+                    o.delivery_fee,
+                    o.tax_amount,
+                    o.special_instructions,
+                    o.estimated_delivery_time,
+                    o.created_at,
+                    o.updated_at
+                FROM orders o
+                JOIN restaurants r ON o.restaurant_id = r.id
+                JOIN customers c ON o.customer_id = c.id
+                WHERE c.phone = $1
+                ORDER BY o.created_at DESC
+            `;
+            
+            const ordersResult = await this.client.query(query, [phone]);
+            
+            // Get order items for each order
+            const orders = [];
+            for (const order of ordersResult.rows) {
+                const itemsQuery = `
+                    SELECT 
+                        oi.id,
+                        oi.menu_item_id,
+                        oi.item_name,
+                        oi.quantity,
+                        oi.unit_price,
+                        oi.special_instructions
+                    FROM order_items oi
+                    WHERE oi.order_id = $1
+                    ORDER BY oi.created_at
+                `;
+                
+                const itemsResult = await this.client.query(itemsQuery, [order.id]);
+                
+                orders.push({
+                    id: order.id,
+                    orderNumber: order.order_number,
+                    restaurantId: order.restaurant_id,
+                    restaurantName: order.restaurant_name,
+                    status: order.status,
+                    totalAmount: parseFloat(order.total_amount),
+                    deliveryAddress: order.delivery_address,
+                    deliveryFee: parseFloat(order.delivery_fee) || 0,
+                    taxAmount: parseFloat(order.tax_amount) || 0,
+                    specialInstructions: order.special_instructions,
+                    estimatedDeliveryTime: order.estimated_delivery_time,
+                    createdAt: order.created_at,
+                    updatedAt: order.updated_at,
+                    items: itemsResult.rows.map(item => ({
+                        id: item.id,
+                        menuItemId: item.menu_item_id,
+                        itemName: item.item_name,
+                        quantity: parseInt(item.quantity),
+                        unitPrice: parseFloat(item.unit_price),
+                        specialInstructions: item.special_instructions
+                    }))
+                });
+            }
+            
+            return orders;
+        } catch (error) {
+            logger.error({ err: error, operation: 'getOrdersByCustomerPhone', customerPhone: phone }, 'Error fetching orders by customer phone');
+            throw error;
+        }
+    }
+
+    /**
+     * Get a specific order by ID
+     */
+    async getOrderById(orderId) {
+        await this.connect();
+        
+        try {
+            const query = `
+                SELECT 
+                    o.id,
+                    o.order_number,
+                    o.restaurant_id,
+                    r.name as restaurant_name,
+                    o.status,
+                    o.total_amount,
+                    o.delivery_address,
+                    o.delivery_fee,
+                    o.tax_amount,
+                    o.special_instructions,
+                    o.estimated_delivery_time,
+                    o.created_at,
+                    o.updated_at
+                FROM orders o
+                JOIN restaurants r ON o.restaurant_id = r.id
+                WHERE o.id = $1
+            `;
+            
+            const orderResult = await this.client.query(query, [orderId]);
+            
+            if (orderResult.rows.length === 0) {
+                return null;
+            }
+            
+            const order = orderResult.rows[0];
+            
+            // Get order items
+            const itemsQuery = `
+                SELECT 
+                    oi.id,
+                    oi.menu_item_id,
+                    oi.item_name,
+                    oi.quantity,
+                    oi.unit_price,
+                    oi.special_instructions
+                FROM order_items oi
+                WHERE oi.order_id = $1
+                ORDER BY oi.created_at
+            `;
+            
+            const itemsResult = await this.client.query(itemsQuery, [orderId]);
+            
+            return {
+                id: order.id,
+                orderNumber: order.order_number,
+                restaurantId: order.restaurant_id,
+                restaurantName: order.restaurant_name,
+                status: order.status,
+                totalAmount: parseFloat(order.total_amount),
+                deliveryAddress: order.delivery_address,
+                deliveryFee: parseFloat(order.delivery_fee) || 0,
+                taxAmount: parseFloat(order.tax_amount) || 0,
+                specialInstructions: order.special_instructions,
+                estimatedDeliveryTime: order.estimated_delivery_time,
+                createdAt: order.created_at,
+                updatedAt: order.updated_at,
+                items: itemsResult.rows.map(item => ({
+                    id: item.id,
+                    menuItemId: item.menu_item_id,
+                    itemName: item.item_name,
+                    quantity: parseInt(item.quantity),
+                    unitPrice: parseFloat(item.unit_price),
+                    specialInstructions: item.special_instructions
+                }))
+            };
+        } catch (error) {
+            logger.error({ err: error, operation: 'getOrderById', orderId: id }, 'Error fetching order by ID');
+            throw error;
+        }
+    }
+
+    /**
+     * Close database connection
+     */
     async close() {
         if (this.client && this.isConnected) {
             try {
                 await this.client.end();
                 this.isConnected = false;
-                console.log('Database connection closed');
+                logger.info('Database connection closed successfully');
             } catch (error) {
-                console.error('Error closing database connection:', error);
+                logger.error({ err: error }, 'Error closing database connection');
             }
         }
     }

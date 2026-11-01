@@ -28,6 +28,10 @@ exports.config = {
    * attributes include/exclude lists.
    */
   allow_all_headers: true,
+  rules: {
+    // Config lookup for the "Behind the scenes" callouts; it isn't part of the app being monitored
+    ignore: ['^/api/nr-config']
+  },
   attributes: {
     /**
      * Prefix of attributes to exclude from all destinations. Allows * as wildcard

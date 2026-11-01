@@ -1,26 +1,41 @@
 integrations:
   - name: nri-nginx
     env:
-      # Nginx status endpoint
-      STATUS_URL: http://nginx:80/nginx_status
-      STATUS_MODULE: discover
-      # Remote monitoring configuration
-      REMOTE_MONITORING: true
-      # Nginx metrics configuration
-      METRICS: true
-      # Nginx inventory configuration
-      INVENTORY: true
-      # Connection timeout
+      # Status URL for nginx stub_status module
+      STATUS_URL: http://127.0.0.1:8080/nginx_status
+      
+      # Connection settings
       CONNECTION_TIMEOUT: 5
-      # HTTP timeout
       HTTP_TIMEOUT: 30
-      # Validate SSL certificates
+      
+      # SSL settings
       VALIDATE_CERTS: false
-      # Custom attributes for easier filtering
-      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"docker-compose","application":"foodme"}'
+      
+      # Metrics collection settings
+      METRICS: true
+      INVENTORY: true
+      
+      # EC2 deployment settings
+      REMOTE_MONITORING: false
+      
+      # Custom attributes for better organization
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"staging","application":"foodme","role":"web-server","deployment":"ec2"}'
+      
+      # Optional: Parse nginx access logs for additional metrics
+      ACCESS_LOG_PATH: /var/log/nginx/access.log
+      ERROR_LOG_PATH: /var/log/nginx/error.log
+      
+      # Log parsing format (combined is default nginx format)
+      LOG_FORMAT: combined
+      
+      # Enable log metrics collection
+      COLLECT_LOG_METRICS: true
+      
     interval: 30s
     labels:
-      env: docker-compose
-      role: reverse-proxy
+      env: staging
+      role: web-server
       service: nginx
+      application: foodme
+      deployment: ec2
     inventory_source: config/nginx

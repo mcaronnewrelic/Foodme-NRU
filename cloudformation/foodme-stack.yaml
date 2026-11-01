@@ -77,6 +77,19 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  ApplicationSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref ApplicationVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-subnet-b'
+        - Key: Environment
+          Value: !Ref Environment
+
   ApplicationInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -116,6 +129,12 @@ Resources:
       SubnetId: !Ref ApplicationSubnet
       RouteTableId: !Ref ApplicationRouteTable
 
+  SubnetRouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ApplicationSubnetB
+      RouteTableId: !Ref ApplicationRouteTable
+
   # Security Groups
   ApplicationSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -131,23 +150,23 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: HTTP access for Angular app
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          Description: HTTP access from ALB
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 0.0.0.0/0
-          Description: HTTPS access for Angular app
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          Description: HTTPS access from ALB
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
-          CidrIp: 0.0.0.0/0
-          Description: Node.js API server
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+          Description: Node.js API server from ALB
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          CidrIp: 10.0.1.0/24
-          Description: PostgreSQL database access from subnet
+          CidrIp: 10.0.0.0/16
+          Description: PostgreSQL database access from VPC
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -155,6 +174,33 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${Environment}-foodme-sg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ALB Security Group
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Application Load Balancer
+      VpcId: !Ref ApplicationVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access from internet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access from internet
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: All outbound traffic
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-alb-sg'
         - Key: Environment
           Value: !Ref Environment
 
@@ -215,9 +261,9 @@ Resources:
           # Log all output
           exec > >(tee /var/log/user-data.log) 2>&1
           
-          # Download and execute installation script
-          echo "Downloading FoodMe installation script..."
-          curl -fsSL -o /tmp/install-foodme.sh "https://raw.githubusercontent.com/mcaronnewrelic/Foodme-NRU/main/cloudformation/install-foodme.sh"
+          # Download installation script from S3 bucket (uploaded by deploy script)
+          echo "Downloading FoodMe installation script from S3..."
+          aws s3 cp "s3://${S3BucketName}/install-foodme.sh" /tmp/install-foodme.sh
           chmod +x /tmp/install-foodme.sh
           
           # Execute installation with parameters
@@ -233,6 +279,273 @@ Resources:
         - Key: Application
           Value: FoodMe
 
+  # ECS Resources for Load Testing
+  LoadTestCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${Environment}-foodme-loadtest-cluster'
+      CapacityProviders:
+        - FARGATE
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-loadtest-cluster'
+        - Key: Environment
+          Value: !Ref Environment
+
+  LoadTestExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-loadtest-execution-role'
+        - Key: Environment
+          Value: !Ref Environment
+
+  LoadTestTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LoadTestCloudWatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-loadtest-task-role'
+        - Key: Environment
+          Value: !Ref Environment
+
+  LoadTestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${Environment}-foodme-loadtest'
+      RetentionInDays: 7
+
+  LoadTestTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${Environment}-foodme-loadtest'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 512
+      Memory: 1024
+      ExecutionRoleArn: !GetAtt LoadTestExecutionRole.Arn
+      TaskRoleArn: !GetAtt LoadTestTaskRole.Arn
+      ContainerDefinitions:
+        - Name: locust-loadtest
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Environment}-foodme-loadtest:latest'
+          Essential: true
+          Environment:
+            - Name: LOCUST_HOST
+              Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
+            - Name: LOCUST_USERS
+              Value: '10'
+            - Name: LOCUST_SPAWN_RATE
+              Value: '2'
+            - Name: LOCUST_RUN_TIME
+              Value: '30m'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LoadTestLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  LoadTestEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RunECSTask
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:RunTask
+                Resource: !Ref LoadTestTaskDefinition
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource:
+                  - !GetAtt LoadTestExecutionRole.Arn
+                  - !GetAtt LoadTestTaskRole.Arn
+
+  LoadTestScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${Environment}-foodme-loadtest-schedule'
+      Description: 'Trigger load test every 4 hours'
+      ScheduleExpression: 'rate(4 hours)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt LoadTestCluster.ClusterArn
+          Id: LoadTestTarget
+          RoleArn: !GetAtt LoadTestEventRole.Arn
+          EcsParameters:
+            TaskDefinitionArn: !Ref LoadTestTaskDefinition
+            LaunchType: FARGATE
+            NetworkConfiguration:
+              AwsVpcConfiguration:
+                SecurityGroups:
+                  - !Ref ApplicationSecurityGroup
+                Subnets:
+                  - !Ref ApplicationSubnet
+                AssignPublicIp: ENABLED
+
+  # ECR Repository for Load Test Container
+  LoadTestRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Delete
+    Properties:
+      RepositoryName: !Sub '${Environment}-foodme-loadtest'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+  # Application Load Balancer Resources
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${Environment}-foodme-alb'
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
+      Subnets:
+        - !Ref ApplicationSubnet
+        - !Ref ApplicationSubnetB
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-alb'
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${Environment}-foodme-tg'
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref ApplicationVPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref ApplicationInstance
+          Port: 80
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200,301,302'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-tg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  ApplicationListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ApplicationTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # API Target Group (for Node.js API on port 3000)
+  APITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${Environment}-foodme-api-tg'
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref ApplicationVPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref ApplicationInstance
+          Port: 3000
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /api/restaurant
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: '200'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-foodme-api-tg'
+        - Key: Environment
+          Value: !Ref Environment
+
+  APIListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref APITargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 3000
+      Protocol: HTTP
+
 Outputs:
   InstanceId:
     Description: Instance ID of the application server
@@ -241,16 +554,28 @@ Outputs:
       Name: !Sub '${Environment}-foodme-instance-id'
 
   PublicIpAddress:
-    Description: Public IP address of the application server
+    Description: Public IP address of the application server (deprecated - use LoadBalancerDNS)
     Value: !GetAtt ApplicationInstance.PublicIp
     Export:
       Name: !Sub '${Environment}-foodme-public-ip'
 
+  LoadBalancerDNS:
+    Description: DNS name of the Application Load Balancer
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${Environment}-foodme-alb-dns'
+
   ApplicationUrl:
-    Description: URL to access the FoodMe application
-    Value: !Sub 'http://${ApplicationInstance.PublicIp}'
+    Description: URL to access the FoodMe application via Load Balancer
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
     Export:
       Name: !Sub '${Environment}-foodme-application-url'
+
+  APIUrl:
+    Description: URL to access the FoodMe API via Load Balancer
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}:3000'
+    Export:
+      Name: !Sub '${Environment}-foodme-api-url'
 
   DatabaseEndpoint:
     Description: PostgreSQL database endpoint
@@ -269,3 +594,39 @@ Outputs:
     Value: !Ref ApplicationVPC
     Export:
       Name: !Sub '${Environment}-foodme-vpc-id'
+
+  LoadTestClusterArn:
+    Description: ARN of the ECS cluster for load testing
+    Value: !GetAtt LoadTestCluster.ClusterArn
+    Export:
+      Name: !Sub '${Environment}-foodme-loadtest-cluster-arn'
+
+  LoadTestRepositoryUri:
+    Description: URI of the ECR repository for load test images
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${LoadTestRepository}'
+    Export:
+      Name: !Sub '${Environment}-foodme-loadtest-repository-uri'
+
+  LoadTestTaskDefinitionArn:
+    Description: ARN of the load test task definition
+    Value: !Ref LoadTestTaskDefinition
+    Export:
+      Name: !Sub '${Environment}-foodme-loadtest-task-definition-arn'
+
+  LoadBalancerArn:
+    Description: ARN of the Application Load Balancer
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub '${Environment}-foodme-alb-arn'
+
+  ApplicationTargetGroupArn:
+    Description: ARN of the Application Target Group
+    Value: !Ref ApplicationTargetGroup
+    Export:
+      Name: !Sub '${Environment}-foodme-app-tg-arn'
+
+  APITargetGroupArn:
+    Description: ARN of the API Target Group
+    Value: !Ref APITargetGroup
+    Export:
+      Name: !Sub '${Environment}-foodme-api-tg-arn'

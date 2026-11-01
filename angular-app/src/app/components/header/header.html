@@ -2,11 +2,11 @@
   <div class="container">
     <!-- Brand/Logo -->
     <a class="navbar-brand d-flex align-items-center" routerLink="/">
-      <img 
-        src="/assets/img/Foodme.png" 
-        alt="FoodMe Logo" 
+      <img
+        src="/assets/img/Foodme.png"
+        alt="FoodMe Logo"
         class="me-2"
-        width="40" 
+        width="40"
         height="40">
       <strong>FoodMe</strong>
     </a>
@@ -30,6 +30,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" routerLink="/orders" routerLinkActive="active">
+            <i class="fas fa-receipt"></i> My Orders
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" routerLink="/how-it-works" routerLinkActive="active">
             <i class="fas fa-info-circle"></i> How It Works
           </a>
@@ -42,37 +47,51 @@
       </ul>
 
       <ul class="navbar-nav">
-        <!-- Cart -->
-        <li class="nav-item dropdown" *ngIf="cartItemCount > 0">
-          <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown">
-            <i class="fas fa-shopping-cart"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-              {{ cartItemCount }}
-            </span>
+        <!-- Show or hide the New Relic "Behind the scenes" callouts -->
+        <li class="nav-item">
+          <a class="nav-link nr-toggle" [class.nr-toggle-on]="nrConfig.showCallouts()" href="#" role="button"
+            [attr.aria-pressed]="nrConfig.showCallouts()"
+            (click)="$event.preventDefault(); nrConfig.toggleCallouts()">
+            <i class="fas" [class.fa-eye]="nrConfig.showCallouts()" [class.fa-eye-slash]="!nrConfig.showCallouts()"></i>
+            Behind the scenes
           </a>
-          <div class="dropdown-menu dropdown-menu-end">
-            <h6 class="dropdown-header">
-              <i class="fas fa-shopping-cart"></i> Cart Summary
-            </h6>
-            <div class="dropdown-item-text">
-              <div class="d-flex justify-content-between">
-                <span>{{ cartItemCount }} item(s)</span>
-                <strong>${{ (cartTotal || 0).toFixed(2) }}</strong>
-              </div>
-            </div>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item text-center" routerLink="/checkout">
-              <i class="fas fa-credit-card"></i> Proceed to Checkout
-            </a>
-          </div>
         </li>
 
+        <!-- Cart -->
+        @if (cartItemCount > 0) {
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ cartItemCount }}
+              </span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end">
+              <h6 class="dropdown-header">
+                <i class="fas fa-shopping-cart"></i> Cart Summary
+              </h6>
+              <div class="dropdown-item-text">
+                <div class="d-flex justify-content-between">
+                  <span>{{ cartItemCount }} item(s)</span>
+                  <strong>${{ (cartTotal || 0).toFixed(2) }}</strong>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item text-center" routerLink="/checkout">
+                <i class="fas fa-credit-card"></i> Proceed to Checkout
+              </a>
+            </div>
+          </li>
+        }
+
         <!-- Cart button when no items -->
-        <li class="nav-item" *ngIf="cartItemCount === 0">
-          <a class="nav-link" routerLink="/checkout">
-            <i class="fas fa-shopping-cart"></i> Cart
-          </a>
-        </li>
+        @if (cartItemCount === 0) {
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/checkout">
+              <i class="fas fa-shopping-cart"></i> Cart
+            </a>
+          </li>
+        }
 
         <!-- Help -->
         <li class="nav-item dropdown">

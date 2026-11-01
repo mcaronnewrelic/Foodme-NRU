@@ -11,79 +11,98 @@
         "menuItems": [
             {
                 "name": "Bockwurst Würstchen",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Traditional German white sausage with mild spices"
             },
             {
                 "name": "Bratwurst mit Brötchen und Sauerkraut",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Grilled bratwurst served with fresh bread roll and tangy sauerkraut"
             },
             {
                 "name": "Currywurst mit Brötchen",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Sliced bratwurst in curry-spiced tomato sauce with bread roll"
             },
             {
                 "name": "Das Hausmannskost",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Traditional hearty German home-style platter"
             },
             {
                 "name": "Fleishkas mit Kartoffelsalat",
-                "price": 6.95
+                "price": 6.95,
+                "description": "German meatloaf served with creamy potato salad"
             },
             {
                 "name": "Frankfurter Würstchen",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Classic Frankfurt sausages, grilled to perfection"
             },
             {
                 "name": "Französische Zwiebelsuppe mit Käse",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Rich French onion soup topped with melted cheese"
             },
             {
                 "name": "Frikadelle mit Brötchen",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Pan-fried German meatball served with fresh bread roll"
             },
             {
                 "name": "Gebackener Camenbert",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Baked camembert cheese with herbs and garlic"
             },
             {
                 "name": "Gemischter Salat",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Fresh mixed green salad with seasonal vegetables"
             },
             {
                 "name": "Haus Salatteller",
-                "price": 11.45
+                "price": 11.45,
+                "description": "House specialty salad with mixed greens and German dressing"
             },
             {
                 "name": "Jaegerschnitzel",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Breaded pork cutlet with mushroom hunter sauce"
             },
             {
                 "name": "Kaesepaetzle",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Traditional German egg noodles with melted cheese"
             },
             {
                 "name": "Kartoffel Reibekuchen mit Apfelmus",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Crispy potato pancakes served with apple sauce"
             },
             {
                 "name": "Maultaschen mit Käse",
-                "price": 7.95
+                "price": 7.95,
+                "description": "German pasta pockets filled with meat and cheese"
             },
             {
                 "name": "Sauerbraten",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Traditional pot roast marinated in vinegar and spices"
             },
             {
                 "name": "Ungarische Gulaschsuppe mit Brötchen",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious ungarische gulaschsuppe mit brötchen made with quality ingredients"
             },
             {
                 "name": "Wienerschnitzel",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious wienerschnitzel made with quality ingredients"
             },
             {
                 "name": "Wurstsalad mit Bauernbrot",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 3,
@@ -109,71 +128,88 @@
         "menuItems": [
             {
                 "name": "California roll",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh crab, avocado and cucumber rolled in sushi rice"
             },
             {
                 "name": "Chicken teriyaki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Grilled chicken glazed with sweet teriyaki sauce"
             },
             {
                 "name": "Edamame",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Steamed young soybeans lightly salted"
             },
             {
                 "name": "Futomaki roll",
-                "price": null
+                "price": null,
+                "description": "Delicious futomaki roll made with quality ingredients"
             },
             {
                 "name": "Green tea ice cream",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Kitsune Udon",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious kitsune udon made with quality ingredients"
             },
             {
                 "name": "Miso soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Traditional soybean paste soup with tofu and scallions"
             },
             {
                 "name": "Pork Katsu",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork katsu made with quality ingredients"
             },
             {
                 "name": "Salmon teriyaki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious salmon teriyaki made with quality ingredients"
             },
             {
                 "name": "Sashimi combo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sashimi combo made with quality ingredients"
             },
             {
                 "name": "Spicy Yellowtail roll",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious spicy yellowtail roll made with quality ingredients"
             },
             {
                 "name": "Sushi combo",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious sushi combo made with quality ingredients"
             },
             {
                 "name": "Teppa Maki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious teppa maki made with quality ingredients"
             },
             {
                 "name": "Unagi Don",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious unagi don made with quality ingredients"
             },
             {
                 "name": "Vegetable tempura",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious vegetable tempura made with quality ingredients"
             },
             {
                 "name": "Vegetarian sushi plate",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious vegetarian sushi plate made with quality ingredients"
             },
             {
                 "name": "Wakame salad",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 4,
@@ -197,71 +233,88 @@
         "menuItems": [
             {
                 "name": "bean and cheese burrito",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious bean and cheese burrito made with quality ingredients"
             },
             {
                 "name": "cheese tortellini in tomato sauce",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious cheese tortellini in tomato sauce made with quality ingredients"
             },
             {
                 "name": "coffee",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "falafel wrap with tabbouleh",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious falafel wrap with tabbouleh made with quality ingredients"
             },
             {
                 "name": "flourless chocolate cake",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious flourless chocolate cake made with quality ingredients"
             },
             {
                 "name": "garden fresh salad",
-                "price": 6.5
+                "price": 6.5,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "happy buddha stir fry",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious happy buddha stir fry made with quality ingredients"
             },
             {
                 "name": "hummus appetizer plate",
-                "price": 8
+                "price": 8,
+                "description": "Delicious hummus appetizer plate made with quality ingredients"
             },
             {
                 "name": "lentil burger",
-                "price": 6
+                "price": 6,
+                "description": "Juicy patty with fresh toppings on a brioche bun"
             },
             {
                 "name": "lentil soup",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "pasta with olives and marinated lemon",
-                "price": 6.95
+                "price": 6.95,
+                "description": "House-made pasta with rich sauce"
             },
             {
                 "name": "spinach and cheese wrap",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious spinach and cheese wrap made with quality ingredients"
             },
             {
                 "name": "tea",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "toasted sandwich with grilled eggplant",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "tofu chicken wrap",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "tomato and cheese sandwich",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "vegetable stew",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious vegetable stew made with quality ingredients"
             }
         ],
         "price": 2,
@@ -287,71 +340,88 @@
         "menuItems": [
             {
                 "name": "bavette dans son jus",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious bavette dans son jus made with quality ingredients"
             },
             {
                 "name": "bœuf bourguignon ",
-                "price": 18
+                "price": 18,
+                "description": "Delicious bœuf bourguignon  made with quality ingredients"
             },
             {
                 "name": "bouillabaisse",
-                "price": 17.5
+                "price": 17.5,
+                "description": "Delicious bouillabaisse made with quality ingredients"
             },
             {
                 "name": "coq au vin",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious coq au vin made with quality ingredients"
             },
             {
                 "name": "frites aïoli ",
-                "price": null
+                "price": null,
+                "description": "Delicious frites aïoli  made with quality ingredients"
             },
             {
                 "name": "moules et frites",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious moules et frites made with quality ingredients"
             },
             {
                 "name": "poulet au riesling",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious poulet au riesling made with quality ingredients"
             },
             {
                 "name": "quiche lorraine",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious quiche lorraine made with quality ingredients"
             },
             {
                 "name": "salade de chèvre chaud",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "salade du midi",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "salade niçoise",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "sandwich croque-madame",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "sandwich croque-monsieur",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "soupe à l'oignon",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "steak frites",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium cut grilled to your preference"
             },
             {
                 "name": "tarte pissaladière ",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "tarte tatin",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious tarte tatin made with quality ingredients"
             }
         ],
         "price": 5,
@@ -375,67 +445,83 @@
         "menuItems": [
             {
                 "name": "Dibi Lamb",
-                "price": 8.25
+                "price": 8.25,
+                "description": "Delicious dibi lamb made with quality ingredients"
             },
             {
                 "name": "Doro Wat",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious doro wat made with quality ingredients"
             },
             {
                 "name": "Grilled Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Grilled Fish",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh catch of the day prepared to perfection"
             },
             {
                 "name": "Grilled Plantains in Spicy Peanut Sauce",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious grilled plantains in spicy peanut sauce made with quality ingredients"
             },
             {
                 "name": "Lamb Mafe (Peanut Butter Stew)",
-                "price": 8.75
+                "price": 8.75,
+                "description": "Delicious lamb mafe (peanut butter stew) made with quality ingredients"
             },
             {
                 "name": "Meat Pie",
-                "price": 6
+                "price": 6,
+                "description": "Delicious meat pie made with quality ingredients"
             },
             {
                 "name": "Mechoui with Plantains",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mechoui with plantains made with quality ingredients"
             },
             {
                 "name": "Pepper Soup",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Piri-Piri Shrimp",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious piri-piri shrimp made with quality ingredients"
             },
             {
                 "name": "Suppa Kandja",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious suppa kandja made with quality ingredients"
             },
             {
                 "name": "Thiou Boulette",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thiou boulette made with quality ingredients"
             },
             {
                 "name": "Thiou Curry with Chicken",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thu Okra",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thu okra made with quality ingredients"
             },
             {
                 "name": "Yassa Chicken",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Yassa Lamb",
-                "price": 8.25
+                "price": 8.25,
+                "description": "Delicious yassa lamb made with quality ingredients"
             }
         ],
         "price": 3,
@@ -461,71 +547,88 @@
         "menuItems": [
             {
                 "name": "Buffalo wings",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious buffalo wings made with quality ingredients"
             },
             {
                 "name": "California-style baked Tilapia with rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious california-style baked tilapia with rice made with quality ingredients"
             },
             {
                 "name": "Cheeseburger and fries",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Juicy patty with fresh toppings on a brioche bun"
             },
             {
                 "name": "Cherry pie a la mode",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry pie a la mode made with quality ingredients"
             },
             {
                 "name": "Chocolate milkshake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chocolate milkshake made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Famous BLT on a kaiser roll with fries",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious famous blt on a kaiser roll with fries made with quality ingredients"
             },
             {
                 "name": "Firehouse chili",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious firehouse chili made with quality ingredients"
             },
             {
                 "name": "Goat cheese and eggplant wrap (vegetarian)",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious goat cheese and eggplant wrap (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Grilled chicken sandwich",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Grilled sausage on a bun",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious grilled sausage on a bun made with quality ingredients"
             },
             {
                 "name": "Housemade pot roast with seasonal vegetable",
-                "price": 16.95
+                "price": 16.95,
+                "description": "Delicious housemade pot roast with seasonal vegetable made with quality ingredients"
             },
             {
                 "name": "Roast beef dip",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious roast beef dip made with quality ingredients"
             },
             {
                 "name": "Roast chicken and mashed potatoes",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Soup of the day",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Spaghetti and meatballs",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious spaghetti and meatballs made with quality ingredients"
             }
         ],
         "price": 4,
@@ -550,71 +653,88 @@
         "menuItems": [
             {
                 "name": "BBQ chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Beef ribs (full)",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious beef ribs (full) made with quality ingredients"
             },
             {
                 "name": "Beef ribs (delux)",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious beef ribs (delux) made with quality ingredients"
             },
             {
                 "name": "Beef ribs (half)",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious beef ribs (half) made with quality ingredients"
             },
             {
                 "name": "Beer",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious beer made with quality ingredients"
             },
             {
                 "name": "Coleslaw",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious coleslaw made with quality ingredients"
             },
             {
                 "name": "Collards",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious collards made with quality ingredients"
             },
             {
                 "name": "Cornbread",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious cornbread made with quality ingredients"
             },
             {
                 "name": "Devilled eggs",
-                "price": 4
+                "price": 4,
+                "description": "Delicious devilled eggs made with quality ingredients"
             },
             {
                 "name": "German chocolate cake",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious german chocolate cake made with quality ingredients"
             },
             {
                 "name": "Housemade chips",
-                "price": 4
+                "price": 4,
+                "description": "Delicious housemade chips made with quality ingredients"
             },
             {
                 "name": "Hushpuppies",
-                "price": 3.25
+                "price": 3.25,
+                "description": "Delicious hushpuppies made with quality ingredients"
             },
             {
                 "name": "Mac and cheese",
-                "price": 6
+                "price": 6,
+                "description": "Delicious mac and cheese made with quality ingredients"
             },
             {
                 "name": "Pork ribs (half)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious pork ribs (half) made with quality ingredients"
             },
             {
                 "name": "Potato salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pulled pork sandwich on a soft roll",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Riblets",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious riblets made with quality ingredients"
             }
         ],
         "price": 3,
@@ -639,67 +759,83 @@
         "menuItems": [
             {
                 "name": "Apple strudel",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious apple strudel made with quality ingredients"
             },
             {
                 "name": "Apricot dumpling with yogurt topping ",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious apricot dumpling with yogurt topping  made with quality ingredients"
             },
             {
                 "name": "Balkánský Salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Beef goulash",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious beef goulash made with quality ingredients"
             },
             {
                 "name": "Chicken breast fillet schnitzel ",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Cucumber Salad",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Dumplings",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious dumplings made with quality ingredients"
             },
             {
                 "name": "Fried goose liver with onion and bread",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious fried goose liver with onion and bread made with quality ingredients"
             },
             {
                 "name": "Halusky with sauerkraut and belly bacon ",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious halusky with sauerkraut and belly bacon  made with quality ingredients"
             },
             {
                 "name": "Lentil soup",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Pickles with cabbage and cheddar",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious pickles with cabbage and cheddar made with quality ingredients"
             },
             {
                 "name": "Pork schnitzel",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious pork schnitzel made with quality ingredients"
             },
             {
                 "name": "Potato pancake with bacon",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious potato pancake with bacon made with quality ingredients"
             },
             {
                 "name": "Potato Salad",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Segedínský gulash and dumplings",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious segedínský gulash and dumplings made with quality ingredients"
             },
             {
                 "name": "Sour cabbage soup",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Hearty soup made with fresh ingredients"
             }
         ],
         "price": 1,
@@ -725,79 +861,98 @@
         "menuItems": [
             {
                 "name": "Bockwurst Würstchen",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Traditional German white sausage with mild spices"
             },
             {
                 "name": "Bratwurst mit Brötchen und Sauerkraut",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Grilled bratwurst served with fresh bread roll and tangy sauerkraut"
             },
             {
                 "name": "Currywurst mit Brötchen",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Sliced bratwurst in curry-spiced tomato sauce with bread roll"
             },
             {
                 "name": "Das Hausmannskost",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Traditional hearty German home-style platter"
             },
             {
                 "name": "Fleishkas mit Kartoffelsalat",
-                "price": 6.95
+                "price": 6.95,
+                "description": "German meatloaf served with creamy potato salad"
             },
             {
                 "name": "Frankfurter Würstchen",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Classic Frankfurt sausages, grilled to perfection"
             },
             {
                 "name": "Französische Zwiebelsuppe mit Käse",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Rich French onion soup topped with melted cheese"
             },
             {
                 "name": "Frikadelle mit Brötchen",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Pan-fried German meatball served with fresh bread roll"
             },
             {
                 "name": "Gebackener Camenbert",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Baked camembert cheese with herbs and garlic"
             },
             {
                 "name": "Gemischter Salat",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Fresh mixed green salad with seasonal vegetables"
             },
             {
                 "name": "Haus Salatteller",
-                "price": 11.45
+                "price": 11.45,
+                "description": "House specialty salad with mixed greens and German dressing"
             },
             {
                 "name": "Jaegerschnitzel",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Breaded pork cutlet with mushroom hunter sauce"
             },
             {
                 "name": "Kaesepaetzle",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Traditional German egg noodles with melted cheese"
             },
             {
                 "name": "Kartoffel Reibekuchen mit Apfelmus",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Crispy potato pancakes served with apple sauce"
             },
             {
                 "name": "Maultaschen mit Käse",
-                "price": 7.95
+                "price": 7.95,
+                "description": "German pasta pockets filled with meat and cheese"
             },
             {
                 "name": "Sauerbraten",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Traditional pot roast marinated in vinegar and spices"
             },
             {
                 "name": "Ungarische Gulaschsuppe mit Brötchen",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious ungarische gulaschsuppe mit brötchen made with quality ingredients"
             },
             {
                 "name": "Wienerschnitzel",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious wienerschnitzel made with quality ingredients"
             },
             {
                 "name": "Wurstsalad mit Bauernbrot",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 3,
@@ -821,71 +976,88 @@
         "menuItems": [
             {
                 "name": "Almond cookie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious almond cookie made with quality ingredients"
             },
             {
                 "name": "Chicken and broccoli",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chow mein",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious chow mein made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "General Tao's chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Hot and Sour Soup",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Hunan dumplings",
-                "price": 6.5
+                "price": 6.5,
+                "description": "Delicious hunan dumplings made with quality ingredients"
             },
             {
                 "name": "Mongolian beef",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious mongolian beef made with quality ingredients"
             },
             {
                 "name": "Pan-fried beef noodle",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious pan-fried beef noodle made with quality ingredients"
             },
             {
                 "name": "Pea shoots with garlic",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious pea shoots with garlic made with quality ingredients"
             },
             {
                 "name": "Potstickers (6)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious potstickers (6) made with quality ingredients"
             },
             {
                 "name": "Seafood hotpot",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious seafood hotpot made with quality ingredients"
             },
             {
                 "name": "Steamed rice",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Sweet and sour pork",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sweet and sour pork made with quality ingredients"
             },
             {
                 "name": "Walnut prawns",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious walnut prawns made with quality ingredients"
             },
             {
                 "name": "Wonton Soup",
-                "price": 6.25
+                "price": 6.25,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Young Chow fried rice",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious young chow fried rice made with quality ingredients"
             }
         ],
         "price": 2,
@@ -911,71 +1083,88 @@
         "menuItems": [
             {
                 "name": "Basil duck with rice",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious basil duck with rice made with quality ingredients"
             },
             {
                 "name": "Curry salmon",
-                "price": 12.45
+                "price": 12.45,
+                "description": "Delicious curry salmon made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "Fried banana and ice cream",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious fried banana and ice cream made with quality ingredients"
             },
             {
                 "name": "Green curry with chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Green curry with pork",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious green curry with pork made with quality ingredients"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Onion pancake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious onion pancake made with quality ingredients"
             },
             {
                 "name": "Pad See Ew",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious pad see ew made with quality ingredients"
             },
             {
                 "name": "Pad Thai",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Stir-fried rice noodles with tamarind, fish sauce and peanuts"
             },
             {
                 "name": "Pumpkin curry",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious pumpkin curry made with quality ingredients"
             },
             {
                 "name": "Red curry with chicken",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Red curry with pork",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious red curry with pork made with quality ingredients"
             },
             {
                 "name": "Sticky rice with mango",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sticky rice with mango made with quality ingredients"
             },
             {
                 "name": "Thai iced coffee",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Thai iced tea",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Tofu salad rolls",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 4,
@@ -999,75 +1188,93 @@
         "menuItems": [
             {
                 "name": "Beans and rice",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious beans and rice made with quality ingredients"
             },
             {
                 "name": "Beef burrito",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious beef burrito made with quality ingredients"
             },
             {
                 "name": "Birria",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious birria made with quality ingredients"
             },
             {
                 "name": "Chicken burrito",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken mole platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chile relleno (meat)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chile relleno (meat) made with quality ingredients"
             },
             {
                 "name": "Chile relleno (vegetarian)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chile relleno (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Chips and guacamole",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious chips and guacamole made with quality ingredients"
             },
             {
                 "name": "Enchiladas",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious enchiladas made with quality ingredients"
             },
             {
                 "name": "Flan",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious flan made with quality ingredients"
             },
             {
                 "name": "Jamaica Aqua Fresca",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Delicious jamaica aqua fresca made with quality ingredients"
             },
             {
                 "name": "Pork al pastor platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork al pastor platter made with quality ingredients"
             },
             {
                 "name": "Sopa de albondigas",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious sopa de albondigas made with quality ingredients"
             },
             {
                 "name": "Sopa de pollo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sopa de pollo made with quality ingredients"
             },
             {
                 "name": "Strawberry Aqua Fresca",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious strawberry aqua fresca made with quality ingredients"
             },
             {
                 "name": "Super nachos with carne asada",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious super nachos with carne asada made with quality ingredients"
             },
             {
                 "name": "Tacos de la casa (3)",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious tacos de la casa (3) made with quality ingredients"
             },
             {
                 "name": "Vegetarian platter",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious vegetarian platter made with quality ingredients"
             }
         ],
         "price": 3,
@@ -1093,71 +1300,88 @@
         "menuItems": [
             {
                 "name": "Aloo Gobi",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious aloo gobi made with quality ingredients"
             },
             {
                 "name": "Basmati rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious basmati rice made with quality ingredients"
             },
             {
                 "name": "Butter Chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Korma",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Tikka Masala",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Gulab Jamun",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious gulab jamun made with quality ingredients"
             },
             {
                 "name": "Kheer",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Delicious kheer made with quality ingredients"
             },
             {
                 "name": "Lamb Asparagus",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious lamb asparagus made with quality ingredients"
             },
             {
                 "name": "Lamb Vindaloo",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious lamb vindaloo made with quality ingredients"
             },
             {
                 "name": "Mix Grill Bombay",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mix grill bombay made with quality ingredients"
             },
             {
                 "name": "Mulligatawny soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Murgh Chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Naan stuffed with spinach and lamb",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious naan stuffed with spinach and lamb made with quality ingredients"
             },
             {
                 "name": "Plain naan",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious plain naan made with quality ingredients"
             },
             {
                 "name": "Rogan Josh",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious rogan josh made with quality ingredients"
             },
             {
                 "name": "Saag Paneer",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious saag paneer made with quality ingredients"
             },
             {
                 "name": "Tandoori Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             }
         ],
         "price": 4,
@@ -1182,67 +1406,83 @@
         "menuItems": [
             {
                 "name": "Dibi Lamb",
-                "price": 8.25
+                "price": 8.25,
+                "description": "Delicious dibi lamb made with quality ingredients"
             },
             {
                 "name": "Doro Wat",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious doro wat made with quality ingredients"
             },
             {
                 "name": "Grilled Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Grilled Fish",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh catch of the day prepared to perfection"
             },
             {
                 "name": "Grilled Plantains in Spicy Peanut Sauce",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious grilled plantains in spicy peanut sauce made with quality ingredients"
             },
             {
                 "name": "Lamb Mafe (Peanut Butter Stew)",
-                "price": 8.75
+                "price": 8.75,
+                "description": "Delicious lamb mafe (peanut butter stew) made with quality ingredients"
             },
             {
                 "name": "Meat Pie",
-                "price": 6
+                "price": 6,
+                "description": "Delicious meat pie made with quality ingredients"
             },
             {
                 "name": "Mechoui with Plantains",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mechoui with plantains made with quality ingredients"
             },
             {
                 "name": "Pepper Soup",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Piri-Piri Shrimp",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious piri-piri shrimp made with quality ingredients"
             },
             {
                 "name": "Suppa Kandja",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious suppa kandja made with quality ingredients"
             },
             {
                 "name": "Thiou Boulette",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thiou boulette made with quality ingredients"
             },
             {
                 "name": "Thiou Curry with Chicken",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thu Okra",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thu okra made with quality ingredients"
             },
             {
                 "name": "Yassa Chicken",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Yassa Lamb",
-                "price": 8.25
+                "price": 8.25,
+                "description": "Delicious yassa lamb made with quality ingredients"
             }
         ],
         "price": 2,
@@ -1267,71 +1507,88 @@
         "menuItems": [
             {
                 "name": "Buffalo wings",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious buffalo wings made with quality ingredients"
             },
             {
                 "name": "California-style baked Tilapia with rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious california-style baked tilapia with rice made with quality ingredients"
             },
             {
                 "name": "Cheeseburger and fries",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Juicy patty with fresh toppings on a brioche bun"
             },
             {
                 "name": "Cherry pie a la mode",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry pie a la mode made with quality ingredients"
             },
             {
                 "name": "Chocolate milkshake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chocolate milkshake made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Famous BLT on a kaiser roll with fries",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious famous blt on a kaiser roll with fries made with quality ingredients"
             },
             {
                 "name": "Firehouse chili",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious firehouse chili made with quality ingredients"
             },
             {
                 "name": "Goat cheese and eggplant wrap (vegetarian)",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious goat cheese and eggplant wrap (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Grilled chicken sandwich",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Grilled sausage on a bun",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious grilled sausage on a bun made with quality ingredients"
             },
             {
                 "name": "Housemade pot roast with seasonal vegetable",
-                "price": 16.95
+                "price": 16.95,
+                "description": "Delicious housemade pot roast with seasonal vegetable made with quality ingredients"
             },
             {
                 "name": "Roast beef dip",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious roast beef dip made with quality ingredients"
             },
             {
                 "name": "Roast chicken and mashed potatoes",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Soup of the day",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Spaghetti and meatballs",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious spaghetti and meatballs made with quality ingredients"
             }
         ],
         "price": 5,
@@ -1357,71 +1614,88 @@
         "menuItems": [
             {
                 "name": "BBQ chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Beef ribs (full)",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious beef ribs (full) made with quality ingredients"
             },
             {
                 "name": "Beef ribs (delux)",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious beef ribs (delux) made with quality ingredients"
             },
             {
                 "name": "Beef ribs (half)",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious beef ribs (half) made with quality ingredients"
             },
             {
                 "name": "Beer",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious beer made with quality ingredients"
             },
             {
                 "name": "Coleslaw",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious coleslaw made with quality ingredients"
             },
             {
                 "name": "Collards",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious collards made with quality ingredients"
             },
             {
                 "name": "Cornbread",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious cornbread made with quality ingredients"
             },
             {
                 "name": "Devilled eggs",
-                "price": 4
+                "price": 4,
+                "description": "Delicious devilled eggs made with quality ingredients"
             },
             {
                 "name": "German chocolate cake",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious german chocolate cake made with quality ingredients"
             },
             {
                 "name": "Housemade chips",
-                "price": 4
+                "price": 4,
+                "description": "Delicious housemade chips made with quality ingredients"
             },
             {
                 "name": "Hushpuppies",
-                "price": 3.25
+                "price": 3.25,
+                "description": "Delicious hushpuppies made with quality ingredients"
             },
             {
                 "name": "Mac and cheese",
-                "price": 6
+                "price": 6,
+                "description": "Delicious mac and cheese made with quality ingredients"
             },
             {
                 "name": "Pork ribs (half)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious pork ribs (half) made with quality ingredients"
             },
             {
                 "name": "Potato salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pulled pork sandwich on a soft roll",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Riblets",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious riblets made with quality ingredients"
             }
         ],
         "price": 3,
@@ -1445,67 +1719,83 @@
         "menuItems": [
             {
                 "name": "Apple strudel",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious apple strudel made with quality ingredients"
             },
             {
                 "name": "Apricot dumpling with yogurt topping ",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious apricot dumpling with yogurt topping  made with quality ingredients"
             },
             {
                 "name": "Balkánský Salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Beef goulash",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious beef goulash made with quality ingredients"
             },
             {
                 "name": "Chicken breast fillet schnitzel ",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Cucumber Salad",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Dumplings",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious dumplings made with quality ingredients"
             },
             {
                 "name": "Fried goose liver with onion and bread",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious fried goose liver with onion and bread made with quality ingredients"
             },
             {
                 "name": "Halusky with sauerkraut and belly bacon ",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious halusky with sauerkraut and belly bacon  made with quality ingredients"
             },
             {
                 "name": "Lentil soup",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Pickles with cabbage and cheddar",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Delicious pickles with cabbage and cheddar made with quality ingredients"
             },
             {
                 "name": "Pork schnitzel",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious pork schnitzel made with quality ingredients"
             },
             {
                 "name": "Potato pancake with bacon",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious potato pancake with bacon made with quality ingredients"
             },
             {
                 "name": "Potato Salad",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Segedínský gulash and dumplings",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious segedínský gulash and dumplings made with quality ingredients"
             },
             {
                 "name": "Sour cabbage soup",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Hearty soup made with fresh ingredients"
             }
         ],
         "price": 4,
@@ -1531,79 +1821,98 @@
         "menuItems": [
             {
                 "name": "Bockwurst Würstchen",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Traditional German white sausage with mild spices"
             },
             {
                 "name": "Bratwurst mit Brötchen und Sauerkraut",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Grilled bratwurst served with fresh bread roll and tangy sauerkraut"
             },
             {
                 "name": "Currywurst mit Brötchen",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Sliced bratwurst in curry-spiced tomato sauce with bread roll"
             },
             {
                 "name": "Das Hausmannskost",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Traditional hearty German home-style platter"
             },
             {
                 "name": "Fleishkas mit Kartoffelsalat",
-                "price": 6.95
+                "price": 6.95,
+                "description": "German meatloaf served with creamy potato salad"
             },
             {
                 "name": "Frankfurter Würstchen",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Classic Frankfurt sausages, grilled to perfection"
             },
             {
                 "name": "Französische Zwiebelsuppe mit Käse",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Rich French onion soup topped with melted cheese"
             },
             {
                 "name": "Frikadelle mit Brötchen",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Pan-fried German meatball served with fresh bread roll"
             },
             {
                 "name": "Gebackener Camenbert",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Baked camembert cheese with herbs and garlic"
             },
             {
                 "name": "Gemischter Salat",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Fresh mixed green salad with seasonal vegetables"
             },
             {
                 "name": "Haus Salatteller",
-                "price": 11.45
+                "price": 11.45,
+                "description": "House specialty salad with mixed greens and German dressing"
             },
             {
                 "name": "Jaegerschnitzel",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Breaded pork cutlet with mushroom hunter sauce"
             },
             {
                 "name": "Kaesepaetzle",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Traditional German egg noodles with melted cheese"
             },
             {
                 "name": "Kartoffel Reibekuchen mit Apfelmus",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Crispy potato pancakes served with apple sauce"
             },
             {
                 "name": "Maultaschen mit Käse",
-                "price": 7.95
+                "price": 7.95,
+                "description": "German pasta pockets filled with meat and cheese"
             },
             {
                 "name": "Sauerbraten",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Traditional pot roast marinated in vinegar and spices"
             },
             {
                 "name": "Ungarische Gulaschsuppe mit Brötchen",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious ungarische gulaschsuppe mit brötchen made with quality ingredients"
             },
             {
                 "name": "Wienerschnitzel",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious wienerschnitzel made with quality ingredients"
             },
             {
                 "name": "Wurstsalad mit Bauernbrot",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 3,
@@ -1627,71 +1936,88 @@
         "menuItems": [
             {
                 "name": "Almond cookie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious almond cookie made with quality ingredients"
             },
             {
                 "name": "Chicken and broccoli",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chow mein",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious chow mein made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "General Tao's chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Hot and Sour Soup",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Hunan dumplings",
-                "price": 6.5
+                "price": 6.5,
+                "description": "Delicious hunan dumplings made with quality ingredients"
             },
             {
                 "name": "Mongolian beef",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious mongolian beef made with quality ingredients"
             },
             {
                 "name": "Pan-fried beef noodle",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious pan-fried beef noodle made with quality ingredients"
             },
             {
                 "name": "Pea shoots with garlic",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious pea shoots with garlic made with quality ingredients"
             },
             {
                 "name": "Potstickers (6)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious potstickers (6) made with quality ingredients"
             },
             {
                 "name": "Seafood hotpot",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious seafood hotpot made with quality ingredients"
             },
             {
                 "name": "Steamed rice",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Sweet and sour pork",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sweet and sour pork made with quality ingredients"
             },
             {
                 "name": "Walnut prawns",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious walnut prawns made with quality ingredients"
             },
             {
                 "name": "Wonton Soup",
-                "price": 6.25
+                "price": 6.25,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Young Chow fried rice",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious young chow fried rice made with quality ingredients"
             }
         ],
         "price": 1,
@@ -1717,71 +2043,88 @@
         "menuItems": [
             {
                 "name": "Basil duck with rice",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious basil duck with rice made with quality ingredients"
             },
             {
                 "name": "Curry salmon",
-                "price": 12.45
+                "price": 12.45,
+                "description": "Delicious curry salmon made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "Fried banana and ice cream",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Delicious fried banana and ice cream made with quality ingredients"
             },
             {
                 "name": "Green curry with chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Green curry with pork",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious green curry with pork made with quality ingredients"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Onion pancake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious onion pancake made with quality ingredients"
             },
             {
                 "name": "Pad See Ew",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious pad see ew made with quality ingredients"
             },
             {
                 "name": "Pad Thai",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Stir-fried rice noodles with tamarind, fish sauce and peanuts"
             },
             {
                 "name": "Pumpkin curry",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious pumpkin curry made with quality ingredients"
             },
             {
                 "name": "Red curry with chicken",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Red curry with pork",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Delicious red curry with pork made with quality ingredients"
             },
             {
                 "name": "Sticky rice with mango",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sticky rice with mango made with quality ingredients"
             },
             {
                 "name": "Thai iced coffee",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Thai iced tea",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Tofu salad rolls",
-                "price": 10.45
+                "price": 10.45,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 3,
@@ -1806,75 +2149,93 @@
         "menuItems": [
             {
                 "name": "Beans and rice",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious beans and rice made with quality ingredients"
             },
             {
                 "name": "Beef burrito",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious beef burrito made with quality ingredients"
             },
             {
                 "name": "Birria",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious birria made with quality ingredients"
             },
             {
                 "name": "Chicken burrito",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken mole platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chile relleno (meat)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chile relleno (meat) made with quality ingredients"
             },
             {
                 "name": "Chile relleno (vegetarian)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chile relleno (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Chips and guacamole",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious chips and guacamole made with quality ingredients"
             },
             {
                 "name": "Enchiladas",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious enchiladas made with quality ingredients"
             },
             {
                 "name": "Flan",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious flan made with quality ingredients"
             },
             {
                 "name": "Jamaica Aqua Fresca",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Delicious jamaica aqua fresca made with quality ingredients"
             },
             {
                 "name": "Pork al pastor platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork al pastor platter made with quality ingredients"
             },
             {
                 "name": "Sopa de albondigas",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious sopa de albondigas made with quality ingredients"
             },
             {
                 "name": "Sopa de pollo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sopa de pollo made with quality ingredients"
             },
             {
                 "name": "Strawberry Aqua Fresca",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious strawberry aqua fresca made with quality ingredients"
             },
             {
                 "name": "Super nachos with carne asada",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious super nachos with carne asada made with quality ingredients"
             },
             {
                 "name": "Tacos de la casa (3)",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious tacos de la casa (3) made with quality ingredients"
             },
             {
                 "name": "Vegetarian platter",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious vegetarian platter made with quality ingredients"
             }
         ],
         "price": 2,
@@ -1899,71 +2260,88 @@
         "menuItems": [
             {
                 "name": "Aloo Gobi",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious aloo gobi made with quality ingredients"
             },
             {
                 "name": "Basmati rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious basmati rice made with quality ingredients"
             },
             {
                 "name": "Butter Chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Korma",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Tikka Masala",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Gulab Jamun",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious gulab jamun made with quality ingredients"
             },
             {
                 "name": "Kheer",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Delicious kheer made with quality ingredients"
             },
             {
                 "name": "Lamb Asparagus",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious lamb asparagus made with quality ingredients"
             },
             {
                 "name": "Lamb Vindaloo",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious lamb vindaloo made with quality ingredients"
             },
             {
                 "name": "Mix Grill Bombay",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mix grill bombay made with quality ingredients"
             },
             {
                 "name": "Mulligatawny soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Murgh Chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Naan stuffed with spinach and lamb",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious naan stuffed with spinach and lamb made with quality ingredients"
             },
             {
                 "name": "Plain naan",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious plain naan made with quality ingredients"
             },
             {
                 "name": "Rogan Josh",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious rogan josh made with quality ingredients"
             },
             {
                 "name": "Saag Paneer",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious saag paneer made with quality ingredients"
             },
             {
                 "name": "Tandoori Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             }
         ],
         "price": 4,
@@ -1989,75 +2367,93 @@
         "menuItems": [
             {
                 "name": "Beans and rice",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious beans and rice made with quality ingredients"
             },
             {
                 "name": "Beef burrito",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious beef burrito made with quality ingredients"
             },
             {
                 "name": "Birria",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious birria made with quality ingredients"
             },
             {
                 "name": "Chicken burrito",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken mole platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chile relleno (meat)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chile relleno (meat) made with quality ingredients"
             },
             {
                 "name": "Chile relleno (vegetarian)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chile relleno (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Chips and guacamole",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious chips and guacamole made with quality ingredients"
             },
             {
                 "name": "Enchiladas",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious enchiladas made with quality ingredients"
             },
             {
                 "name": "Flan",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious flan made with quality ingredients"
             },
             {
                 "name": "Jamaica Aqua Fresca",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Delicious jamaica aqua fresca made with quality ingredients"
             },
             {
                 "name": "Pork al pastor platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork al pastor platter made with quality ingredients"
             },
             {
                 "name": "Sopa de albondigas",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious sopa de albondigas made with quality ingredients"
             },
             {
                 "name": "Sopa de pollo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sopa de pollo made with quality ingredients"
             },
             {
                 "name": "Strawberry Aqua Fresca",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious strawberry aqua fresca made with quality ingredients"
             },
             {
                 "name": "Super nachos with carne asada",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious super nachos with carne asada made with quality ingredients"
             },
             {
                 "name": "Tacos de la casa (3)",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious tacos de la casa (3) made with quality ingredients"
             },
             {
                 "name": "Vegetarian platter",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious vegetarian platter made with quality ingredients"
             }
         ],
         "price": 3,
@@ -2081,75 +2477,93 @@
         "menuItems": [
             {
                 "name": "Beans and rice",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious beans and rice made with quality ingredients"
             },
             {
                 "name": "Beef burrito",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious beef burrito made with quality ingredients"
             },
             {
                 "name": "Birria",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious birria made with quality ingredients"
             },
             {
                 "name": "Chicken burrito",
-                "price": 11.45
+                "price": 11.45,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken mole platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chile relleno (meat)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chile relleno (meat) made with quality ingredients"
             },
             {
                 "name": "Chile relleno (vegetarian)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chile relleno (vegetarian) made with quality ingredients"
             },
             {
                 "name": "Chips and guacamole",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious chips and guacamole made with quality ingredients"
             },
             {
                 "name": "Enchiladas",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious enchiladas made with quality ingredients"
             },
             {
                 "name": "Flan",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious flan made with quality ingredients"
             },
             {
                 "name": "Jamaica Aqua Fresca",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Delicious jamaica aqua fresca made with quality ingredients"
             },
             {
                 "name": "Pork al pastor platter",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork al pastor platter made with quality ingredients"
             },
             {
                 "name": "Sopa de albondigas",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious sopa de albondigas made with quality ingredients"
             },
             {
                 "name": "Sopa de pollo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sopa de pollo made with quality ingredients"
             },
             {
                 "name": "Strawberry Aqua Fresca",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious strawberry aqua fresca made with quality ingredients"
             },
             {
                 "name": "Super nachos with carne asada",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious super nachos with carne asada made with quality ingredients"
             },
             {
                 "name": "Tacos de la casa (3)",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious tacos de la casa (3) made with quality ingredients"
             },
             {
                 "name": "Vegetarian platter",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious vegetarian platter made with quality ingredients"
             }
         ],
         "price": 4,
@@ -2175,71 +2589,88 @@
         "menuItems": [
             {
                 "name": "Almond cookie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious almond cookie made with quality ingredients"
             },
             {
                 "name": "Chicken and broccoli",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chow mein",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious chow mein made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "General Tao's chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Hot and Sour Soup",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Hunan dumplings",
-                "price": 6.5
+                "price": 6.5,
+                "description": "Delicious hunan dumplings made with quality ingredients"
             },
             {
                 "name": "Mongolian beef",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious mongolian beef made with quality ingredients"
             },
             {
                 "name": "Pan-fried beef noodle",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious pan-fried beef noodle made with quality ingredients"
             },
             {
                 "name": "Pea shoots with garlic",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious pea shoots with garlic made with quality ingredients"
             },
             {
                 "name": "Potstickers (6)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious potstickers (6) made with quality ingredients"
             },
             {
                 "name": "Seafood hotpot",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious seafood hotpot made with quality ingredients"
             },
             {
                 "name": "Steamed rice",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Sweet and sour pork",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sweet and sour pork made with quality ingredients"
             },
             {
                 "name": "Walnut prawns",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious walnut prawns made with quality ingredients"
             },
             {
                 "name": "Wonton Soup",
-                "price": 6.25
+                "price": 6.25,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Young Chow fried rice",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious young chow fried rice made with quality ingredients"
             }
         ],
         "price": 2,
@@ -2263,71 +2694,88 @@
         "menuItems": [
             {
                 "name": "Aloo Gobi",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious aloo gobi made with quality ingredients"
             },
             {
                 "name": "Basmati rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious basmati rice made with quality ingredients"
             },
             {
                 "name": "Butter Chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Korma",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Tikka Masala",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Gulab Jamun",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious gulab jamun made with quality ingredients"
             },
             {
                 "name": "Kheer",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Delicious kheer made with quality ingredients"
             },
             {
                 "name": "Lamb Asparagus",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious lamb asparagus made with quality ingredients"
             },
             {
                 "name": "Lamb Vindaloo",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious lamb vindaloo made with quality ingredients"
             },
             {
                 "name": "Mix Grill Bombay",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mix grill bombay made with quality ingredients"
             },
             {
                 "name": "Mulligatawny soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Murgh Chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Naan stuffed with spinach and lamb",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious naan stuffed with spinach and lamb made with quality ingredients"
             },
             {
                 "name": "Plain naan",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious plain naan made with quality ingredients"
             },
             {
                 "name": "Rogan Josh",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious rogan josh made with quality ingredients"
             },
             {
                 "name": "Saag Paneer",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious saag paneer made with quality ingredients"
             },
             {
                 "name": "Tandoori Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             }
         ],
         "price": 5,
@@ -2353,71 +2801,88 @@
         "menuItems": [
             {
                 "name": "California roll",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh crab, avocado and cucumber rolled in sushi rice"
             },
             {
                 "name": "Chicken teriyaki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Grilled chicken glazed with sweet teriyaki sauce"
             },
             {
                 "name": "Edamame",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Steamed young soybeans lightly salted"
             },
             {
                 "name": "Futomaki roll",
-                "price": null
+                "price": null,
+                "description": "Delicious futomaki roll made with quality ingredients"
             },
             {
                 "name": "Green tea ice cream",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Kitsune Udon",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious kitsune udon made with quality ingredients"
             },
             {
                 "name": "Miso soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Traditional soybean paste soup with tofu and scallions"
             },
             {
                 "name": "Pork Katsu",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious pork katsu made with quality ingredients"
             },
             {
                 "name": "Salmon teriyaki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious salmon teriyaki made with quality ingredients"
             },
             {
                 "name": "Sashimi combo",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sashimi combo made with quality ingredients"
             },
             {
                 "name": "Spicy Yellowtail roll",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious spicy yellowtail roll made with quality ingredients"
             },
             {
                 "name": "Sushi combo",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious sushi combo made with quality ingredients"
             },
             {
                 "name": "Teppa Maki",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious teppa maki made with quality ingredients"
             },
             {
                 "name": "Unagi Don",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Delicious unagi don made with quality ingredients"
             },
             {
                 "name": "Vegetable tempura",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious vegetable tempura made with quality ingredients"
             },
             {
                 "name": "Vegetarian sushi plate",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious vegetarian sushi plate made with quality ingredients"
             },
             {
                 "name": "Wakame salad",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             }
         ],
         "price": 3,
@@ -2442,71 +2907,88 @@
         "menuItems": [
             {
                 "name": "Almond cookie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious almond cookie made with quality ingredients"
             },
             {
                 "name": "Chicken and broccoli",
-                "price": 9.95
+                "price": 9.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chow mein",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious chow mein made with quality ingredients"
             },
             {
                 "name": "Egg rolls (4)",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious egg rolls (4) made with quality ingredients"
             },
             {
                 "name": "General Tao's chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Hot and Sour Soup",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Hunan dumplings",
-                "price": 6.5
+                "price": 6.5,
+                "description": "Delicious hunan dumplings made with quality ingredients"
             },
             {
                 "name": "Mongolian beef",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious mongolian beef made with quality ingredients"
             },
             {
                 "name": "Pan-fried beef noodle",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious pan-fried beef noodle made with quality ingredients"
             },
             {
                 "name": "Pea shoots with garlic",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious pea shoots with garlic made with quality ingredients"
             },
             {
                 "name": "Potstickers (6)",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious potstickers (6) made with quality ingredients"
             },
             {
                 "name": "Seafood hotpot",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious seafood hotpot made with quality ingredients"
             },
             {
                 "name": "Steamed rice",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Sweet and sour pork",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious sweet and sour pork made with quality ingredients"
             },
             {
                 "name": "Walnut prawns",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious walnut prawns made with quality ingredients"
             },
             {
                 "name": "Wonton Soup",
-                "price": 6.25
+                "price": 6.25,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Young Chow fried rice",
-                "price": 6.45
+                "price": 6.45,
+                "description": "Delicious young chow fried rice made with quality ingredients"
             }
         ],
         "price": 4,
@@ -2531,71 +3013,88 @@
         "menuItems": [
             {
                 "name": "Aloo Gobi",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious aloo gobi made with quality ingredients"
             },
             {
                 "name": "Basmati rice",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious basmati rice made with quality ingredients"
             },
             {
                 "name": "Butter Chicken",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Korma",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicken Tikka Masala",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Gulab Jamun",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious gulab jamun made with quality ingredients"
             },
             {
                 "name": "Kheer",
-                "price": 4.5
+                "price": 4.5,
+                "description": "Delicious kheer made with quality ingredients"
             },
             {
                 "name": "Lamb Asparagus",
-                "price": 9.5
+                "price": 9.5,
+                "description": "Delicious lamb asparagus made with quality ingredients"
             },
             {
                 "name": "Lamb Vindaloo",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious lamb vindaloo made with quality ingredients"
             },
             {
                 "name": "Mix Grill Bombay",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious mix grill bombay made with quality ingredients"
             },
             {
                 "name": "Mulligatawny soup",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Hearty soup made with fresh ingredients"
             },
             {
                 "name": "Murgh Chicken",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Naan stuffed with spinach and lamb",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious naan stuffed with spinach and lamb made with quality ingredients"
             },
             {
                 "name": "Plain naan",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious plain naan made with quality ingredients"
             },
             {
                 "name": "Rogan Josh",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious rogan josh made with quality ingredients"
             },
             {
                 "name": "Saag Paneer",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious saag paneer made with quality ingredients"
             },
             {
                 "name": "Tandoori Chicken",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Tender chicken prepared with herbs and spices"
             }
         ],
         "price": 3,
@@ -2621,75 +3120,93 @@
         "menuItems": [
             {
                 "name": "Apple pie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious apple pie made with quality ingredients"
             },
             {
                 "name": "B.L.T. and Avocado Sandwich",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Caesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cappucino",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious cappucino made with quality ingredients"
             },
             {
                 "name": "Cherry cheesecake",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry cheesecake made with quality ingredients"
             },
             {
                 "name": "Chocolate chip cookie",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious chocolate chip cookie made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Drip coffee",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Eggsalad Sandwich",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Espresso",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious espresso made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Iced tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Latte",
-                "price": 4
+                "price": 4,
+                "description": "Delicious latte made with quality ingredients"
             },
             {
                 "name": "Mango and banana smoothie",
-                "price": 3
+                "price": 3,
+                "description": "Delicious mango and banana smoothie made with quality ingredients"
             },
             {
                 "name": "Orange juice",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious orange juice made with quality ingredients"
             },
             {
                 "name": "Quiche of the day",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious quiche of the day made with quality ingredients"
             },
             {
                 "name": "Turkey Sandwich",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Freshly made sandwich with quality ingredients"
             }
         ],
         "price": 1,
@@ -2713,75 +3230,93 @@
         "menuItems": [
             {
                 "name": "Apple pie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious apple pie made with quality ingredients"
             },
             {
                 "name": "B.L.T. and Avocado Sandwich",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Caesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cappucino",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious cappucino made with quality ingredients"
             },
             {
                 "name": "Cherry cheesecake",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry cheesecake made with quality ingredients"
             },
             {
                 "name": "Chocolate chip cookie",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious chocolate chip cookie made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Drip coffee",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Eggsalad Sandwich",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Espresso",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious espresso made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Iced tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Latte",
-                "price": 4
+                "price": 4,
+                "description": "Delicious latte made with quality ingredients"
             },
             {
                 "name": "Mango and banana smoothie",
-                "price": 3
+                "price": 3,
+                "description": "Delicious mango and banana smoothie made with quality ingredients"
             },
             {
                 "name": "Orange juice",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious orange juice made with quality ingredients"
             },
             {
                 "name": "Quiche of the day",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious quiche of the day made with quality ingredients"
             },
             {
                 "name": "Turkey Sandwich",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Freshly made sandwich with quality ingredients"
             }
         ],
         "price": 3,
@@ -2807,75 +3342,93 @@
         "menuItems": [
             {
                 "name": "Apple pie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious apple pie made with quality ingredients"
             },
             {
                 "name": "B.L.T. and Avocado Sandwich",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Caesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cappucino",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious cappucino made with quality ingredients"
             },
             {
                 "name": "Cherry cheesecake",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry cheesecake made with quality ingredients"
             },
             {
                 "name": "Chocolate chip cookie",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious chocolate chip cookie made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Drip coffee",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Eggsalad Sandwich",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Espresso",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious espresso made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Iced tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Latte",
-                "price": 4
+                "price": 4,
+                "description": "Delicious latte made with quality ingredients"
             },
             {
                 "name": "Mango and banana smoothie",
-                "price": 3
+                "price": 3,
+                "description": "Delicious mango and banana smoothie made with quality ingredients"
             },
             {
                 "name": "Orange juice",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious orange juice made with quality ingredients"
             },
             {
                 "name": "Quiche of the day",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious quiche of the day made with quality ingredients"
             },
             {
                 "name": "Turkey Sandwich",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Freshly made sandwich with quality ingredients"
             }
         ],
         "price": 2,
@@ -2899,75 +3452,93 @@
         "menuItems": [
             {
                 "name": "Apple pie",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious apple pie made with quality ingredients"
             },
             {
                 "name": "B.L.T. and Avocado Sandwich",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly made sandwich with quality ingredients"
             },
             {
                 "name": "Caesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cappucino",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious cappucino made with quality ingredients"
             },
             {
                 "name": "Cherry cheesecake",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious cherry cheesecake made with quality ingredients"
             },
             {
                 "name": "Chocolate chip cookie",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious chocolate chip cookie made with quality ingredients"
             },
             {
                 "name": "Cobb salad",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Drip coffee",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Eggsalad Sandwich",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Espresso",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious espresso made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Hot tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Iced tea",
-                "price": 2.5
+                "price": 2.5,
+                "description": "Premium tea blend served hot or iced"
             },
             {
                 "name": "Latte",
-                "price": 4
+                "price": 4,
+                "description": "Delicious latte made with quality ingredients"
             },
             {
                 "name": "Mango and banana smoothie",
-                "price": 3
+                "price": 3,
+                "description": "Delicious mango and banana smoothie made with quality ingredients"
             },
             {
                 "name": "Orange juice",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious orange juice made with quality ingredients"
             },
             {
                 "name": "Quiche of the day",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious quiche of the day made with quality ingredients"
             },
             {
                 "name": "Turkey Sandwich",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Freshly made sandwich with quality ingredients"
             }
         ],
         "price": 4,
@@ -2993,71 +3564,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 1,
@@ -3082,71 +3670,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 4,
@@ -3171,71 +3776,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 2,
@@ -3261,71 +3883,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 5,
@@ -3349,71 +3988,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 3,
@@ -3439,71 +4095,88 @@
         "menuItems": [
             {
                 "name": "Cesar salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Cheesecake",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious cheesecake made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish chicken and spinach",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Chicago-style deep dish pepperoni and cheese",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Delicious chicago-style deep dish pepperoni and cheese made with quality ingredients"
             },
             {
                 "name": "Chicago-style deep dish vegetarian",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious chicago-style deep dish vegetarian made with quality ingredients"
             },
             {
                 "name": "Chicago-style meat lover's",
-                "price": 8.95
+                "price": 8.95,
+                "description": "Delicious chicago-style meat lover's made with quality ingredients"
             },
             {
                 "name": "Chocolate cake",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Delicious chocolate cake made with quality ingredients"
             },
             {
                 "name": "Coffee",
-                "price": 7.95
+                "price": 7.95,
+                "description": "Freshly brewed premium coffee"
             },
             {
                 "name": "Garlic bread",
-                "price": null
+                "price": null,
+                "description": "Delicious garlic bread made with quality ingredients"
             },
             {
                 "name": "Greek salad",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Fresh mixed greens with seasonal vegetables"
             },
             {
                 "name": "Pizza of the day (slice)",
-                "price": 7.55
+                "price": 7.55,
+                "description": "Wood-fired pizza with fresh toppings"
             },
             {
                 "name": "Thin crust anchovy and garlic and chili pepper",
-                "price": 5.95
+                "price": 5.95,
+                "description": "Delicious thin crust anchovy and garlic and chili pepper made with quality ingredients"
             },
             {
                 "name": "Thin crust broccoli, chicken, and mozarella",
-                "price": 3.95
+                "price": 3.95,
+                "description": "Tender chicken prepared with herbs and spices"
             },
             {
                 "name": "Thin crust margherita",
-                "price": 4.55
+                "price": 4.55,
+                "description": "Delicious thin crust margherita made with quality ingredients"
             },
             {
                 "name": "Thin crust pepperoni",
-                "price": 6.95
+                "price": 6.95,
+                "description": "Delicious thin crust pepperoni made with quality ingredients"
             },
             {
                 "name": "Thin crust quattro stagione",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust quattro stagione made with quality ingredients"
             },
             {
                 "name": "Thin crust sausage and guanciale bacon",
-                "price": 4.95
+                "price": 4.95,
+                "description": "Delicious thin crust sausage and guanciale bacon made with quality ingredients"
             }
         ],
         "price": 4,

@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header';
+import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { RestaurantService } from '../../services/restaurant.service';
 import { CartService } from '../../services/cart.service';
 import { CustomerService } from '../../services/customer.service';
@@ -10,11 +11,17 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, RouterModule, HeaderComponent, FormsModule],
+  imports: [RouterModule, HeaderComponent, FormsModule, NrCalloutComponent],
   templateUrl: './menu.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu.css'
 })
 export class MenuComponent implements OnInit {
+  readonly menuStatusNrql =
+    "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri, http.statusCode SINCE 1 day ago";
+  readonly menuNrql =
+    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
+
   restaurant = signal<Restaurant | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -52,21 +59,21 @@ export class MenuComponent implements OnInit {
       return;
     }
 
-    // Get restaurant ID from route params
-    const restaurantId = this.route.snapshot.paramMap.get('restaurantId');
-    if (restaurantId) {
-      this.loadRestaurant(restaurantId);
+    // Get restaurant name slug from route params
+    const restaurantName = this.route.snapshot.paramMap.get('restaurantName');
+    if (restaurantName) {
+      this.loadRestaurant(restaurantName);
     } else {
-      this.error.set('No restaurant ID provided');
+      this.error.set('No restaurant name provided');
       this.loading.set(false);
     }
   }
 
-  loadRestaurant(id: string) {
+  loadRestaurant(nameSlug: string) {
     this.loading.set(true);
     this.error.set(null);
     
-    this.restaurantService.getRestaurant(id).subscribe({
+    this.restaurantService.getRestaurantByName(nameSlug).subscribe({
       next: (restaurant) => {
         this.restaurant.set(restaurant);
         this.loading.set(false);
@@ -129,6 +136,18 @@ export class MenuComponent implements OnInit {
 
   getCategoryLink(category: string): string {
     return '#category-' + category.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  scrollToCategory(category: string) {
+    const elementId = this.getCategoryId(category);
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+    }
   }
 
   goBack() {

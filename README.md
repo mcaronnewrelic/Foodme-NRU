@@ -1,6 +1,6 @@
 # 🍕 FoodMe - Restaurant Ordering Application
 
-[![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org/)
 [![Angular](https://img.shields.io/badge/Angular-20-red.svg)](https://angular.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/Security-Validated-brightgreen.svg)](#-security-features)
@@ -13,7 +13,8 @@ A modern, full-stack restaurant ordering application built with Angular 20 front
 - [🎯 Project Overview](#-project-overview)
 - [🚀 Quick Start](#-quick-start)
 - [🏗️ Architecture](#️-architecture)
-- [📚 Documentation](#-documentation)
+- [� Project Structure](#-project-structure)
+- [�📚 Documentation](#-documentation)
 - [🛠️ Development](#️-development)
 - [🔧 Configuration](#-configuration)
 - [🧪 Testing & Quality](#-testing--quality)
@@ -56,7 +57,32 @@ FoodMe is a demonstration application that showcases modern web development prac
 
 ## 🚀 Quick Start
 
-### Option 1: GitHub Actions Deployment (Recommended)
+### Option 1: Simple Docker Development (Recommended for Mac)
+
+Perfect for new developers - get up and running in minutes:
+
+```bash
+# 1. Setup environment
+npm run setup:env
+# Edit .env with your values (copy from .env.example)
+
+# 2. Start simple development environment
+npm run docker:dev:simple
+
+# 3. Access your app
+# Main app: http://localhost
+# Health check: http://localhost/health
+# API: http://localhost/api/restaurant
+```
+
+**Need more features?** Try the full production simulation:
+```bash
+npm run docker:dev:full
+```
+
+📖 **For complete Docker guide**: [DOCKER_DEVELOPMENT_GUIDE.md](./DOCKER_DEVELOPMENT_GUIDE.md)
+
+### Option 2: GitHub Actions Deployment
 
 Deploy automatically to AWS EC2 using GitHub Actions:
 
@@ -73,28 +99,22 @@ Deploy automatically to AWS EC2 using GitHub Actions:
 3. **Push to main branch** or manually trigger the deployment workflow
 4. **Access your application** at the provided EC2 instance IP
 
-### Option 2: Local Development
+### Option 3: Local Development (Non-Docker)
 
 ```bash
 # Setup environment
 npm run setup:env
 # Edit .env with your configuration
 
-# Auto-detect best Docker configuration for your environment
-./docker-setup.sh
-
 # Install dependencies
 npm run install:all
 
 # Start development server
 npm run dev
-
-# Or run with Docker
-npm run docker:run
 ```
 
-> 📚 **For detailed setup instructions**, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)  
-> 🗄️ **For database setup**, see [DATABASE_GUIDE.md](./DATABASE_GUIDE.md)
+> 📚 **For detailed setup instructions**, see [SETUP_GUIDE.md](./docs/setup/SETUP_GUIDE.md)  
+> 🗄️ **For database setup**, see [DATABASE_GUIDE.md](./docs/setup/DATABASE_GUIDE.md)
 
 ## 🏗️ Architecture
 
@@ -116,43 +136,81 @@ npm run docker:run
 - **Load Testing**: Locust-based performance testing
 - **Security**: Comprehensive validation and compliance checks
 
-## 📚 Documentation
+## � Project Structure
 
-### 🔐 Security & Configuration
-| Document | Description |
-|----------|-------------|
-| **[Security Documentation](./SECURITY.md)** | Comprehensive security measures, secret management, and best practices |
-| **[Secret Management Guide](./SECRET_MANAGEMENT.md)** | Environment variable configuration and secret handling |
-| **[Docker Comprehensive Guide](./DOCKER_COMPREHENSIVE_GUIDE.md)** | Complete Docker setup, secrets management, and file organization |
-| **[Security Compliance](./SECURITY_COMPLIANCE.md)** | Compliance checks and validation procedures |
+The FoodMe project is organized for clarity and ease of development:
 
-### 🚀 Deployment & Operations  
-| Document | Description |
-|----------|-------------|
-| **[Setup Guide](./SETUP_GUIDE.md)** | Complete project setup, dependencies, and development environment configuration |
-| **[DevContainer Setup](./DEVCONTAINER_SETUP.md)** | Docker Compose configurations for dev containers and restricted environments |
-| **[Database Guide](./DATABASE_GUIDE.md)** | PostgreSQL setup, initialization, and restaurant data management |
-| **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** | Complete deployment workflows and environment management |
-| **[Terraform Deployment](./terraform/README.md)** | AWS EC2 deployment using Terraform and GitHub Actions |
-| **[Load Testing](./LOAD_TESTING.md)** | Performance testing with Locust, metrics, and analysis |
-| **[Cleanup Guide](./.github/CLEANUP_GUIDE.md)** | AWS resource cleanup procedures for failed deployments |
+```
+foodme/
+├── README.md                    # 👈 Project overview and quick start
+├── DOCKER_DEVELOPMENT_GUIDE.md # 🐳 Complete Docker development guide
+├── package.json                # 📦 Main project dependencies and scripts
+│
+├── angular-app/                # 🅰️ Angular frontend application
+├── server/                     # 🌐 Node.js backend server
+├── docker/                     # 🐳 Docker configurations (simplified)
+├── docs/                       # 📚 Organized documentation
+│   ├── setup/                 # 🛠️ Setup and configuration guides
+│   ├── deployment/            # 🚀 Deployment documentation
+│   └── troubleshooting/       # 🔧 Problem-solving guides
+└── scripts/                    # 🔧 Deployment and utility scripts
+```
 
-### 💡 Quick Reference
-- **Setup Guide**: Follow [SETUP_GUIDE.md](./SETUP_GUIDE.md) for complete project setup
-- **DevContainer Setup**: Use [DEVCONTAINER_SETUP.md](./DEVCONTAINER_SETUP.md) for dev container configurations
-- **Database Setup**: Use [DATABASE_GUIDE.md](./DATABASE_GUIDE.md) for PostgreSQL initialization  
-- **Terraform Deployment**: Use [terraform/README.md](./terraform/README.md) for AWS EC2 deployment
-- **GitHub Actions**: Push to main branch for automatic deployment to EC2
+**📖 For complete project structure details**: [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)
+
+**🎯 New Developer Path:**
+1. This README for overview
+2. [DOCKER_DEVELOPMENT_GUIDE.md](./DOCKER_DEVELOPMENT_GUIDE.md) for quick start
+3. [docs/README.md](./docs/README.md) for specific documentation
+
+## �📚 Documentation
+
+### � Essential Reading
+- **[Docker Development Guide](./DOCKER_DEVELOPMENT_GUIDE.md)** - 🐳 **START HERE** for local development
+- **[Project Structure](./PROJECT_STRUCTURE.md)** - 📁 Understanding the organized codebase
+- **[Documentation Index](./docs/README.md)** - 📚 Which document to read for what
+
+### 🎯 Quick Access by Topic
+
+#### �️ Setup & Configuration
+- **[Setup Guide](./docs/setup/SETUP_GUIDE.md)** - Complete project setup and dependencies
+- **[Database Guide](./docs/setup/DATABASE_GUIDE.md)** - PostgreSQL configuration and management
+- **[Environment Variables](./docs/setup/ENVIRONMENT_VARIABLES.md)** - Configuration and secrets
+- **[DevContainer Setup](./docs/setup/DEVCONTAINER_SETUP.md)** - VS Code development containers
+
+#### 🚀 Deployment & Operations  
+- **[Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md)** - Production deployment workflows
+- **[CloudFormation Templates](./cloudformation/README.md)** - AWS infrastructure deployment
+- **[GitHub Actions deployment](./docs/deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions)** - The deploy-cloudformation workflow: code, stack and cleanup
+
+#### 📊 Monitoring & Testing
+- **[New Relic Demo Features](./docs/NEW_RELIC_DEMO.md)** - "Behind the scenes" callouts, planned failures and source maps
+- **[New Relic Setup Scripts](./newrelic/README.md)** - Dashboard, service levels, alerts and workload
+- **[New Relic Infrastructure Setup](./docs/NEW_RELIC_INFRA_SETUP.md)** - Host and database monitoring
+- **[Load Testing](./docs/LOAD_TESTING.md)** - Performance testing with Locust
+- **[Security](./docs/SECURITY.md)** - Practices, checks and the open findings from the security review
+
+#### 🔧 Troubleshooting
+- **[EC2 Troubleshooting](./docs/troubleshooting/EC2_TROUBLESHOOTING.md)** - Stack problems and a site that is not working on EC2
+- **[Docker Comprehensive Guide](./docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md)** - Docker services, commands and fixes for common problems
+
+### 💡 Quick Reference for New Developers
+1. **[README.md](./README.md)** - This file, project overview
+2. **[DOCKER_DEVELOPMENT_GUIDE.md](./DOCKER_DEVELOPMENT_GUIDE.md)** - Get coding in 3 steps
+3. **[docs/README.md](./docs/README.md)** - Find any specific documentation
+- **DevContainer Setup**: Use [DEVCONTAINER_SETUP.md](./docs/setup/DEVCONTAINER_SETUP.md) for dev container configurations
+- **Database Setup**: Use [DATABASE_GUIDE.md](./docs/setup/DATABASE_GUIDE.md) for PostgreSQL initialization  
+- **AWS Deployment**: Use the **deploy-cloudformation** workflow (Actions tab). A push to `main` that changes `server/` or `angular-app/` deploys the code to staging. See [Deployment Guide](./docs/deployment/DEPLOYMENT_GUIDE.md#deploying-with-github-actions)
 - **Security Validation**: Run `npm run security:validate` for comprehensive security checks
 - **Load Testing**: Execute `npm run loadtest` for performance testing
 - **Deployment**: Use `npm run deploy` for full deployment workflow
 - **Environment Setup**: Copy `.env.example` to `.env` and configure your settings
-- **AWS Cleanup**: Use [Cleanup Guide](./.github/CLEANUP_GUIDE.md) for removing failed deployments
+- **AWS Cleanup**: See [Removing a deployment](./docs/deployment/DEPLOYMENT_GUIDE.md#removing-a-deployment)
 
 ## 🛠️ Development
 
 ### Prerequisites
-- Node.js 22+ (or use the included dev container)
+- Node.js 24+ (or use the included dev container)
 - Docker and Docker Compose
 - Python 3.11+ (for load testing)
 
@@ -264,13 +322,13 @@ docker compose -f docker/docker-compose.loadtest.yml up locust
 
 #### DevContainer Configuration Differences
 
-| Feature | Main Config | DevContainer Config |
-|---------|-------------|-------------------|
-| **Privileged Access** | ✅ Full host access | ❌ Restricted for security |
-| **Process Monitoring** | ✅ Enabled | ❌ Disabled |
-| **Host Volume Mounts** | ✅ Full host filesystem | ❌ Docker socket only |
-| **Network Mode** | Bridge with custom network | Bridge mode |
-| **New Relic Features** | Full monitoring suite | Basic container monitoring |
+| Feature                | Main Config                | DevContainer Config        |
+| ---------------------- | -------------------------- | -------------------------- |
+| **Privileged Access**  | ✅ Full host access         | ❌ Restricted for security  |
+| **Process Monitoring** | ✅ Enabled                  | ❌ Disabled                 |
+| **Host Volume Mounts** | ✅ Full host filesystem     | ❌ Docker socket only       |
+| **Network Mode**       | Bridge with custom network | Bridge mode                |
+| **New Relic Features** | Full monitoring suite      | Basic container monitoring |
 
 #### Troubleshooting DevContainer Issues
 

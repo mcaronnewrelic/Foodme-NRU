@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header';
 
 @Component({
   selector: 'app-who-we-are',
-  imports: [CommonModule, RouterModule, HeaderComponent],
+  imports: [RouterModule, HeaderComponent],
   templateUrl: './who-we-are.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './who-we-are.css'
 })
 export class WhoWeAreComponent {

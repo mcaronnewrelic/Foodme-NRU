@@ -1,0 +1,18 @@
+@if (config.showCallouts()) {
+  <aside class="nr-callout">
+    <span class="nr-callout-label"><i class="fas fa-eye me-1"></i>Behind the scenes</span>
+    <h5 class="nr-callout-title">{{ title }}</h5>
+    <div class="nr-callout-body"><ng-content></ng-content></div>
+    <pre class="nr-callout-nrql">{{ nrql }}</pre>
+    @if (url; as link) {
+      <a class="btn btn-sm nr-callout-btn" [href]="link" target="newrelic">
+        {{ buttonLabel }} <i class="fas fa-arrow-up-right-from-square ms-1"></i>
+      </a>
+    }
+    @if (browserErrorsUrl; as errorsLink) {
+      <a class="btn btn-sm nr-callout-btn nr-callout-btn-alt ms-2" [href]="errorsLink" target="newrelic">
+        Open Errors Inbox <i class="fas fa-arrow-up-right-from-square ms-1"></i>
+      </a>
+    }
+  </aside>
+}

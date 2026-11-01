@@ -1,61 +1,31 @@
-# Docker Configuration Files
+# Docker files
 
-This directory contains all Docker-related configuration files for the FoodMe application.
+What each file in this folder is for. To run the app, use [DOCKER_DEVELOPMENT_GUIDE.md](../DOCKER_DEVELOPMENT_GUIDE.md) and its npm scripts. If something breaks, see the [Docker Comprehensive Guide](../docs/troubleshooting/DOCKER_COMPREHENSIVE_GUIDE.md).
 
-## Files Overview
+## Compose files
 
-### Dockerfiles
-- **`Dockerfile`** - Main application Dockerfile for production builds
-- **`Dockerfile.secure`** - Security-hardened version with multi-stage build
-- **`nginx.dockerfile`** - Custom Nginx reverse proxy configuration
-- **`newrelic-infra.dockerfile`** - Custom New Relic Infrastructure agent
-- **`Dockerfile.locust`** - Load testing with Locust
+| File | Runs | Start it with |
+|---|---|---|
+| `docker-compose.dev-simple.yml` | App, PostgreSQL 16, nginx | `npm run docker:dev:simple` |
+| `docker-compose.arm64.yml` | App, nginx, PostgreSQL with monitoring, New Relic infrastructure agent stand-in | `npm run docker:dev:full` |
 
-### Docker Compose Files
-- **`docker-compose.yml`** - Main production configuration
-- **`docker-compose.dev.yml`** - Development environment overrides
-- **`docker-compose.loadtest.yml`** - Load testing configuration
+## Dockerfiles
 
-### Other Files
-- **`.dockerignore`** - Files and directories to exclude from Docker builds
+| File | Builds |
+|---|---|
+| `Dockerfile.simple` | The Node app for the simple setup (server code only; the Angular build is mounted from `dist/`) |
+| `Dockerfile.arm64` | The Node app for the full setup, on ARM64 |
+| `Dockerfile` | A multi-stage production build of the Node app |
+| `nginx.dockerfile` | nginx reverse proxy |
+| `postgres-monitoring.dockerfile` | PostgreSQL with the monitoring extensions |
+| `newrelic-infra.arm64.dockerfile` | A minimal ARM64-compatible stand-in for the infrastructure agent, for local development |
 
-## Quick Start
+`newrelic-integrations/` holds the integration configuration mounted into the infrastructure container. See [newrelic-integrations/README.md](../newrelic-integrations/README.md).
 
-### Production Deployment
-```bash
-cd docker
-docker-compose up -d
-```
+## Archive
 
-### Development Environment
-```bash
-cd docker
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-```
+`archive/` keeps the earlier compose files and Dockerfiles (`docker-compose.yml`, the dev and devcontainer overrides, the load test setup, and the security-hardened Dockerfile). They are not maintained, and documents that refer to them may be out of date.
 
-### Load Testing
-```bash
-cd docker
-docker-compose -f docker-compose.loadtest.yml run --rm locust
-```
+## Environment
 
-## Environment Variables
-
-Make sure to set up your environment variables in a `.env` file in the project root:
-
-```bash
-# New Relic Configuration
-NEW_RELIC_LICENSE_KEY=your_license_key
-NEW_RELIC_API_KEY=your_api_key
-NEW_RELIC_APP_NAME=FoodMe-App
-
-# Database Configuration
-POSTGRES_DB=foodme
-POSTGRES_USER=foodme_user
-POSTGRES_PASSWORD=your_secure_password
-```
-
-For more detailed information, see the main project documentation files:
-- [Setup Guide](../SETUP_GUIDE.md)
-- [Docker Comprehensive Guide](../DOCKER_COMPREHENSIVE_GUIDE.md)
-- [Deployment Guide](../DEPLOYMENT_GUIDE.md)
+Both compose files read `../.env`. See [Environment Variables](../docs/setup/ENVIRONMENT_VARIABLES.md).
