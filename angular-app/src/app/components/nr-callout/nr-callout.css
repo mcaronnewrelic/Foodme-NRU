@@ -23,6 +23,25 @@
   text-transform: uppercase;
 }
 
+.nr-callout-scope {
+  position: absolute;
+  top: -0.8rem;
+  right: 1rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 1rem;
+  background: #ffb454;
+  color: #0d1b1b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.nr-callout-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: #9fb8b8;
+}
+
 .nr-callout-title {
   font-size: 1rem;
   color: #1ce783;

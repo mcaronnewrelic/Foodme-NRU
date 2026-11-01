@@ -4,6 +4,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
+import { NrCheckComponent } from '../nr-check/nr-check';
 import { RestaurantService } from '../../services/restaurant.service';
 import { CartService } from '../../services/cart.service';
 import { CustomerService } from '../../services/customer.service';
@@ -11,7 +12,7 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [RouterModule, HeaderComponent, FormsModule, NrCalloutComponent],
+  imports: [RouterModule, HeaderComponent, FormsModule, NrCalloutComponent, NrCheckComponent],
   templateUrl: './menu.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu.css'

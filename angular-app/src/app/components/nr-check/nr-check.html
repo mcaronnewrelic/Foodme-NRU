@@ -1,0 +1,59 @@
+@if (config.showCallouts()) {
+  <div class="nr-check">
+    <p class="nr-check-question">
+      <i class="fas fa-circle-question me-1"></i><strong>Check yourself:</strong> {{ question }}
+    </p>
+
+    @if (solved) {
+      <p class="nr-check-result nr-check-correct">
+        <i class="fas fa-circle-check me-1"></i>Correct{{ attempts > 1 ? ' — solved in ' + attempts + ' tries' : ' — first try' }}.
+        @if (proves) { <span class="nr-check-proves">{{ proves }}</span> }
+      </p>
+    } @else {
+      @switch (kind) {
+        @case ('choice') {
+          <div class="nr-check-options">
+            @for (option of options; track option) {
+              <label class="nr-check-option">
+                <input type="radio" [name]="'nr-check-' + questionId" [value]="option"
+                       [checked]="selected() === option" (change)="selected.set(option)">
+                {{ option }}
+              </label>
+            }
+          </div>
+        }
+        @case ('multi') {
+          <div class="nr-check-options">
+            @for (option of options; track option) {
+              <label class="nr-check-option">
+                <input type="checkbox" [value]="option"
+                       [checked]="selectedMulti().has(option)"
+                       (change)="toggleMulti(option, $any($event.target).checked)">
+                {{ option }}
+              </label>
+            }
+          </div>
+        }
+        @case ('number') {
+          <input type="number" class="form-control form-control-sm nr-check-entry"
+                 [ngModel]="entry()" (ngModelChange)="entry.set($event)" placeholder="Your answer">
+        }
+        @case ('text') {
+          <input type="text" class="form-control form-control-sm nr-check-entry"
+                 [ngModel]="entry()" (ngModelChange)="entry.set($event)" placeholder="Your answer">
+        }
+      }
+
+      <button type="button" class="btn btn-sm nr-check-btn" [disabled]="!canSubmit" (click)="submit()">
+        Check my answer
+      </button>
+
+      @if (feedback() === 'wrong') {
+        <p class="nr-check-result nr-check-wrong">
+          <i class="fas fa-circle-xmark me-1"></i>Not what the data says — check the Find result and try again.
+          @if (attempts > 0) { <span class="nr-check-attempts">Attempt {{ attempts + 1 }} coming up.</span> }
+        </p>
+      }
+    }
+  </div>
+}

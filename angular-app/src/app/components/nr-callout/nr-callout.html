@@ -1,9 +1,12 @@
 @if (config.showCallouts()) {
   <aside class="nr-callout">
     <span class="nr-callout-label"><i class="fas fa-eye me-1"></i>Behind the scenes</span>
+    @if (scope === 'cohort') {
+      <span class="nr-callout-scope"><i class="fas fa-users me-1"></i>Shows everyone's data</span>
+    }
     <h5 class="nr-callout-title">{{ title }}</h5>
     <div class="nr-callout-body"><ng-content></ng-content></div>
-    <pre #nrqlText class="nr-callout-nrql">{{ nrql }}</pre>
+    <pre #nrqlText class="nr-callout-nrql">{{ resolvedNrql }}</pre>
     <button type="button" class="btn btn-sm nr-callout-btn nr-callout-btn-alt me-2" (click)="copyNrql()">
       {{ copyState === 'copied' ? 'Copied' : copyState === 'selected' ? 'Selected — hold to copy' : 'Copy NRQL' }} <i class="fas fa-copy ms-1"></i>
     </button>
@@ -17,5 +20,9 @@
         Open Errors Inbox <i class="fas fa-arrow-up-right-from-square ms-1"></i>
       </a>
     }
+    @if (showAccountNote) {
+      <p class="nr-callout-note">Opens in the shared demo account — sign in there first. In your own account the query runs but finds no OrderUp data.</p>
+    }
+    <ng-content select="app-nr-check"></ng-content>
   </aside>
 }
