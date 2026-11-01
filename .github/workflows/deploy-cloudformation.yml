@@ -198,6 +198,10 @@ jobs:
           # account ingest key only needs this secret updated + a code deploy.
           # (Same secret the stack deploy installs the key from.)
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          # The APM/browser app name in New Relic. Synced into the instance
+          # .env by deploy-code.sh; changing it here renames the app (a new
+          # entity is created - see the rename PR).
+          NEW_RELIC_APP_NAME: 'OrderUp'
         run: bash cloudformation/deploy-code.sh -e "$ENVIRONMENT" -r "$AWS_REGION"
 
       - name: Record the deployment in New Relic

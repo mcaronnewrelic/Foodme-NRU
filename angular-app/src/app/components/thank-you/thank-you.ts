@@ -20,5 +20,5 @@ export class ThankYouComponent {
   readonly transactionNrql =
     `SELECT customer, restaurant, itemCount, orderTotal, userID, orderId, duration FROM Transaction WHERE requestId = '${this.requestId}' SINCE 1 day ago`;
   readonly metricsNrql =
-    "SELECT count(newrelic.timeslice.value), sum(newrelic.timeslice.value) FROM Metric WHERE appName = 'FoodMe' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES SINCE 1 day ago";
+    "SELECT count(newrelic.timeslice.value), sum(newrelic.timeslice.value) FROM Metric WHERE appName = 'OrderUp' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES SINCE 1 day ago";
 }

@@ -18,9 +18,9 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 })
 export class MenuComponent implements OnInit {
   readonly menuStatusNrql =
-    "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri, http.statusCode SINCE 1 day ago";
+    "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri, http.statusCode SINCE 1 day ago";
   readonly menuNrql =
-    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
+    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
 
   restaurant = signal<Restaurant | null>(null);
   loading = signal(true);

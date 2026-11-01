@@ -618,7 +618,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       // The client's demoCode (spec section 1), if it sent a well-formed one:
       // stamped on the transaction and the Order event so the order is
       // findable by code as well as by requestId.
-      const demoCode = /^FM-[A-Z0-9]{4}$/.test(order.demoCode || '') ? order.demoCode : null;
+      const demoCode = /^OU-[A-Z0-9]{4}$/.test(order.demoCode || '') ? order.demoCode : null;
 
       // Add New Relic monitoring
       newrelic.addCustomAttributes({

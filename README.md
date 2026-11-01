@@ -1,4 +1,4 @@
-# 🍕 FoodMe - Restaurant Ordering Application
+# 🍕 OrderUp - Restaurant Ordering Application
 
 [![Node.js](https://img.shields.io/badge/Node.js-24-green.svg)](https://nodejs.org/)
 [![Angular](https://img.shields.io/badge/Angular-22-red.svg)](https://angular.io/)
@@ -25,7 +25,7 @@ A modern, full-stack restaurant ordering application built with Angular 22 front
 
 ## 🎯 Project Overview
 
-FoodMe is a demonstration application that showcases modern web development practices, security implementations, and operational excellence. Originally designed as an educational workshop application, it has evolved into a production-ready example of:
+OrderUp is a demonstration application that showcases modern web development practices, security implementations, and operational excellence. Originally designed as an educational workshop application, it has evolved into a production-ready example of:
 
 - **Modern Frontend**: Angular 22 with TypeScript, responsive design, and component-based architecture
 - **Robust Backend**: Node.js/Express server with RESTful APIs and structured data handling
@@ -139,7 +139,7 @@ npm run dev
 
 ## � Project Structure
 
-The FoodMe project is organized for clarity and ease of development:
+The OrderUp project is organized for clarity and ease of development:
 
 ```
 foodme/
@@ -274,7 +274,7 @@ PORT=3000
 
 ### DevContainer & Docker Compose Configurations
 
-FoodMe includes multiple Docker Compose configurations to support different development environments:
+OrderUp includes multiple Docker Compose configurations to support different development environments:
 
 #### Main Configuration (`docker-compose.yml`)
 - **Purpose**: Production-ready setup with full New Relic monitoring

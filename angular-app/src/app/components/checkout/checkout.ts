@@ -26,7 +26,7 @@ interface PaymentInfo {
 })
 export class CheckoutComponent implements OnInit {
   readonly checkoutNrql =
-    "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/POST//api/order' SINCE 1 day ago";
+    "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' SINCE 1 day ago";
 
   submitting = signal(false);
   

@@ -25,7 +25,7 @@ export class CustomerService {
   private loadFromStorage(): Customer {
     if (typeof localStorage !== 'undefined') {
       try {
-        const stored = localStorage.getItem('foodme-customer');
+        const stored = localStorage.getItem('orderup-customer');
         if (stored) {
           const parsed = JSON.parse(stored);
           // Email is no longer collected (it was a PII risk in a shared
@@ -62,7 +62,7 @@ export class CustomerService {
   private saveToStorage(customer: Customer) {
     if (typeof localStorage !== 'undefined') {
       try {
-        localStorage.setItem('foodme-customer', JSON.stringify(customer));
+        localStorage.setItem('orderup-customer', JSON.stringify(customer));
       } catch {
         // Silently fail if localStorage is not available
       }
@@ -88,7 +88,7 @@ export class CustomerService {
   clearCustomer() {
     this.customerSignal.set({});
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('foodme-customer');
+      localStorage.removeItem('orderup-customer');
     }
   }
 }

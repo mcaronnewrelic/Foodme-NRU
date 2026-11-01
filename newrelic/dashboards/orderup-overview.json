@@ -1,6 +1,6 @@
 {
-  "name": "FoodMe Overview",
-  "description": "Orders, menus and browser activity for FoodMe. The queries match the 'Behind the scenes' callouts on the site.",
+  "name": "OrderUp Overview",
+  "description": "Orders, menus and browser activity for OrderUp. The queries match the 'Behind the scenes' callouts on the site.",
   "permissions": "PUBLIC_READ_WRITE",
   "pages": [
     {
@@ -24,7 +24,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'FoodMe' SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'OrderUp' SINCE 1 week ago"
               }
             ]
           }
@@ -46,7 +46,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'FoodMe' TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'OrderUp' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -68,7 +68,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'FoodMe' FACET restaurant SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
           }
@@ -90,7 +90,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'FoodMe' FACET restaurant SINCE 1 week ago"
+                "query": "SELECT sum(orderTotal) AS 'Revenue' FROM `Order` WHERE appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
           }
@@ -112,7 +112,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/POST//api/order' TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -134,7 +134,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(newrelic.timeslice.value) FROM Metric WHERE appName = 'FoodMe' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT count(newrelic.timeslice.value) FROM Metric WHERE appName = 'OrderUp' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -156,7 +156,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = 'WebTransaction/Expressjs/POST//api/order' FACET error.message SINCE 1 week ago"
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = 'WebTransaction/Expressjs/POST//api/order' FACET error.message SINCE 1 week ago"
               }
             ]
           }
@@ -184,7 +184,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET http.statusCode TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET http.statusCode TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -206,7 +206,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, http.statusCode SINCE 1 week ago LIMIT 50"
+                "query": "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, http.statusCode SINCE 1 week ago LIMIT 50"
               }
             ]
           }
@@ -228,7 +228,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*), latest(timestamp) AS 'Last seen' FROM TransactionError WHERE appName = 'FoodMe' AND transactionName = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, error.message SINCE 1 week ago"
+                "query": "SELECT count(*), latest(timestamp) AS 'Last seen' FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, error.message SINCE 1 week ago"
               }
             ]
           }
@@ -250,7 +250,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT average(duration) FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug SINCE 1 week ago LIMIT 20"
+                "query": "SELECT average(duration) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug SINCE 1 week ago LIMIT 20"
               }
             ]
           }
@@ -272,7 +272,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'FoodMe' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -294,7 +294,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'FoodMe' AND transactionName NOT LIKE '%/simulate/%' FACET transactionName, error.message SINCE 1 week ago"
+                "query": "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName NOT LIKE '%/simulate/%' FACET transactionName, error.message SINCE 1 week ago"
               }
             ]
           }
@@ -322,7 +322,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT uniqueCount(session) AS 'Sessions', count(*) AS 'Page views' FROM PageView WHERE appName = 'FoodMe' SINCE 1 week ago"
+                "query": "SELECT uniqueCount(session) AS 'Sessions', count(*) AS 'Page views' FROM PageView WHERE appName = 'OrderUp' SINCE 1 week ago"
               }
             ]
           }
@@ -344,7 +344,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM PageView WHERE appName = 'FoodMe' FACET pageUrl SINCE 1 week ago LIMIT 20"
+                "query": "SELECT count(*) FROM PageView WHERE appName = 'OrderUp' FACET pageUrl SINCE 1 week ago LIMIT 20"
               }
             ]
           }
@@ -366,7 +366,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM JavaScriptError WHERE appName = 'FoodMe' FACET errorMessage, page SINCE 1 week ago"
+                "query": "SELECT count(*) FROM JavaScriptError WHERE appName = 'OrderUp' FACET errorMessage, page SINCE 1 week ago"
               }
             ]
           }
@@ -388,7 +388,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM AjaxRequest WHERE appName = 'FoodMe' AND httpResponseCode >= 500 FACET requestUrl SINCE 1 week ago"
+                "query": "SELECT count(*) FROM AjaxRequest WHERE appName = 'OrderUp' AND httpResponseCode >= 500 FACET requestUrl SINCE 1 week ago"
               }
             ]
           }
@@ -410,7 +410,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM PageAction WHERE appName = 'FoodMe' FACET actionName SINCE 1 week ago"
+                "query": "SELECT count(*) FROM PageAction WHERE appName = 'OrderUp' FACET actionName SINCE 1 week ago"
               }
             ]
           }
@@ -432,7 +432,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE appName = 'FoodMe' AND actionName = 'error_simulation_triggered' TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE appName = 'OrderUp' AND actionName = 'error_simulation_triggered' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -454,7 +454,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) FROM PageView, AjaxRequest, PageAction, JavaScriptError WHERE appName = 'FoodMe' AND enduser.id IS NOT NULL FACET enduser.id, eventType() SINCE 1 week ago"
+                "query": "SELECT count(*) FROM PageView, AjaxRequest, PageAction, JavaScriptError WHERE appName = 'OrderUp' AND enduser.id IS NOT NULL FACET enduser.id, eventType() SINCE 1 week ago"
               }
             ]
           }
