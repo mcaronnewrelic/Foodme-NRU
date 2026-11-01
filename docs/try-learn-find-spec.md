@@ -65,6 +65,15 @@ browser.nru.to”, copy that pattern, not its code.
 
 **Update (2026-10-31, Michael's decisions, built in PR #10, stacked on the §1 PR #9):** the customer's *name is the demoCode* — there is no personal name anywhere. Email is **removed from the product entirely** (form, model, order payload, NR attributes, the by-email lookup endpoint, the customers table on fresh installs): in a shared demo it was a PII trap. Instead, the Customer page pre-fills a generated sample customer — name = demoCode, phone in the reserved (503) 555-01xx fictional range, generated Portland address — with copy asking visitors not to substitute real details. Order lookup is by sample phone only; server user IDs derive from the name (the code). Missions below should treat `demoCode`/`enduser.id` as the only identity; nothing in §2 may ask for or key on a name or email.
 
+**Update (2026-11-01, SIM- codes):** the browser.nru.to exclusion
+convention is adopted: simulated visitors may carry SIM-XXXX codes
+(the identity service and the server's order-payload validation both
+accept the prefix; a code can be pinned with ?demoCode= or a
+pre-seeded localStorage entry), and the scripted dashboards exclude
+them with demoCode NOT LIKE 'SIM-%'. No simulated traffic exists yet;
+this is the future-proofing, documented in docs/MISSIONS.md.
+
+
 browser.nru.to's loop works because `demoCode` ties a visitor to their data.
 Foodme has a name → `setUserId()` → `enduser.id`, which is real but not enough:
 names collide in a workshop, and several data types are easier to filter by a

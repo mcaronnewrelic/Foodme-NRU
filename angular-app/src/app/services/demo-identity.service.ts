@@ -7,7 +7,7 @@ import { NewRelicService } from './newrelic.service';
 const DEMO_CODE_STORAGE_KEY = 'orderup-demo-code';
 // Unambiguous alphabet: no 0/O, 1/I/L to confuse when read aloud or copied.
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_PATTERN = /^OU-[A-Z0-9]{4}$/;
+const CODE_PATTERN = /^(OU|SIM)-[A-Z0-9]{4}$/;
 
 /**
  * The visitor's demoCode (spec: try-learn-find-spec.md section 1).
@@ -17,6 +17,12 @@ const CODE_PATTERN = /^OU-[A-Z0-9]{4}$/;
  * enduser.id. It is stamped on everything the browser agent sends, and the
  * cart service includes it in orders so the server can stamp it on the
  * order transaction and the Order event too.
+ *
+ * Simulated visitors carry SIM-XXXX instead (the browser.nru.to
+ * convention), so cohort queries can leave them out with
+ * demoCode NOT LIKE 'SIM-%'. A code is pinned for a visit either by
+ * pre-seeding localStorage before the app loads, or with a ?demoCode=
+ * URL parameter - the same trick ?callouts= plays for the callouts.
  */
 @Injectable({
   providedIn: 'root'
@@ -47,6 +53,13 @@ export class DemoIdentityService {
 
   private loadOrCreateCode(): string {
     try {
+      // A code handed over in the URL wins over the stored one: it is how
+      // a simulated visitor pins its SIM- identity for the visit.
+      const fromUrl = new URLSearchParams(location.search).get('demoCode');
+      if (fromUrl && CODE_PATTERN.test(fromUrl)) {
+        localStorage.setItem(DEMO_CODE_STORAGE_KEY, fromUrl);
+        return fromUrl;
+      }
       const stored = localStorage.getItem(DEMO_CODE_STORAGE_KEY);
       if (stored && CODE_PATTERN.test(stored)) return stored;
       const created = this.generateCode();

@@ -90,6 +90,30 @@ collected nowhere: in a shared demo account it would be a PII trap.
 The sample phone sits in the reserved (503) 555-01xx range, and order
 lookup is by that phone only.
 
+## Simulated traffic (SIM- codes)
+
+Nothing generates simulated traffic yet — no simulator, no synthetic
+monitors — but the convention is in place so it is excludable from the
+day it exists, exactly as on browser.nru.to. A simulated visitor
+carries a code starting **SIM-** instead of OU-: seed it by
+pre-loading localStorage `orderup-demo-code` before the app starts, or
+by linking to any page with `?demoCode=SIM-XXXX` (the identity service
+accepts both prefixes and the URL wins; the server likewise accepts
+both on the order payload). Because the sample customer's name is the
+code, a simulated visitor's data is marked everywhere a real one's is:
+`demoCode` on browser events, `Order` events and `OrderupQuizAnswer`,
+and `userID = user_sim_xxxx` on its APM transactions.
+
+Exclusion recipes for queries:
+
+- Event data with the code: `WHERE demoCode NOT LIKE 'SIM-%'` — the
+  scripted dashboards (§8) already carry this on their cohort queries,
+  including the demoCode variable itself.
+- Transaction queries (no `demoCode` there): where the transaction
+  carries the derived id, `WHERE userID NOT LIKE 'user_sim_%'`.
+- Custom metrics (`Custom/Orders/*`) carry no identity at all and
+  cannot exclude anyone — they are cohort by nature.
+
 ## State and recorded data
 
 - Progress lives in localStorage `orderup-missions`:
