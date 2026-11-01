@@ -81,10 +81,17 @@ export class MissionProgressService {
     this.save();
   }
 
-  /** A mission is checked when its check question is solved. */
+  /** A mission is checked when its check question (or its alternative) is solved. */
   isChecked(missionId: string): boolean {
     const mission = missionById(missionId);
-    return mission ? this.isSolved(missionId, mission.questionId) : false;
+    if (!mission) return false;
+    return this.isSolved(missionId, mission.questionId)
+      || (mission.altQuestionId ? this.isSolved(missionId, mission.altQuestionId) : false);
+  }
+
+  /** Questions solved on the first attempt - the hub's first-try score (spec section 6). */
+  firstTryCount(): number {
+    return Object.values(this.state().questions).filter(q => q.solved && q.attempts === 1).length;
   }
 
   checkedCount(): number {

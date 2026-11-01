@@ -53,6 +53,51 @@
           </a>
         </div>
         
+        <!-- Your journey: the mission hub (spec section 6, behind the scenes only) -->
+        @if (nrConfig.showCallouts()) {
+          <div class="mt-5 pt-4 border-top">
+            <h4 class="text-center mb-3 text-muted">
+              <i class="fas fa-route me-2"></i>
+              Your journey
+            </h4>
+            <p class="text-muted small text-center mb-3">
+              {{ progress.checkedCount() }} of 5 missions checked · {{ progress.firstTryCount() }} solved on the first try.
+              The class's answers land on the
+              <a href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">OrderUp Overview dashboard</a>
+              once the knowledge-checks page joins it.
+            </p>
+            <ol class="fm-steps list-group list-group-numbered">
+              @for (mission of missions; track mission.id) {
+                <li class="list-group-item d-flex align-items-center justify-content-between">
+                  <div class="ms-2">
+                    <strong>{{ mission.title }}</strong>
+                    @if (mission.id === 'mission-5') {
+                      <span class="text-muted small"> — this page</span>
+                    }
+                  </div>
+                  @if (progress.isChecked(mission.id)) {
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Checked</span>
+                  } @else if (progress.missionState(mission.id).tried || progress.missionState(mission.id).found) {
+                    <a [routerLink]="mission.link" class="badge bg-warning text-dark text-decoration-none">In progress</a>
+                  } @else {
+                    <a [routerLink]="mission.link" class="badge bg-secondary text-decoration-none">Start</a>
+                  }
+                </li>
+              }
+            </ol>
+            @if (progress.checkedCount() === 5) {
+              <div class="alert alert-success text-center mt-4">
+                <strong>Case closed.</strong> All five missions checked — every stop on the journey, found in the data.
+                <div class="mt-2">
+                  <a class="btn btn-success btn-sm" href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">
+                    See the OrderUp Overview dashboard <i class="fas fa-arrow-up-right-from-square ms-1"></i>
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
         <!-- Demo failure scenario: instructor controls (behind the scenes only) -->
         @if (nrConfig.showCallouts()) {
           <div class="mt-5 pt-4 border-top">
@@ -123,16 +168,40 @@
             </button>
           </div>
 
-          <app-nr-callout title="The error you just caused" [nrql]="errorNrql" [showBrowserErrors]="true">
+          <app-nr-callout title="The error you just caused" [nrql]="errorNrql" [showBrowserErrors]="true"
+            missionId="mission-5"
+            tryText="Press Simulate Synchronous Error above — one click, three traces: the three callouts here.">
             The button calls <code>noticeError()</code> after the server returns a 500.
             The error lands in <b>JavaScriptError</b>, and in Errors Inbox.
           </app-nr-callout>
-          <app-nr-callout title="The page action" [nrql]="actionNrql" buttonLabel="See the page action">
+          <app-nr-callout title="The page action" [nrql]="actionNrql" buttonLabel="See the page action"
+            missionId="mission-5">
             <code>addPageAction('error_simulation_triggered')</code> records which endpoint failed and why.
+            <app-nr-check missionId="mission-5" questionId="simulated-error-type" kind="text"
+              question="In the PageAction data, what errorType did your simulated error record?"
+              answer="sync"
+              proves="The page action carries the error's shape — type, endpoint, summary, duration — alongside the error itself."></app-nr-check>
           </app-nr-callout>
-          <app-nr-callout title="How long it took" [nrql]="timingNrql" buttonLabel="See the timing">
+          <app-nr-callout title="How long it took" [nrql]="timingNrql" buttonLabel="See the timing"
+            missionId="mission-5">
             The page action also carries <b>durationMs</b>, the time from click to the failed response.
           </app-nr-callout>
+
+          <!-- Mission 5, second half: hunt the planted failure (only when one is armed) -->
+          @if (nrConfig.showCallouts() && nrConfig.armedScenario()) {
+            <app-nr-callout title="Hunt the planted failure" [nrql]="huntNrql" buttonLabel="See the failures"
+              missionId="mission-5"
+              tryText="Reproduce the failure below, then read its exact error message in the data.">
+              Something in the app is failing on purpose right now: <b>{{ armedDescription() }}</b>
+              Reproduce it — open the page, or place the order — then run this query. It lists the
+              failing transactions with their exact error messages; from any of them you can open
+              the trace, or find the same error grouped in Errors Inbox.
+              <app-nr-check missionId="mission-5" questionId="armed-error-message" kind="text"
+                question="What is the exact error message on the failing transaction?"
+                [answer]="armedErrorMessage"
+                proves="You found a planted failure in a live system and read its message from the data — the whole exercise in one line."></app-nr-check>
+            </app-nr-callout>
+          }
         </div>
       </div>
     </div>
