@@ -3,6 +3,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { NrConfigService } from '../../nr-config';
+import { DemoIdentityService } from '../../services/demo-identity.service';
 
 @Component({
   selector: 'app-header',
@@ -16,7 +17,11 @@ export class HeaderComponent {
   showHelpDropdown = false;
   showMobileMenu = false;
 
-  constructor(public cartService: CartService, public nrConfig: NrConfigService) {}
+  constructor(
+    public cartService: CartService,
+    public nrConfig: NrConfigService,
+    public demoIdentity: DemoIdentityService
+  ) {}
 
   get cartItemCount() {
     return this.cartService.totalItems();

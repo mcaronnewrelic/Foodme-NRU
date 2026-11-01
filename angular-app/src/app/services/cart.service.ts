@@ -2,12 +2,14 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CartItem, Customer } from '../models/restaurant.model';
+import { DemoIdentityService } from './demo-identity.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
   private http = inject(HttpClient);
+  private demoIdentity = inject(DemoIdentityService);
   private cartItemsSignal = signal<CartItem[]>([]);
 
   cartItems = this.cartItemsSignal.asReadonly();
@@ -94,6 +96,9 @@ export class CartService {
         name: restaurant.name
       },
       items: orderItems,
+      // The server stamps this on the order transaction and Order event,
+      // so a student's order is findable by code as well as requestId.
+      demoCode: this.demoIdentity.code(),
       total: this.totalPrice(),
       timestamp: new Date().toISOString()
     };
