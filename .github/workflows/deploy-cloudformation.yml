@@ -13,6 +13,10 @@
 #            NEW_RELIC_LICENSE_KEY, NEW_RELIC_API_KEY, NEW_RELIC_APP_ID (entity GUID, for deployment markers).
 #            They can be set per GitHub environment (staging, production) or for the whole repository.
 # Variable:  AWS_REGION (optional). Default: us-west-2.
+# Secrets (cont.): NEW_RELIC_ACCOUNT_ID and NEW_RELIC_BROWSER_ENTITY_GUID (optional): when set, code deploys
+#            sync them into the instance .env (they power /api/nr-config). Identifiers rather than true
+#            secrets, but stored as secrets so there is one place to look; deploy-code.sh treats them as
+#            non-secret configuration either way.
 name: deploy-cloudformation
 
 on:
@@ -182,6 +186,10 @@ jobs:
       - name: Deploy to the instance (through SSM, no SSH)
         env:
           ENVIRONMENT: ${{ inputs.environment || 'staging' }}
+          # Synced into the instance .env by deploy-code.sh when set (see its
+          # SYNC_ENV_KEYS). Non-secret identifiers, so variables, not secrets.
+          NEW_RELIC_ACCOUNT_ID: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
+          NEW_RELIC_BROWSER_ENTITY_GUID: ${{ secrets.NEW_RELIC_BROWSER_ENTITY_GUID }}
         run: bash cloudformation/deploy-code.sh -e "$ENVIRONMENT" -r "$AWS_REGION"
 
       - name: Record the deployment in New Relic
