@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { NrCheckComponent } from '../nr-check/nr-check';
+import { InvestigationComponent } from '../investigation/investigation';
+import { INVESTIGATIONS } from '../../services/investigations';
 import { MissionProgressService } from '../../services/mission-progress.service';
 import { MISSIONS } from '../../services/missions';
 import { NewRelicService } from '../../services/newrelic.service';
@@ -14,7 +16,7 @@ import { errorToJson, flattenError, getErrorSummary, getUserFriendlyErrorMessage
 
 @Component({
   selector: 'app-how-it-works',
-  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent, InvestigationComponent],
   templateUrl: './how-it-works.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './how-it-works.css'
@@ -31,6 +33,7 @@ export class HowItWorksComponent {
     "SELECT timestamp, error.message, transactionName, requestId FROM TransactionError SINCE 1 day ago";
 
   protected readonly missions = MISSIONS;
+  protected readonly investigations = INVESTIGATIONS;
 
   // Instructor controls for the demo failure scenario
   readonly restaurantNames = signal<string[]>([]);

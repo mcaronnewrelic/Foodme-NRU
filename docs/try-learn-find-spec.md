@@ -568,6 +568,18 @@ investigation, not a fault) *(Added 2026-11-01.)*
 15. I10 — one env-gated metric pair plus its page; independent of the
     fault investigations and shippable any time after §8.
 
+**Status (2026-11-01):** the investigations platform and I3 are built —
+an investigations registry, a gated checkpoint component on How It
+Works (callout mode only, sequential unlock, answers recorded as
+`inv-<slug>`), and I3 as the first tenant. I3's checkpoint answers were
+derived from the code, not assumed: the menu read is 1 API call and 2
+database queries (restaurant row + items, fixed); a 4-item order is 10
+datastore queries (customer + order + 2 per item), with the check's
+tolerance absorbing whether a given trace shows BEGIN/COMMIT spans —
+confirm once against a live staging trace. I2 follows, bringing the
+first arm switch and the §7 banner naming the live investigation.
+
+
 ### 11.4 Acceptance tests (extends §10)
 
 - **A9** With exactly one investigation armed, the §7 banner names it, its
