@@ -578,6 +578,12 @@ datastore queries (customer + order + 2 per item), with the check's
 tolerance absorbing whether a given trace shows BEGIN/COMMIT spans —
 confirm once against a live staging trace. I2 follows, bringing the
 first arm switch and the §7 banner naming the live investigation.
+ I2 built (2026-11-01): `DEMO_DB_SLOW_ORDER_QUERY` arms a pg_sleep
+inside the order transaction (env > persisted manual override via
+`/api/demo/investigations`, instructor controls on How It Works); the
+header banner names the live investigation; armed investigations
+render the A10 not-live state until armed. I2's span-share check
+(90% ±10) assumes the default 3s arm.
 
 
 ### 11.4 Acceptance tests (extends §10)

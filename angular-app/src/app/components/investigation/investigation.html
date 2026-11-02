@@ -3,16 +3,27 @@
     <h3>🔍 {{ def.title }}</h3>
     @if (allSolved) {
       <span class="investigation-status closed">Case closed ✓</span>
-    } @else if (def.live === 'always') {
+    } @else if (isLive) {
       <span class="investigation-status live">● Live now</span>
     } @else {
-      <span class="investigation-status armed">Armed by your instructor</span>
+      <span class="investigation-status armed">Not live right now</span>
     }
   </header>
   <p class="investigation-summary">{{ def.summary }}</p>
   <p class="investigation-live-note">{{ def.liveNote }}</p>
   <p class="investigation-progress">{{ solvedCount }} of {{ def.checkpoints.length }} checkpoints</p>
 
+  @if (!isLive) {
+    <section class="checkpoint not-live">
+      <p>
+        <strong>Not live right now.</strong> This investigation is armed by your instructor —
+        when it's live, the banner at the top of the site names it and the checkpoints open here.
+        Nothing records until then.
+      </p>
+    </section>
+  }
+
+  @if (isLive) {
   @for (cp of def.checkpoints; track cp.questionId; let i = $index) {
     @if (solved(cp)) {
       <section class="checkpoint solved">
@@ -68,5 +79,6 @@
       <h4>Case closed</h4>
       <p>{{ def.caseClosed }}</p>
     </section>
+  }
   }
 </article>

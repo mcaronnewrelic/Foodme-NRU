@@ -55,6 +55,7 @@ export class HowItWorksComponent {
 
     // Current scenario state, and the pick-lists for arming a different one
     this.nrConfig.refreshDemoState();
+    this.nrConfig.refreshInvestigationState();
     this.http.get<{ name: string; menuItems?: { name: string }[] }[]>('/api/restaurant').subscribe({
       next: restaurants => {
         this.restaurantNames.set(restaurants.map(r => r.name));

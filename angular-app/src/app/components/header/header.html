@@ -124,6 +124,21 @@
   </div>
 </nav>
 
+<!-- Behind-the-scenes only: which investigation is live (spec section 11) -->
+@if (nrConfig.showCallouts() && nrConfig.armedInvestigation(); as inv) {
+  <div class="scenario-banner">
+    <i class="fas fa-magnifying-glass me-2"></i>
+    <span>
+      <strong>Investigation live:</strong> {{ NrConfigService.describeInvestigation(inv) }}
+      <a routerLink="/how-it-works">Open the investigation</a>
+      @switch (inv.source) {
+        @case ('manual') { <span class="scenario-source">(set by the instructor)</span> }
+        @case ('env') { <span class="scenario-source">(set in the server environment)</span> }
+      }
+    </span>
+  </div>
+}
+
 <!-- Behind-the-scenes only: which demo failure is armed, so nobody has to guess -->
 @if (nrConfig.showCallouts() && nrConfig.armedScenario(); as scenario) {
   <div class="scenario-banner">

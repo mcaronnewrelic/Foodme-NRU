@@ -18,6 +18,18 @@ export interface DemoFailureState {
   armed: { kind: ScenarioKind; target: string; targetName: string } | null;
 }
 
+export interface ArmedInvestigation {
+  slug: string;
+  /** For I2: the slow query's length in seconds. */
+  seconds: number;
+  source: 'env' | 'manual';
+}
+
+export interface DemoInvestigationState {
+  source: 'env' | 'manual' | 'none';
+  armed: { slug: string; seconds: number } | null;
+}
+
 const NR_BASE_URL = 'https://one.newrelic.com';
 const CALLOUTS_STORAGE_KEY = 'foodme-nr-callouts';
 const CALLOUTS_SHOWN_BY_DEFAULT = false;
@@ -33,14 +45,17 @@ export class NrConfigService {
   /** The demo failure scenario the server currently has armed, if any. */
   readonly armedScenario = signal<ArmedScenario | null>(null);
   readonly demoState = signal<DemoFailureState | null>(null);
+  readonly armedInvestigation = signal<ArmedInvestigation | null>(null);
+  readonly investigationState = signal<DemoInvestigationState | null>(null);
 
   constructor(private http: HttpClient) {
-    http.get<{ accountId: string | null; browserEntityGuid: string | null; armedScenario: ArmedScenario | null }>('/api/nr-config')
+    http.get<{ accountId: string | null; browserEntityGuid: string | null; armedScenario: ArmedScenario | null; armedInvestigation: ArmedInvestigation | null }>('/api/nr-config')
       .subscribe({
         next: config => {
           this.accountId.set(config.accountId);
           this.browserEntityGuid.set(config.browserEntityGuid);
           this.armedScenario.set(config.armedScenario);
+          this.armedInvestigation.set(config.armedInvestigation);
         },
         error: () => {}
       });
@@ -84,6 +99,55 @@ export class NrConfigService {
       next: state => this.applyDemoState(state),
       error: () => {}
     });
+  }
+
+  /** Investigation titles by slug, for banners and panels. */
+  static investigationTitle(slug: string): string {
+    switch (slug) {
+      case 'its-not-checkout': return 'It’s not checkout';
+      default: return slug;
+    }
+  }
+
+  /** Plain-language description of the armed investigation, for the banner. */
+  static describeInvestigation(a: ArmedInvestigation): string {
+    return `“${NrConfigService.investigationTitle(a.slug)}” is live: every order’s database work includes a ${a.seconds}s slow query.`;
+  }
+
+  refreshInvestigationState(): void {
+    this.http.get<DemoInvestigationState>('/api/demo/investigations').subscribe({
+      next: state => this.applyInvestigationState(state),
+      error: () => {}
+    });
+  }
+
+  /** Arm I2 manually (instructor override). */
+  armInvestigation(seconds = 3): void {
+    this.http.post<DemoInvestigationState>('/api/demo/investigations', { slug: 'its-not-checkout', seconds }).subscribe({
+      next: state => this.applyInvestigationState(state),
+      error: () => {}
+    });
+  }
+
+  /** Arm no investigation (instructor override), until cleared. */
+  disarmInvestigation(): void {
+    this.http.post<DemoInvestigationState>('/api/demo/investigations', { slug: 'off' }).subscribe({
+      next: state => this.applyInvestigationState(state),
+      error: () => {}
+    });
+  }
+
+  /** Clear the manual override, back to the server environment. */
+  clearInvestigationOverride(): void {
+    this.http.delete<DemoInvestigationState>('/api/demo/investigations').subscribe({
+      next: state => this.applyInvestigationState(state),
+      error: () => {}
+    });
+  }
+
+  private applyInvestigationState(state: DemoInvestigationState): void {
+    this.investigationState.set(state);
+    this.armedInvestigation.set(state.armed ? { ...state.armed, source: state.source as ArmedInvestigation['source'] } : null);
   }
 
   private applyDemoState(state: DemoFailureState): void {
