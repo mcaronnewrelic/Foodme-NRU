@@ -19,13 +19,14 @@
         @if (nrConfig.armedInvestigation(); as inv) {
           <span>{{ NrConfigService.describeInvestigation(inv) }} (via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }})</span>
         } @else {
-          <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy; I7 locks the orders table for 15 minutes; I8 seeds 200k synthetic customers so the phone lookup has to scan for them. I6 arms itself — run <code>scripts/burst-orders.js</code> against this site and it starts and stops the investigation with the burst.</span>
+          <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy; I7 locks the orders table for 15 minutes; I8 seeds 200k synthetic customers so the phone lookup has to scan for them. I11 slips one legacy order (status 'confirmed') into the table, which freezes the order-status worker's batch — orders stop advancing while the site stays fine. I6 arms itself — run <code>scripts/burst-orders.js</code> against this site and it starts and stops the investigation with the burst.</span>
         }
       </p>
       <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('its-not-checkout', 3)">Arm I2 (3s)</button>
       <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-502-didnt-come-from-the-app')">Arm I5 (502s)</button>
       <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-table-is-locked')">Arm I7 (lock, 15 min)</button>
       <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-slow-lookup')">Arm I8 (seed history)</button>
+      <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-kitchen-never-got-the-ticket')">Arm I11 (poison order)</button>
       @if (nrConfig.armedInvestigation()?.slug === 'the-slow-lookup' && !nrConfig.armedInvestigation()?.indexApplied) {
         <button class="btn btn-sm btn-success me-2" (click)="nrConfig.applyInvestigationFix()">Apply I8 fix (create the index)</button>
       }

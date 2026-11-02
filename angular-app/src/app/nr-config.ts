@@ -138,6 +138,8 @@ export class NrConfigService {
         if (a.indexApplied) return '“The slow lookup” is live — and the index fix has been applied. The lookup should be fast again; checkpoint 6 verifies it.';
         if (a.seedStatus === 'seeding') return `“The slow lookup” is live: synthetic order history is still seeding (${a.seededCustomers ?? 0} customers so far). Give it a minute.`;
         return `“The slow lookup” is live: ${a.seededCustomers ?? 0} synthetic customers of order history are in the database, and the phone lookup has no index.`;
+      case 'the-kitchen-never-got-the-ticket':
+        return '“The kitchen never got the ticket” is live: orders have stopped advancing — the site is fine, the queue is not.';
       default:
         return `Investigation “${a.slug}” is live.`;
     }
