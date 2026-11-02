@@ -22,6 +22,14 @@ export interface ArmedInvestigation {
   slug: string;
   /** For I2: the slow query's length in seconds. Absent for other arms. */
   seconds?: number;
+  /** For I7: the lock helper's backend PID and when its window ends. */
+  lockPid?: number | null;
+  windowEndsAt?: string | null;
+  lockError?: string;
+  /** For I8: seed progress and whether the index fix has been applied. */
+  seedStatus?: 'idle' | 'seeding' | 'ready' | 'error';
+  seededCustomers?: number;
+  indexApplied?: boolean;
   source: 'env' | 'manual';
 }
 
@@ -107,6 +115,8 @@ export class NrConfigService {
       case 'its-not-checkout': return 'It’s not checkout';
       case 'the-502-didnt-come-from-the-app': return 'The 502 didn’t come from the app';
       case 'one-connection-for-the-whole-restaurant': return 'One connection for the whole restaurant';
+      case 'the-table-is-locked': return 'The table is locked';
+      case 'the-slow-lookup': return 'The slow lookup';
       default: return slug;
     }
   }
@@ -120,6 +130,14 @@ export class NrConfigService {
         return '“The 502 didn’t come from the app” is live: about half of restaurant and menu requests are dying at the proxy.';
       case 'one-connection-for-the-whole-restaurant':
         return '“One connection for the whole restaurant” is live: a simulated visitor (SIM-BST1) is placing concurrent orders.';
+      case 'the-table-is-locked':
+        return a.lockPid
+          ? `“The table is locked” is live: a helper transaction (backend PID ${a.lockPid}) is holding a lock on the orders table${a.windowEndsAt ? ` until ${new Date(a.windowEndsAt).toLocaleTimeString()}` : ''}. Placing an order will hang.`
+          : '“The table is locked” is live: a helper transaction is holding a lock on the orders table. Placing an order will hang.';
+      case 'the-slow-lookup':
+        if (a.indexApplied) return '“The slow lookup” is live — and the index fix has been applied. The lookup should be fast again; checkpoint 6 verifies it.';
+        if (a.seedStatus === 'seeding') return `“The slow lookup” is live: synthetic order history is still seeding (${a.seededCustomers ?? 0} customers so far). Give it a minute.`;
+        return `“The slow lookup” is live: ${a.seededCustomers ?? 0} synthetic customers of order history are in the database, and the phone lookup has no index.`;
       default:
         return `Investigation “${a.slug}” is live.`;
     }
@@ -135,6 +153,14 @@ export class NrConfigService {
   /** Arm an investigation manually (instructor override). */
   armInvestigation(slug: string, seconds?: number): void {
     this.http.post<DemoInvestigationState>('/api/demo/investigations', { slug, seconds }).subscribe({
+      next: state => this.applyInvestigationState(state),
+      error: () => {}
+    });
+  }
+
+  /** Apply I8's fix (index on customers.phone) while it is armed. */
+  applyInvestigationFix(): void {
+    this.http.post<DemoInvestigationState>('/api/demo/investigations', { action: 'apply-index' }).subscribe({
       next: state => this.applyInvestigationState(state),
       error: () => {}
     });

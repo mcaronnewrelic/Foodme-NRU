@@ -519,11 +519,16 @@ judged from whether the errors are JS errors (bundle) or transaction errors
   connection metrics on the dashboard, load test before/after.
 
 **I7 · The table is locked** (Postgres locks)
-- *Symptom:* placing an order hangs; browsing menus is fine; DB CPU ~0.
-- *Arm:* `DEMO_DB_LOCK` — a helper transaction that updates a row in
-  `orders` and sleeps uncommitted for a set window (started/stopped like the
-  other switches; the container entrypoint or a small admin endpoint runs it).
-- *Chain:* (1) only writes hang — reads fine (rules out general DB trouble);
+- *Symptom:* placing an order hangs; because every query shares one
+  connection (I6), the hang then spreads to the whole site; DB CPU ~0.
+- *Arm:* `DEMO_DB_LOCK` or the manual override — a helper transaction
+  on a dedicated connection takes `LOCK TABLE orders IN EXCLUSIVE MODE`
+  and holds it, idle in transaction, for a hard 15-minute window (A12).
+  (Build correction: the row UPDATE originally specced here would block
+  nothing — order inserts create new rows. A table lock is the honest
+  mechanism: it blocks order INSERTs and leaves reads alone.)
+- *Chain:* (1) an order hangs, and the stall spreads through the shared
+  connection — reads were fine until the first order queued behind it;
   (2) transaction time is *wait*, not work; (3) lock metrics — the integration
   config already sets `COLLECT_DB_LOCK_METRICS: true`: ungranted locks appear;
   (4) identify the blocked PID and what it's waiting on; (5) identify the
@@ -537,9 +542,14 @@ judged from whether the errors are JS errors (bundle) or transaction errors
 **I8 · The slow lookup** (missing index)
 - *Symptom:* the Orders lookup has been getting slower for weeks; everything
   else is fine.
-- *Arm:* `DEMO_DB_BIG_ORDERS` — seed `orders`/`order_items` with synthetic
-  history (idempotent seed script, clearly synthetic customers) so the lookup
-  column (the one the Orders page searches by) is large and unindexed.
+- *Arm:* `DEMO_DB_BIG_ORDERS` or the manual override — the server seeds
+  synthetic history itself when armed (~200k customers with (503) 555-7
+  phones and their orders, numbered SEED-*) so the lookup column
+  (`customers.phone` — the Orders page searches by phone) is large and
+  unindexed. The fix is applied from the instructor panel
+  (POST {action: 'apply-index'} creates the demo index); disarming
+  deletes the seed (cascades take the orders and items) and drops the
+  index. Seeding is idempotent — re-arming tops up to the target count.
 - *Chain:* (1) slowest query by total time, not by count; (2) its text — one
   query, big table; (3) rows examined vs returned (sequential scan evidence
   via the Postgres query-performance data); (4) the table's growth over time;
@@ -677,6 +687,28 @@ checkpoint query (PostgresqlCustomSample / active_connections) is
 carried over from section 11.0's inventory of the integration's
 custom queries - confirm its exact form against the live account
 once, the way I3's span count was confirmed.
+I7 + I8 built (2026-11-01): DemoInvestigations gains a dedicated
+admin pg client (never the app's single client; same connection
+parameters as DatabaseService) and syncSideEffects(), run at boot and
+after every arm change. On staging the DATABASE_URL user is postgres
+- the table owner - which is what makes LOCK TABLE and CREATE INDEX
+possible; the foodme_user fallback path lacks ownership and the fix
+endpoint says so honestly instead of failing silently. I7's helper
+holds LOCK TABLE orders IN EXCLUSIVE MODE for a hard 15-minute
+window (A12), sleeping client-side so its session reads idle in
+transaction; verified locally end-to-end: the app's session showed
+active / Lock / relation on INSERT INTO orders, the helper showed
+idle in transaction, a hung order stalled menu reads behind it (the
+I6 spread, now a checkpoint), and disarm restored 201s in ~6 ms. I8
+verified locally: 200k customers seeded in ~75 s (progress visible
+in the armed state), the phone lookup ran ~24 ms warm / ~192 ms cold
+unindexed against ~11 ms pre-seed baseline, and 2.4 ms after the
+panel applied the index; disarm cleanup (drop index + cascade
+delete) finished in under 20 s. Local disks are fast - staging's
+absolute numbers will be larger; the rows-examined ratio (200k vs 1)
+is the robust evidence either way. One more NRQL spelling is
+provisional for the live-confirmation pass, alongside I6's:
+PostgresqlDatabaseSample / locksWaiting in I7's lock checkpoint.
 
 
 ### 11.4 Acceptance tests (extends §10)
