@@ -618,6 +618,70 @@ investigation, not a fault) *(Added 2026-11-01.)*
   reach for events when the question is per-entity, and apply the same
   cardinality arithmetic to OTel attribute design.
 
+**I11 · The kitchen never got the ticket** (async processing - the
+order-status worker) - specced 2026-11-01 from Michael's observation
+that orders sit in `pending` forever, and his question: if orders
+progressed asynchronously, could an investigation live in the
+*processing* rather than the site - its evidence in the Postgres
+data? Yes, and the shape is the classic poison-pill queue failure.
+
+- *Prerequisite feature (build first; it stands alone):* an
+  order-status worker. Today nothing ever updates `orders.status` -
+  it is written `pending` at insert (server/database.js) and frozen.
+  The worker is an in-process poller with its OWN pg client (the
+  demo-investigations admin client is the precedent; never the app's
+  single client - that separation is what keeps the site unaffected
+  when the worker is sick). Every 20s it advances the due batch in
+  one transaction: pending -> preparing at 45s old, preparing ->
+  out_for_delivery at +75s, out_for_delivery -> delivered at +75s
+  (about three minutes end to end, so a student watches their own
+  order move on My Orders). Each poll runs as an APM background
+  transaction (`OrderStatusWorker/poll`) and records an
+  `OrderPipelineSample` event (count per status + how many it
+  advanced), which feeds pipeline widgets on the OrderUp Overview
+  dashboard: pending/preparing/out counts and advances per poll.
+  Deliberate flaw, kept for this investigation: the batch advances
+  in ONE statement, `UPDATE ... SET status = CASE status WHEN
+  'pending' THEN 'preparing' ...` over the four known statuses.
+- *Symptom:* orders place instantly and the site is fast, but no
+  order ever leaves pending; My Orders is a wall of pending while
+  everything else looks healthy.
+- *Arm:* `DEMO_ORDER_POISON` or the manual override - insert ONE
+  synthetic legacy order (order_number `LEGACY-0001`, a "Legacy
+  Import" customer) with status `confirmed`, a status from the
+  pre-OrderUp system the worker's CASE never heard of. The CASE
+  yields NULL for it, `orders.status` is NOT NULL, the whole batch
+  rolls back, and every poll fails the same way: the queue freezes
+  and the web tier never notices. Disarm deletes the legacy row;
+  the backlog drains on the next poll.
+- *Chain:* (1) symptom shape - order now: succeeds instantly, still
+  pending minutes later; the stall is total but the site is fine;
+  (2) the pipeline view - `OrderPipelineSample`: advances stopped
+  at a sharp timestamp, the pending count only grows; (3) the
+  worker in APM - background transactions erroring at 100% since
+  that moment while web transactions stay clean, error class a
+  not-null violation on `orders.status`; (4) the statement - one
+  batch UPDATE, a CASE over exactly four statuses, one transaction
+  for everyone: one bad row takes the batch down; (5) the Postgres
+  view - the integration's database sample (the Postgres
+  dashboard): rollbacks climbing in lockstep with the polls while
+  web-tier commits stay normal, and the worker's UPDATE among the
+  most-called statements (pg_stat_statements; spelling to confirm
+  live, as with I6/I7's) - the database is not sick, it is
+  faithfully rolling back; (6) verdict + fix.
+- *Evidence checks:* orders advanced per poll since the stall (0);
+  the constraint the worker keeps hitting (choice); the poison
+  status value (text: `confirmed`).
+- *Case closed:* a queue can be down while the site is up; next
+  steps - per-order transactions, skip-and-quarantine unknown
+  statuses (dead-letter, not silent rollback), alerting on queue
+  age (the oldest pending order) rather than error rates alone,
+  and migrating legacy values at import, not at 2 a.m. Interplay
+  note: one investigation armed at a time still holds - I7's table
+  lock would stall the worker too (it writes `orders`), and I6's
+  burst gives the worker a SIM backlog to chew through, oldest
+  first, a few hundred per poll.
+
 ### 11.3 Build order (extends §9)
 
 9. I2 + I3 ports first (they reuse Mission 3/4 surfaces and existing callouts).
@@ -773,3 +837,10 @@ content and the error simulator, with signposts to the two pages.
 - **A15** With the AWS account linked, `AlbSample` data exists for the
   staging ALB and I5's source-split checkpoint (ELB vs target 5XX) is
   answerable from it directly.
+- **A16** With the order-status worker running and nothing armed, a
+  placed order reaches `delivered` within ~5 minutes and
+  `OrderPipelineSample` events flow; with I11 armed, web order
+  placement stays fast and successful while zero orders advance and
+  `OrderStatusWorker/poll` errors on every poll; on disarm,
+  advancement resumes within one poll interval and the backlog
+  drains.
