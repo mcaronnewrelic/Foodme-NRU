@@ -286,10 +286,22 @@ configure_nginx() {
     
     # Create main nginx configuration with monitoring module
     cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
+# JSON access logs: New Relic's log forwarder lifts JSON keys to
+# attributes automatically, so status / uri / upstream timings are
+# queryable fields instead of text to parse. (The error log keeps
+# nginx's fixed text format - it has no log_format by design.)
+log_format json_access escape=json
+    '{"time":"$time_iso8601","remote_addr":"$remote_addr","method":"$request_method",'
+    '"uri":"$uri","status":$status,"bytes":$body_bytes_sent,'
+    '"request_time":$request_time,"upstream_time":"$upstream_response_time",'
+    '"upstream_status":"$upstream_status","user_agent":"$http_user_agent"}';
+
 server {
     listen 80;
     listen 8080;
     server_name _;
+
+    access_log /var/log/nginx/access.log json_access;
     
     # Health check endpoint for monitoring
     location /nginx-health {
