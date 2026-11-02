@@ -35,6 +35,16 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" routerLink="/missions" routerLinkActive="active">
+            <i class="fas fa-route"></i> Missions
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/investigations" routerLinkActive="active">
+            <i class="fas fa-magnifying-glass"></i> Investigations
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" routerLink="/how-it-works" routerLinkActive="active">
             <i class="fas fa-info-circle"></i> How It Works
           </a>
@@ -124,13 +134,13 @@
   </div>
 </nav>
 
-<!-- Behind-the-scenes only: which investigation is live (spec section 11) -->
-@if (nrConfig.showCallouts() && nrConfig.armedInvestigation(); as inv) {
+<!-- Which investigation is live (spec section 11); always shown -->
+@if (nrConfig.armedInvestigation(); as inv) {
   <div class="scenario-banner">
     <i class="fas fa-magnifying-glass me-2"></i>
     <span>
       <strong>Investigation live:</strong> {{ NrConfigService.describeInvestigation(inv) }}
-      <a routerLink="/how-it-works">Open the investigation</a>
+      <a routerLink="/investigations">Open the investigation</a>
       @switch (inv.source) {
         @case ('manual') { <span class="scenario-source">(set by the instructor)</span> }
         @case ('env') { <span class="scenario-source">(set in the server environment)</span> }
@@ -139,8 +149,8 @@
   </div>
 }
 
-<!-- Behind-the-scenes only: which demo failure is armed, so nobody has to guess -->
-@if (nrConfig.showCallouts() && nrConfig.armedScenario(); as scenario) {
+<!-- Which demo failure is armed, so nobody has to guess; always shown -->
+@if (nrConfig.armedScenario(); as scenario) {
   <div class="scenario-banner">
     <i class="fas fa-clapperboard me-2"></i>
     <span>

@@ -734,6 +734,21 @@ ALB, so the DNS CNAME Michael is about to set (orderup.nru.to)
 should only ever be set once. Left alone: the archive/ tree, the
 legacy foodme-stack.yaml, the docs' historical record, and the
 GitHub repository name.
+Page restructure (2026-11-01, Michael's direction after using the
+site): the missions and investigations outgrew How It Works. The
+Your journey hub is now a Missions page (/missions, in the menu)
+with a segmented progress bar and a per-mission brief (what to do,
+what the check asks); the investigation chains are an
+Investigations page (/investigations, in the menu); and both
+instructor panels (planted-failure arming, investigation arming)
+moved to an unlisted Instructor page (/instructor, bookmarked, not
+in the menu) so students cannot change what is armed. Missions,
+investigations, the shell progress strip, and the header's
+armed-scenario / live-investigation banners are no longer gated on
+Behind the scenes - the pages and progress are always available;
+the evidence checks still live in the callouts where the evidence
+is, and the Missions page says so. How It Works keeps its explainer
+content and the error simulator, with signposts to the two pages.
 
 
 ### 11.4 Acceptance tests (extends §10)

@@ -1,0 +1,20 @@
+<app-header></app-header>
+
+<div class="mt-4"></div>
+
+<div class="container pb-5">
+  <h4 class="text-center mb-3 text-muted">
+    <i class="fas fa-magnifying-glass me-2"></i>
+    Investigations
+  </h4>
+  <p class="text-muted small text-center mb-3">
+    Longer cases beyond the five missions: six checkpoints each, every answer recorded
+    under the investigation's name. A correct answer opens the next checkpoint.
+    One investigation is live at a time — when one is, the banner under the menu names it,
+    and its checkpoints open below. The rest wait their turn.
+  </p>
+
+  @for (def of investigations; track def.slug) {
+    <app-investigation [def]="def" />
+  }
+</div>
