@@ -61,9 +61,9 @@ if [ -z "$AWS_REGION" ]; then
     fi
 fi
 
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
-echo "🔍 Validating FoodMe Deployment"
+echo "🔍 Validating OrderUp Deployment"
 echo "   Environment: $ENVIRONMENT"
 echo "   AWS Region: $AWS_REGION"
 echo "   AWS Profile: $AWS_PROFILE"

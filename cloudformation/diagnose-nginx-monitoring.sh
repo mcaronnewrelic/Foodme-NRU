@@ -74,7 +74,7 @@ if [ -z "$AWS_REGION" ]; then
     fi
 fi
 
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
 echo "🔍 Nginx New Relic Monitoring Diagnostics"
 echo "   Environment: $ENVIRONMENT"
@@ -245,14 +245,14 @@ fix_nginx_monitoring() {
         echo '2️⃣ Checking and fixing Nginx configuration...'
         
         # Check if status server block exists in main configuration
-        if ! grep -q 'server.*listen.*8080' /etc/nginx/conf.d/foodme.conf 2>/dev/null; then
+        if ! grep -q 'server.*listen.*8080' /etc/nginx/conf.d/orderup.conf 2>/dev/null; then
             echo 'Adding status server block to nginx configuration...'
             
             # Backup current config
-            cp /etc/nginx/conf.d/foodme.conf /etc/nginx/conf.d/foodme.conf.backup
+            cp /etc/nginx/conf.d/orderup.conf /etc/nginx/conf.d/orderup.conf.backup
             
             # Add status server block
-            cat >> /etc/nginx/conf.d/foodme.conf << 'EOF'
+            cat >> /etc/nginx/conf.d/orderup.conf << 'EOF'
 
 # Status server for monitoring
 server {
@@ -318,7 +318,7 @@ integrations:
       REMOTE_MONITORING: false
       
       # Custom attributes for better organization
-      CUSTOM_ATTRIBUTES: '{\"service\":\"nginx\",\"environment\":\"$ENVIRONMENT\",\"application\":\"foodme\",\"role\":\"web-server\",\"deployment\":\"ec2\"}'
+      CUSTOM_ATTRIBUTES: '{\"service\":\"nginx\",\"environment\":\"$ENVIRONMENT\",\"application\":\"orderup\",\"role\":\"web-server\",\"deployment\":\"ec2\"}'
       
       # Optional: Parse nginx access logs for additional metrics
       ACCESS_LOG_PATH: /var/log/nginx/access.log
@@ -335,7 +335,7 @@ integrations:
       env: $ENVIRONMENT
       role: web-server
       service: nginx
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/nginx
 EOF

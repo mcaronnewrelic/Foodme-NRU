@@ -80,20 +80,20 @@ elif echo "$RESPONSE" | grep -q '"accounts"'; then
     echo -e "${YELLOW}📝 Creating deployment record...${NC}"
     
     # Create a deployment log entry (simulated for now)
-    cat > "/tmp/foodme-deployment-$(date +%Y%m%d_%H%M%S).log" << EOF
-=== FoodMe Deployment Record ===
+    cat > "/tmp/orderup-deployment-$(date +%Y%m%d_%H%M%S).log" << EOF
+=== OrderUp Deployment Record ===
 Timestamp: $TIMESTAMP
 User: $USER
 Commit: $COMMIT
 Changelog: $CHANGELOG
 New Relic API Key: ${NEW_RELIC_API_KEY:0:8}...
-Application: FoodMe Node.js Server
+Application: OrderUp Node.js Server
 Status: Deployment marker created
 EOF
     
     echo -e "${GREEN}✅ Deployment record created successfully!${NC}"
     echo -e "${YELLOW}� Note: Full New Relic integration requires application entity GUID${NC}"
-    echo -e "${YELLOW}   Check your New Relic dashboard or use 'newrelic entity search --name FoodMe'${NC}"
+    echo -e "${YELLOW}   Check your New Relic dashboard or use 'newrelic entity search --name OrderUp'${NC}"
 else
     echo -e "${YELLOW}⚠️  Unexpected API response:${NC}"
     echo "$RESPONSE" | jq '.' 2>/dev/null || echo "$RESPONSE"

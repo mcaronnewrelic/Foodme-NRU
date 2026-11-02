@@ -1,4 +1,4 @@
-# Deploys FoodMe to AWS with CloudFormation. This replaces the Terraform workflows, which are archived in
+# Deploys OrderUp to AWS with CloudFormation. This replaces the Terraform workflows, which are archived in
 # archive/terraform/workflows.
 #
 #   code          Update the running instance with the current server and Angular code (cloudformation/deploy-code.sh).
@@ -51,12 +51,16 @@ on:
         description: Type DELETE to confirm (delete-stack only)
         type: string
         default: ""
+      config_version:
+        description: Config version (stack only; bump to force instance replacement)
+        type: string
+        default: "1"
 
 permissions:
   contents: read
 
 concurrency:
-  group: foodme-cloudformation-${{ inputs.environment || 'staging' }}
+  group: orderup-cloudformation-${{ inputs.environment || 'staging' }}
   cancel-in-progress: false
 
 env:
@@ -75,11 +79,11 @@ jobs:
       - name: Lint the CloudFormation templates
         run: |
           pip install --quiet cfn-lint
-          cfn-lint cloudformation/foodme-production-stack.yaml
+          cfn-lint cloudformation/orderup-production-stack.yaml
 
       - name: Check the deployment scripts
         run: |
-          for script in cloudformation/deploy-production.sh cloudformation/deploy-code.sh cloudformation/install-foodme.sh; do
+          for script in cloudformation/deploy-production.sh cloudformation/deploy-code.sh cloudformation/install-orderup.sh; do
             bash -n "$script"
           done
 
@@ -139,10 +143,11 @@ jobs:
           # empty leaves the site HTTP-only). See the template's
           # CertificateArn parameter.
           CERTIFICATE_ARN: ${{ vars.CERTIFICATE_ARN }}
+          CONFIG_VERSION: ${{ inputs.config_version || '1' }}
         run: |
           # The script reads the region from the AWS CLI configuration
           aws configure set region "$AWS_REGION"
-          bash cloudformation/deploy-production.sh "$ENVIRONMENT" "$INSTANCE_TYPE" "$KEY_NAME" "$DB_PASSWORD" "$NEW_RELIC_LICENSE_KEY" "$CERTIFICATE_ARN"
+          bash cloudformation/deploy-production.sh "$ENVIRONMENT" "$INSTANCE_TYPE" "$KEY_NAME" "$DB_PASSWORD" "$NEW_RELIC_LICENSE_KEY" "$CERTIFICATE_ARN" "$CONFIG_VERSION"
 
       - name: Summarize
         env:
@@ -150,9 +155,9 @@ jobs:
         run: |
           # The backticks are JMESPath literals, not command substitution
           # shellcheck disable=SC2016
-          outputs=$(aws cloudformation describe-stacks --stack-name "foodme-$ENVIRONMENT" \
+          outputs=$(aws cloudformation describe-stacks --stack-name "orderup-$ENVIRONMENT" \
             --query 'Stacks[0].Outputs[?OutputKey==`ApplicationURL` || OutputKey==`HealthCheckURL`].[OutputKey,OutputValue]' --output text)
-          { echo "### Stack foodme-$ENVIRONMENT deployed"; echo; echo '```'; echo "$outputs"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "### Stack orderup-$ENVIRONMENT deployed"; echo; echo '```'; echo "$outputs"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
   deploy-code:
     name: Deploy the code
@@ -262,14 +267,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Delete foodme-${{ inputs.environment }}
+      - name: Delete orderup-${{ inputs.environment }}
         env:
-          STACK_NAME: foodme-${{ inputs.environment }}
+          STACK_NAME: orderup-${{ inputs.environment }}
         run: |
           aws cloudformation delete-stack --stack-name "$STACK_NAME"
           aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME"
           {
             echo "### Stack $STACK_NAME deleted"
             echo
-            echo "The S3 bucket with the deployment packages (foodme-deployments-<account>-<region>) is not part of the stack and was kept."
+            echo "The S3 bucket with the deployment packages (orderup-deployments-<account>-<region>) is not part of the stack and was kept."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -33,11 +33,11 @@ else
 fi
 
 # Test 2: Database accessibility
-echo -n "2. FoodMe database accessible: "
+echo -n "2. OrderUp database accessible: "
 COMMAND_ID=$(AWS_PROFILE="$AWS_PROFILE" aws ssm send-command \
     --instance-ids "$INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["sudo -u postgres psql -d foodme -c \"\\q\" && echo OK"]' \
+    --parameters 'commands=["sudo -u postgres psql -d orderup -c \"\\q\" && echo OK"]' \
     --region "$AWS_REGION" \
     --query 'Command.CommandId' \
     --output text)
@@ -61,7 +61,7 @@ echo -n "3. Restaurant data exists: "
 COMMAND_ID=$(AWS_PROFILE="$AWS_PROFILE" aws ssm send-command \
     --instance-ids "$INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["sudo -u postgres psql -d foodme -tAc \"SELECT COUNT(*) FROM restaurants\""]' \
+    --parameters 'commands=["sudo -u postgres psql -d orderup -tAc \"SELECT COUNT(*) FROM restaurants\""]' \
     --region "$AWS_REGION" \
     --query 'Command.CommandId' \
     --output text)
@@ -85,7 +85,7 @@ echo -n "4. Application database connection: "
 COMMAND_ID=$(AWS_PROFILE="$AWS_PROFILE" aws ssm send-command \
     --instance-ids "$INSTANCE_ID" \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["cd /opt/foodme/server && npm test 2>/dev/null | grep -i \"database\\|connection\" || echo \"No test available\""]' \
+    --parameters 'commands=["cd /opt/orderup/server && npm test 2>/dev/null | grep -i \"database\\|connection\" || echo \"No test available\""]' \
     --region "$AWS_REGION" \
     --query 'Command.CommandId' \
     --output text)

@@ -35,7 +35,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Start FoodMe Server",
+            "label": "Start OrderUp Server",
             "type": "shell",
             "command": "npm",
             "args": ["start"],

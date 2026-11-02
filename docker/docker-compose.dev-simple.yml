@@ -1,10 +1,10 @@
 services:
-  # Main FoodMe application service
-  foodme:
+  # Main OrderUp application service
+  orderup:
     build:
       context: ..
       dockerfile: docker/Dockerfile.simple
-    container_name: foodme-app
+    container_name: orderup-app
     ports:
       - "${PORT:-3000}:3000"
     env_file:
@@ -20,13 +20,13 @@ services:
       db:
         condition: service_healthy
     networks:
-      - foodme_network
+      - orderup_network
 
   # PostgreSQL database (simplified)
   db:
     image: postgres:16-alpine
     restart: unless-stopped
-    container_name: foodme-db
+    container_name: orderup-db
     env_file:
       - ../.env
     volumes:
@@ -35,17 +35,17 @@ services:
       - ../db/init/01-init-schema.sql:/docker-entrypoint-initdb.d/10-init-schema.sql:ro
       - ../db/init/02-import-restaurants-uuid.sql:/docker-entrypoint-initdb.d/20-import-restaurants-uuid.sql:ro
     environment:
-      - POSTGRES_DB=${DB_NAME:-foodme}
-      - POSTGRES_USER=${DB_USER:-foodme_user}
+      - POSTGRES_DB=${DB_NAME:-orderup}
+      - POSTGRES_USER=${DB_USER:-orderup_user}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       # PostgreSQL monitoring configuration
       - POSTGRES_INITDB_ARGS=--data-checksums
     expose:
       - "5432"
     networks:
-      - foodme_network
+      - orderup_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d foodme -U foodme_user"]
+      test: ["CMD-SHELL", "pg_isready -d orderup -U orderup_user"]
       interval: ${DB_HEALTH_INTERVAL:-10s}
       timeout: ${DB_HEALTH_TIMEOUT:-5s}
       retries: ${DB_HEALTH_RETRIES:-5}
@@ -54,16 +54,16 @@ services:
   # Nginx reverse proxy (simplified)
   nginx:
     image: nginx:1.25-alpine
-    container_name: foodme-nginx
+    container_name: orderup-nginx
     restart: unless-stopped
     ports:
       - "${HTTP_PORT:-80}:80"
     volumes:
-      - ../nginx-config/foodme.dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx-config/orderup.dev.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
-      - foodme_network
+      - orderup_network
     depends_on:
-      - foodme
+      - orderup
     healthcheck:
       test:
         ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
@@ -76,10 +76,10 @@ services:
 volumes:
   db-data:
     driver: local
-    name: foodme-db-data
+    name: orderup-db-data
 
 # Docker networks
 networks:
-  foodme_network:
+  orderup_network:
     driver: bridge
-    name: foodme_network
+    name: orderup_network

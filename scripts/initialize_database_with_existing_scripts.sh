@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Initialize FoodMe Database using existing scripts
+# Initialize OrderUp Database using existing scripts
 # This script uploads and runs the existing database initialization scripts
 
 set -e
 
-STACK_NAME="foodme-staging"
+STACK_NAME="orderup-staging"
 AWS_PROFILE="Team-Account-Standard-365309403645"
 
-echo "🗄️  FoodMe Database Initialization"
+echo "🗄️  OrderUp Database Initialization"
 echo "================================="
 
 # Get instance ID
@@ -26,7 +26,7 @@ aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["mkdir -p /tmp/foodme-db-init"]' \
+    --parameters 'commands=["mkdir -p /tmp/orderup-db-init"]' \
     --output text >/dev/null
 
 # Step 1: Upload and run schema initialization
@@ -36,7 +36,7 @@ COMMAND_ID=$(aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters "commands=[\"echo '$SCHEMA_SQL' | base64 -d > /tmp/foodme-db-init/01-init-schema.sql\"]" \
+    --parameters "commands=[\"echo '$SCHEMA_SQL' | base64 -d > /tmp/orderup-db-init/01-init-schema.sql\"]" \
     --query 'Command.CommandId' \
     --output text)
 
@@ -47,7 +47,7 @@ COMMAND_ID=$(aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["sudo -u postgres psql -d foodme -f /tmp/foodme-db-init/01-init-schema.sql"]' \
+    --parameters 'commands=["sudo -u postgres psql -d orderup -f /tmp/orderup-db-init/01-init-schema.sql"]' \
     --query 'Command.CommandId' \
     --output text)
 
@@ -78,7 +78,7 @@ for chunk_file in /tmp/import_chunk_*; do
         --profile $AWS_PROFILE \
         --instance-ids $INSTANCE_ID \
         --document-name "AWS-RunShellScript" \
-        --parameters "commands=[\"echo '$CHUNK_SQL' | base64 -d > /tmp/foodme-db-init/import_chunk_$chunk_num.sql\"]" \
+        --parameters "commands=[\"echo '$CHUNK_SQL' | base64 -d > /tmp/orderup-db-init/import_chunk_$chunk_num.sql\"]" \
         --query 'Command.CommandId' \
         --output text)
     
@@ -92,7 +92,7 @@ COMMAND_ID=$(aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["cd /tmp/foodme-db-init && cat import_chunk_*.sql > 02-import-restaurants-uuid.sql && sudo -u postgres psql -d foodme -f 02-import-restaurants-uuid.sql"]' \
+    --parameters 'commands=["cd /tmp/orderup-db-init && cat import_chunk_*.sql > 02-import-restaurants-uuid.sql && sudo -u postgres psql -d orderup -f 02-import-restaurants-uuid.sql"]' \
     --query 'Command.CommandId' \
     --output text)
 
@@ -115,7 +115,7 @@ COMMAND_ID=$(aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["sudo -u postgres psql -d foodme -c \"SELECT COUNT(*) as total_restaurants FROM restaurants; SELECT COUNT(*) as total_menu_items FROM menu_items; SELECT COUNT(*) as items_with_descriptions FROM menu_items WHERE description IS NOT NULL AND description != '\'\''; SELECT r.name, COUNT(m.id) as menu_count FROM restaurants r LEFT JOIN menu_items m ON r.id = m.restaurant_id GROUP BY r.name ORDER BY r.name LIMIT 5;\""]' \
+    --parameters 'commands=["sudo -u postgres psql -d orderup -c \"SELECT COUNT(*) as total_restaurants FROM restaurants; SELECT COUNT(*) as total_menu_items FROM menu_items; SELECT COUNT(*) as items_with_descriptions FROM menu_items WHERE description IS NOT NULL AND description != '\'\''; SELECT r.name, COUNT(m.id) as menu_count FROM restaurants r LEFT JOIN menu_items m ON r.id = m.restaurant_id GROUP BY r.name ORDER BY r.name LIMIT 5;\""]' \
     --query 'Command.CommandId' \
     --output text)
 
@@ -130,7 +130,7 @@ COMMAND_ID=$(aws ssm send-command \
     --profile $AWS_PROFILE \
     --instance-ids $INSTANCE_ID \
     --document-name "AWS-RunShellScript" \
-    --parameters 'commands=["cd /opt/foodme/backend && pm2 restart all || pm2 start ecosystem.config.js"]' \
+    --parameters 'commands=["cd /opt/orderup/backend && pm2 restart all || pm2 start ecosystem.config.js"]' \
     --query 'Command.CommandId' \
     --output text)
 
@@ -148,7 +148,7 @@ echo "✅ Schema created with all tables"
 echo "✅ Restaurant and menu data imported WITH descriptions"
 echo "✅ Backend service restarted"
 echo ""
-echo "🔗 Test your application at: http://staging-foodme-alb-1507419918.us-west-2.elb.amazonaws.com"
+echo "🔗 Test your application at: http://staging-orderup-alb-1507419918.us-west-2.elb.amazonaws.com"
 echo ""
 echo "📋 What was accomplished:"
 echo "• Database tables created using your 01-init-schema.sql"

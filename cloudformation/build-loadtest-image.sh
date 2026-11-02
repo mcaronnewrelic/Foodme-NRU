@@ -61,7 +61,7 @@ fi
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 
 # ECR repository name and URI
-ECR_REPOSITORY_NAME="${ENVIRONMENT}-foodme-loadtest"
+ECR_REPOSITORY_NAME="${ENVIRONMENT}-orderup-loadtest"
 ECR_REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}"
 
 echo "🚀 Building and pushing load test container"

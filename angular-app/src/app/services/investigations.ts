@@ -243,11 +243,13 @@ export const INVESTIGATIONS: InvestigationDef[] = [
           'what the proxy\u2019s access log recorded for the same ' +
           'requests.',
         nrql:
-          "SELECT count(*) FROM Log WHERE logtype = 'nginx-access' AND message LIKE '%/api/restaurant%' SINCE 30 minutes ago",
+          "SELECT count(*) FROM Log WHERE logtype = 'nginx-access' AND uri LIKE '%/api/restaurant%' FACET status SINCE 30 minutes ago",
         learn:
           'A reverse proxy answers on the app\u2019s behalf when the app ' +
           'can\u2019t. The status code it chooses is the first clue ' +
-          'about which side of the proxy the trouble lives on.',
+          'about which side of the proxy the trouble lives on. (This ' +
+          'access log is JSON, so status is a field you can FACET — ' +
+          'no text parsing.)',
         kind: 'choice',
         question: 'What does a failed page load actually receive?',
         options: [
@@ -339,7 +341,7 @@ export const INVESTIGATIONS: InvestigationDef[] = [
           'requests in the window, what share came back 502? The ' +
           'query computes the percentage.',
         nrql:
-          "SELECT percentage(count(*), WHERE message LIKE '%\" 502 %') AS '% 502' FROM Log WHERE logtype = 'nginx-access' AND message LIKE '%/api/restaurant%' SINCE 30 minutes ago",
+          "SELECT percentage(count(*), WHERE status = 502) AS '% 502' FROM Log WHERE logtype = 'nginx-access' AND uri LIKE '/api/restaurant%' SINCE 30 minutes ago",
         learn:
           'Intermittency is a quantity, not a vibe: a percentage ' +
           'distinguishes "every request" from "every other request" ' +

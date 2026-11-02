@@ -75,9 +75,9 @@ if [ -z "$AWS_REGION" ]; then
 fi
 
 # Stack and resource names
-STACK_NAME="foodme-${ENVIRONMENT}"
-CLUSTER_NAME="${ENVIRONMENT}-foodme-loadtest-cluster"
-TASK_DEFINITION_FAMILY="${ENVIRONMENT}-foodme-loadtest"
+STACK_NAME="orderup-${ENVIRONMENT}"
+CLUSTER_NAME="${ENVIRONMENT}-orderup-loadtest-cluster"
+TASK_DEFINITION_FAMILY="${ENVIRONMENT}-orderup-loadtest"
 
 trigger_load_test() {
     echo "🚀 Triggering manual load test"
@@ -201,7 +201,7 @@ show_logs() {
     echo "📜 Showing recent load test logs"
     echo "   Environment: $ENVIRONMENT"
     
-    LOG_GROUP="/ecs/${ENVIRONMENT}-foodme-loadtest"
+    LOG_GROUP="/ecs/${ENVIRONMENT}-orderup-loadtest"
     
     # Check if log group exists
     if ! aws logs describe-log-groups \

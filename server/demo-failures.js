@@ -109,7 +109,7 @@ class DemoFailures {
     if (this.rotationCache.week === week) return this.rotationCache.scenario;
     let scenario = null;
     if (process.env.DEMO_FAILURE_ROTATION !== 'off') {
-      const h = hashString(`foodme-demo-${week}`);
+      const h = hashString(`orderup-demo-${week}`);
       const kind = KINDS[h % KINDS.length];
       const names = kind === 'order-item' ? this.candidates.itemNames : this.candidates.restaurantNames;
       if (names.length > 0) {

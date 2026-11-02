@@ -74,7 +74,7 @@ if [ -z "$AWS_REGION" ]; then
     fi
 fi
 
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
 echo "🔍 PostgreSQL New Relic Monitoring Diagnostics"
 echo "   Environment: $ENVIRONMENT"
@@ -187,7 +187,7 @@ diagnose_postgresql_monitoring() {
     
     echo "5️⃣ Checking New Relic monitoring user in PostgreSQL..."
     execute_on_ec2 "
-        sudo -u postgres psql -d foodme -c \"SELECT usename FROM pg_user WHERE usename = 'newrelic';\" 2>/dev/null | grep newrelic && echo '✅ New Relic user exists' || echo '❌ New Relic user does not exist'
+        sudo -u postgres psql -d orderup -c \"SELECT usename FROM pg_user WHERE usename = 'newrelic';\" 2>/dev/null | grep newrelic && echo '✅ New Relic user exists' || echo '❌ New Relic user does not exist'
     "
     echo ""
     
@@ -197,7 +197,7 @@ diagnose_postgresql_monitoring() {
             # Extract password from config (this is safe since we're running on the same machine)
             PASS=\$(grep 'PASSWORD:' /etc/newrelic-infra/integrations.d/postgresql-config.yml | awk '{print \$2}' | tr -d '\"')
             if [ -n \"\$PASS\" ]; then
-                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT 1;' > /dev/null 2>&1 && echo '✅ Database connection test successful' || echo '❌ Database connection test failed'
+                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT 1;' > /dev/null 2>&1 && echo '✅ Database connection test successful' || echo '❌ Database connection test failed'
             else
                 echo '⚠️  Could not extract password from config file'
             fi
@@ -241,13 +241,13 @@ fix_postgresql_monitoring() {
         fi
         
         echo '2️⃣ Creating monitoring user if missing...'
-        if ! sudo -u postgres psql -d foodme -tAc \"SELECT 1 FROM pg_roles WHERE rolname='newrelic'\" | grep -q 1; then
+        if ! sudo -u postgres psql -d orderup -tAc \"SELECT 1 FROM pg_roles WHERE rolname='newrelic'\" | grep -q 1; then
             echo 'Creating newrelic user...'
             NEWRELIC_DB_PASSWORD=\$(openssl rand -base64 32)
             
-            sudo -u postgres psql -d foodme << 'EOF'
+            sudo -u postgres psql -d orderup << 'EOF'
 CREATE USER newrelic WITH PASSWORD '\$NEWRELIC_DB_PASSWORD';
-GRANT CONNECT ON DATABASE foodme TO newrelic;
+GRANT CONNECT ON DATABASE orderup TO newrelic;
 GRANT USAGE ON SCHEMA public TO newrelic;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO newrelic;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO newrelic;
@@ -261,7 +261,7 @@ EOF
             echo '✅ New Relic user already exists'
             # Generate new password for existing user
             NEWRELIC_DB_PASSWORD=\$(openssl rand -base64 32)
-            sudo -u postgres psql -d foodme -c \"ALTER USER newrelic WITH PASSWORD '\$NEWRELIC_DB_PASSWORD';\"
+            sudo -u postgres psql -d orderup -c \"ALTER USER newrelic WITH PASSWORD '\$NEWRELIC_DB_PASSWORD';\"
             echo \$NEWRELIC_DB_PASSWORD > /tmp/newrelic_db_password
             echo '✅ New Relic user password updated'
         fi
@@ -278,7 +278,7 @@ integrations:
       HOSTNAME: localhost
       PORT: 5432
       USERNAME: newrelic
-      DATABASE: foodme
+      DATABASE: orderup
       PASSWORD: \$NEWRELIC_DB_PASSWORD
       SSL_MODE: disable
       CONNECTION_TIMEOUT: 5
@@ -286,13 +286,13 @@ integrations:
       INVENTORY: true
       COLLECT_DB_LOCK_METRICS: true
       COLLECT_BLOAT_METRICS: true
-      CUSTOM_ATTRIBUTES: '{\"service\":\"postgresql\",\"environment\":\"$ENVIRONMENT\",\"application\":\"foodme\",\"database\":\"foodme\",\"deployment\":\"ec2\"}'
+      CUSTOM_ATTRIBUTES: '{\"service\":\"postgresql\",\"environment\":\"$ENVIRONMENT\",\"application\":\"orderup\",\"database\":\"orderup\",\"deployment\":\"ec2\"}'
     interval: 30s
     labels:
       env: $ENVIRONMENT
       role: database
       service: postgresql
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/postgresql
 EOF
@@ -302,7 +302,7 @@ EOF
         chmod 640 /etc/newrelic-infra/integrations.d/postgresql-config.yml
         
         echo '5️⃣ Testing database connection...'
-        PGPASSWORD=\"\$NEWRELIC_DB_PASSWORD\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT 1;' > /dev/null && echo '✅ Database connection test successful' || echo '❌ Database connection test failed'
+        PGPASSWORD=\"\$NEWRELIC_DB_PASSWORD\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT 1;' > /dev/null && echo '✅ Database connection test successful' || echo '❌ Database connection test failed'
         
         echo '6️⃣ Restarting New Relic Infrastructure...'
         systemctl restart newrelic-infra
@@ -343,13 +343,13 @@ test_postgresql_monitoring() {
             PASS=\$(grep 'PASSWORD:' /etc/newrelic-infra/integrations.d/postgresql-config.yml | awk '{print \$2}' | tr -d '\"')
             if [ -n \"\$PASS\" ]; then
                 echo 'Testing basic connection...'
-                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT version();' && echo '✅ Basic connection successful'
+                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT version();' && echo '✅ Basic connection successful'
                 
                 echo 'Testing monitoring queries...'
-                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT COUNT(*) FROM pg_stat_activity;' && echo '✅ Monitoring queries successful'
+                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT COUNT(*) FROM pg_stat_activity;' && echo '✅ Monitoring queries successful'
                 
                 echo 'Testing custom metrics query...'
-                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c \"SELECT 'database_size' as metric_name, pg_database_size('foodme') as metric_value;\" && echo '✅ Custom metrics query successful'
+                PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c \"SELECT 'database_size' as metric_name, pg_database_size('orderup') as metric_value;\" && echo '✅ Custom metrics query successful'
             else
                 echo '❌ Could not extract password from config'
             fi
