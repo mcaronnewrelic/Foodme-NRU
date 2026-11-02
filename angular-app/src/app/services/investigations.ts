@@ -1093,4 +1093,185 @@ export const INVESTIGATIONS: InvestigationDef[] = [
       },
     ],
   },
+  {
+    slug: 'the-kitchen-never-got-the-ticket',
+    title: 'The kitchen never got the ticket',
+    summary:
+      'Orders are placing fine — and never moving. Pending, ' +
+      'preparing, out for delivery, delivered: a background worker ' +
+      'walks every order through those stages, and it has stopped ' +
+      'walking. The site has not noticed. Your customers\' orders ' +
+      'have. Find why a queue can be down while everything it feeds ' +
+      'looks healthy.',
+    live: 'armed',
+    liveNote: 'Armed by your instructor: a single legacy order — imported history, order number LEGACY-0001 — is sitting in the orders table carrying a status from the pre-OrderUp system. Nothing about the website changes. Watch My Orders and the Order pipeline widgets on the Overview dashboard.',
+    caseClosed:
+      'One row the worker could not classify took down every ' +
+      'order behind it, because the worker advanced its whole ' +
+      'claimed batch in a single transaction: one throw, everyone ' +
+      'rolls back. The website never noticed because the worker ' +
+      'runs on its own connection and its own schedule — async ' +
+      'processing fails silently by default, and the first symptom ' +
+      'is a queue that quietly stops ageing. The disciplines this ' +
+      'case teaches: advance items independently, so one bad item ' +
+      'costs one item; skip and quarantine what you cannot classify ' +
+      '(a dead-letter pile you can inspect beats a silent rollback); ' +
+      'migrate legacy values at import time; and alert on queue ' +
+      'age — the oldest unfinished order — not just on error rates. ' +
+      'A system is not healthy because its pages load.',
+    checkpoints: [
+      {
+        questionId: 'stuck-but-fine',
+        title: 'Isolate the symptom',
+        prompt:
+          'Use the site: browse, and place an order. It succeeds ' +
+          'instantly. Now watch it on My Orders for a minute — a ' +
+          'healthy order leaves pending within the minute and is ' +
+          'delivered in about three.',
+        kind: 'choice',
+        question: 'What is true of orders right now?',
+        options: [
+          'They place fine and instantly — and then never move; nothing leaves pending',
+          'Placing an order errors out',
+          'Orders move, just slowly — about ten minutes a stage',
+          'Only orders to one restaurant are stuck',
+        ],
+        answer: 'They place fine and instantly — and then never move; nothing leaves pending',
+        proves: 'The write path is healthy; the processing behind it is not.',
+        reveal:
+          'Total stall, zero user-facing errors. Whatever walks ' +
+          'orders through their stages has stopped walking — and ' +
+          'it is not the website, which just proved it can take ' +
+          'an order perfectly well.',
+      },
+      {
+        questionId: 'advances-per-poll',
+        title: 'Read the pipeline',
+        prompt:
+          'The worker reports every poll as an OrderPipelineSample ' +
+          'event — how many orders it advanced, and how many are ' +
+          'waiting in each stage. The Order pipeline widgets on ' +
+          'the Overview dashboard chart the same data. Sum what it ' +
+          'has advanced in the last half hour.',
+        nrql:
+          "SELECT sum(advanced) AS 'Orders advanced', latest(pending) AS 'Pending now', latest(oldestUnfinishedAgeSeconds) AS 'Oldest waiting (s)' FROM OrderPipelineSample SINCE 30 minutes ago",
+        kind: 'number',
+        question: 'How many orders has the worker advanced in the last 30 minutes?',
+        answer: 0,
+        tolerance: 0,
+        proves: 'Not slow — stopped. And the stop has a sharp edge in time.',
+        reveal:
+          'Zero. Not a trickle — a cliff. The samples keep ' +
+          'arriving (the worker is alive and polling), the pending ' +
+          'count keeps growing, and the advances stopped at one ' +
+          'specific moment. Whatever happened, happened then.',
+      },
+      {
+        questionId: 'worker-error',
+        title: 'Ask the worker',
+        prompt:
+          'In APM, look past the web transactions (clean) to the ' +
+          'app\u2019s background transactions: OrderStatusWorker/poll ' +
+          'runs every twenty seconds. Its error rate went to 100% ' +
+          'at the same moment the advances stopped.',
+        nrql:
+          "SELECT count(*) FROM Transaction WHERE name = 'OrderStatusWorker/poll' AND error IS true SINCE 30 minutes ago",
+        kind: 'choice',
+        question: 'What does the worker keep reporting?',
+        options: [
+          'Unknown order status: "confirmed" — it keeps meeting one row it cannot classify',
+          'Connection refused — it cannot reach Postgres at all',
+          'Deadlock detected — its updates keep colliding with the web tier\u2019s',
+          'Query timeout — one restaurant\u2019s orders are too large to advance',
+        ],
+        answer: 'Unknown order status: "confirmed" — it keeps meeting one row it cannot classify',
+        proves: 'The worker is not down or locked out — it is objecting to one specific row, by value.',
+        reveal:
+          'The error names the culprit\u2019s fingerprint: a status ' +
+          'value, "confirmed", that is not one of the four the ' +
+          'worker knows (pending, preparing, out_for_delivery, ' +
+          'delivered). It is the status the pre-OrderUp system ' +
+          'wrote — and one legacy order, LEGACY-0001, still ' +
+          'carries it.',
+      },
+      {
+        questionId: 'why-everyone',
+        title: 'Why does everyone wait?',
+        prompt:
+          'One bad row explains one stuck order. It does not, by ' +
+          'itself, explain why YOUR freshly placed order — perfect ' +
+          'status, nothing wrong with it — is also frozen. The ' +
+          'worker\u2019s poll, visible in its transaction traces, ' +
+          'claims a batch of a few hundred unfinished orders per ' +
+          'poll and advances them together.',
+        kind: 'choice',
+        question: 'Why does one unclassifiable order freeze every order?',
+        options: [
+          'The batch advances in one transaction — one throw rolls back everyone it claimed',
+          'The worker processes orders strictly one per poll, and the bad one is first in line',
+          'The worker and the website share one connection, and the bad order holds it',
+          'The bad order is the oldest, and the worker refuses to skip ahead on principle',
+        ],
+        answer: 'The batch advances in one transaction — one throw rolls back everyone it claimed',
+        proves: 'The failure is the batching, not the row: atomicity turned one bad item into a total stall.',
+        reveal:
+          'Exactly: claim a few hundred, advance them in a single ' +
+          'transaction, and the legacy row aborts the lot — every ' +
+          'poll, identically. The web tier never shares the pain: ' +
+          'the worker runs on its own connection, which is why ' +
+          'the site stayed perfect while the queue died.',
+      },
+      {
+        questionId: 'postgres-view',
+        title: 'Confirm it in Postgres',
+        prompt:
+          'Now the database\u2019s own account of the last half ' +
+          'hour — the Postgres integration\u2019s data (its ' +
+          'dashboard shows commits and rollbacks per database). ' +
+          'The web tier has been committing normally the whole ' +
+          'time. What have rollbacks been doing?',
+        nrql:
+          "SELECT sum(transactionsRolledBack) AS 'Rollbacks', sum(transactionsCommitted) AS 'Commits' FROM PostgresqlDatabaseSample SINCE 30 minutes ago TIMESERIES",
+        kind: 'choice',
+        question: 'What does the Postgres data show?',
+        options: [
+          'Rollbacks ticking up in lockstep with the polls — one doomed transaction every twenty seconds — while commits flow normally',
+          'Nothing at all — the database has been idle and unreachable',
+          'Commits stopped too — the whole database is wedged',
+          'Connections exhausted — hundreds of sessions piled up',
+        ],
+        answer: 'Rollbacks ticking up in lockstep with the polls — one doomed transaction every twenty seconds — while commits flow normally',
+        proves: 'The database is healthy and busy — faithfully rolling back the same doomed batch, three times a minute.',
+        reveal:
+          'That is the signature from the database\u2019s chair: ' +
+          'not load, not locks, not an outage — a metronome of ' +
+          'rollbacks keeping time with the poll interval. The ' +
+          'worker asks, Postgres refuses the transaction, both ' +
+          'write it down.',
+      },
+      {
+        questionId: 'the-fix',
+        title: 'The verdict',
+        prompt:
+          'Close the case: what change means one bad order can ' +
+          'never freeze the queue again?',
+        kind: 'choice',
+        question: 'What is the fix?',
+        options: [
+          'Advance each order in its own transaction, and skip-and-quarantine statuses the worker cannot classify',
+          'Restart the app every hour so the worker starts fresh',
+          'Add an index on orders.status so the batch runs faster',
+          'Delete the legacy order and change nothing else — it was a freak row',
+        ],
+        answer: 'Advance each order in its own transaction, and skip-and-quarantine statuses the worker cannot classify',
+        proves: 'Case ready to close.',
+        reveal:
+          'Deleting the row alone leaves the design that made it ' +
+          'fatal — and there is always another legacy value. ' +
+          'Independent items, a quarantine for the unclassifiable, ' +
+          'and migrated values at import: then one bad row costs ' +
+          'one row.',
+      },
+    ],
+  },
 ];

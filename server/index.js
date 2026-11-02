@@ -42,6 +42,8 @@ const demoInvestigations = new DemoInvestigations(logger);
 // I7/I8 carry live side effects (lock helper, seed data): start them if
 // an env var or a persisted manual override already has one armed.
 void demoInvestigations.syncSideEffects();
+const OrderStatusWorker = require('./order-status-worker');
+const orderStatusWorker = new OrderStatusWorker(logger);
 
 // Utility function to generate consistent user IDs for New Relic tracking
 function generateUserID(customerData) {
@@ -417,9 +419,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       void demoInvestigations.syncSideEffects();
       return res.json(state);
     }
-    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app' && slug !== 'one-connection-for-the-whole-restaurant' && slug !== 'the-table-is-locked' && slug !== 'the-slow-lookup') {
+    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app' && slug !== 'one-connection-for-the-whole-restaurant' && slug !== 'the-table-is-locked' && slug !== 'the-slow-lookup' && slug !== 'the-kitchen-never-got-the-ticket') {
       return res.status(400).json({
-        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, {slug: "the-502-didnt-come-from-the-app"}, {slug: "one-connection-for-the-whole-restaurant"} (armed by scripts/burst-orders.js), {slug: "the-table-is-locked"}, {slug: "the-slow-lookup"}, {action: "apply-index"} (I8 fix, while I8 is armed), or {slug: "off"}'
+        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, {slug: "the-502-didnt-come-from-the-app"}, {slug: "one-connection-for-the-whole-restaurant"} (armed by scripts/burst-orders.js), {slug: "the-table-is-locked"}, {slug: "the-slow-lookup"}, {slug: "the-kitchen-never-got-the-ticket"}, {action: "apply-index"} (I8 fix, while I8 is armed), or {slug: "off"}'
       });
     }
     const state = demoInvestigations.setManual(slug, seconds);
@@ -1302,6 +1304,8 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
   function startHttpServer() {
     app.listen(PORT, function() {
+      // Orders advance through their lifecycle only in database mode.
+      if (useDatabase) orderStatusWorker.start();
       logger.info({
         port: PORT,
         url: `http://localhost:${PORT}/`,

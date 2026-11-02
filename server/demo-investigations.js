@@ -9,7 +9,10 @@
  *      (I2): every order runs a pg_sleep of that many seconds inside its
  *      database work, so the order transaction's time sits in one
  *      datastore span; DEMO_DB_LOCK=1 arms "The table is locked" (I7);
- *      DEMO_DB_BIG_ORDERS=1 arms "The slow lookup" (I8).
+ *      DEMO_DB_BIG_ORDERS=1 arms "The slow lookup" (I8);
+ *      DEMO_ORDER_POISON=1 arms "The kitchen never got the ticket"
+ *      (I11): one legacy order the order-status worker cannot
+ *      classify, so its batch rolls back and the queue freezes.
  *   2. Manual override - POST /api/demo/investigations (the How It Works
  *      instructor controls), persisted to data/demo-investigations.json
  *      so an arm survives restarts. {slug: 'off'} disarms until cleared.
@@ -42,7 +45,10 @@ const SLUG_NGINX_502 = 'the-502-didnt-come-from-the-app';
 const SLUG_SINGLE_CONNECTION = 'one-connection-for-the-whole-restaurant';
 const SLUG_TABLE_LOCKED = 'the-table-is-locked';
 const SLUG_SLOW_LOOKUP = 'the-slow-lookup';
-const KNOWN_SLUGS = [SLUG_SLOW_ORDER, SLUG_NGINX_502, SLUG_SINGLE_CONNECTION, SLUG_TABLE_LOCKED, SLUG_SLOW_LOOKUP];
+const SLUG_KITCHEN = 'the-kitchen-never-got-the-ticket';
+const KNOWN_SLUGS = [SLUG_SLOW_ORDER, SLUG_NGINX_502, SLUG_SINGLE_CONNECTION, SLUG_TABLE_LOCKED, SLUG_SLOW_LOOKUP, SLUG_KITCHEN];
+const POISON_ORDER_NUMBER = 'LEGACY-0001';
+const POISON_CUSTOMER_PHONE = '(503) 555-0142';
 const DEFAULT_SECONDS = 3;
 const MAX_SECONDS = 10;
 
@@ -95,6 +101,7 @@ class DemoInvestigations {
     this.lockHelper = null; // { client, pid, windowEndsAt, timer }
     this.lockError = null;
     this.seed = { status: 'idle', customers: 0, indexApplied: false };
+    this.poisonHandled = null; // null = not yet reconciled with the DB
   }
 
   loadManual() {
@@ -126,6 +133,7 @@ class DemoInvestigations {
     }
     if (envTruthy('DEMO_DB_LOCK')) return { slug: SLUG_TABLE_LOCKED };
     if (envTruthy('DEMO_DB_BIG_ORDERS')) return { slug: SLUG_SLOW_LOOKUP };
+    if (envTruthy('DEMO_ORDER_POISON')) return { slug: SLUG_KITCHEN };
     return null;
   }
 
@@ -204,6 +212,66 @@ class DemoInvestigations {
     }
     if (slug === SLUG_SLOW_LOOKUP) this.ensureSeeded();
     else if (this.seed.status !== 'idle') this.cleanupSeed();
+    // I11's poison order: present exactly while the investigation is armed.
+    if (slug === SLUG_KITCHEN) { if (this.poisonHandled !== true) this.ensurePoisonOrder(); }
+    else if (this.poisonHandled !== false) this.removePoisonOrder();
+  }
+
+  /**
+   * I11: insert the legacy order the order-status worker cannot
+   * classify - status 'confirmed', a value from the pre-OrderUp
+   * system. The worker claims it (it is not in its terminal set),
+   * cannot map it to a next status, throws, and its one-transaction
+   * batch rolls back: the whole queue freezes while the site, on its
+   * own connection and code path, never notices.
+   */
+  ensurePoisonOrder() {
+    (async () => {
+      const client = new Client(adminClientConfig());
+      try {
+        await client.connect();
+        const existing = await client.query('SELECT id FROM orders WHERE order_number = $1', [POISON_ORDER_NUMBER]);
+        if (!existing.rows.length) {
+          let { rows } = await client.query('SELECT id FROM customers WHERE phone = $1', [POISON_CUSTOMER_PHONE]);
+          if (!rows.length) {
+            ({ rows } = await client.query(
+              'INSERT INTO customers (name, phone, address) VALUES ($1, $2, $3) RETURNING id',
+              ['Legacy Import', POISON_CUSTOMER_PHONE, '1 Legacy Way, Portland, OR'],
+            ));
+          }
+          const customerId = rows[0].id;
+          const { rows: rests } = await client.query('SELECT id FROM restaurants WHERE is_active = true ORDER BY name LIMIT 1');
+          if (!rests.length) throw new Error('No active restaurant for the legacy order');
+          await client.query(
+            `INSERT INTO orders (customer_id, restaurant_id, order_number, status, total_amount, delivery_address)
+             VALUES ($1, $2, $3, 'confirmed', 24.50, '1 Legacy Way, Portland, OR')`,
+            [customerId, rests[0].id, POISON_ORDER_NUMBER],
+          );
+          this.logger?.info('I11 poison order inserted (LEGACY-0001, status confirmed)');
+        }
+        this.poisonHandled = true;
+      } catch (err) {
+        this.logger?.warn({ err }, 'I11 armed but the poison order could not be inserted');
+      } finally {
+        await client.end().catch(() => {});
+      }
+    })();
+  }
+
+  removePoisonOrder() {
+    (async () => {
+      const client = new Client(adminClientConfig());
+      try {
+        await client.connect();
+        const { rowCount } = await client.query('DELETE FROM orders WHERE order_number = $1', [POISON_ORDER_NUMBER]);
+        if (rowCount) this.logger?.info('I11 poison order removed; the queue can drain');
+        this.poisonHandled = false;
+      } catch (err) {
+        this.logger?.warn({ err }, 'I11 poison order cleanup failed');
+      } finally {
+        await client.end().catch(() => {});
+      }
+    })();
   }
 
   async startLockHelper() {

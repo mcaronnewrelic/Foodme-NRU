@@ -920,6 +920,122 @@
           }
         }
       ]
+    },
+    {
+      "name": "Order pipeline",
+      "description": "The order-status worker: orders advance pending -> preparing -> out for delivery -> delivered in the background. If the queue freezes while the site stays healthy, this page is where it shows.",
+      "widgets": [
+        {
+          "title": "Orders waiting (latest poll)",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT latest(unfinished) AS 'Unfinished orders' FROM OrderPipelineSample"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Oldest unfinished order (seconds)",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT latest(oldestUnfinishedAgeSeconds) AS 'Oldest waiting (s)' FROM OrderPipelineSample"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Worker errors (last hour)",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT count(*) AS 'Failed polls' FROM Transaction WHERE name = 'OrderStatusWorker/poll' AND error IS true SINCE 1 hour ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Pipeline by stage",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT latest(pending) AS 'Pending', latest(preparing) AS 'Preparing', latest(outForDelivery) AS 'Out for delivery' FROM OrderPipelineSample TIMESERIES"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Orders advanced per poll",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  1352811
+                ],
+                "query": "SELECT sum(advanced) AS 'Advanced' FROM OrderPipelineSample TIMESERIES"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "variables": [
