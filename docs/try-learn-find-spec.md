@@ -648,6 +648,35 @@ destroyed; disarm restores). Its log checkpoints light up once the
 foodme-logs.yml addition reaches the instance. (Process note: PR
 #31's section 11.0 originally merged into PR #30's branch rather
 than main; it was recovered from that branch and lands with this PR.)
+ The access log also switches to JSON (log_format json_access in
+install-foodme.sh; the error log stays nginx's fixed text - it has
+no log_format by design), so I5's NRQL facets/filters on status and
+uri attributes; nri-nginx's log-derived metrics are turned off in
+exchange (its parser reads combined only) - stub_status metrics are
+unaffected, and status splits move to NR Logs where students can
+compute them directly.
+I6 built (2026-11-01): the burst is a script, not a server switch -
+scripts/burst-orders.js places concurrent orders over HTTP as a
+simulated visitor carrying a SIM- code (SIM-BST1, so the traffic is
+excludable per the SIM- convention) and arms/disarms the
+investigation itself via /api/demo/investigations; no DEMO_DB_BURST
+env is needed. The registry entry follows A11: its summary and the
+pinned-connections reveal both say the investigation must be retired
+if the app ever gets a connection pool. Verified end-to-end against
+a local Postgres-backed server: 24 concurrent placers put through
+~14,600 orders in 60s with zero failures; pg_stat_activity showed
+exactly 1 foodme_user connection throughout (caught idle in
+transaction mid-burst); order latency rose ~4ms -> ~24ms average
+(p95 ~59-82ms) and menu reads slowed ~3.5x in the same window - the
+uniform-slowdown signature, on an idle database. Local numbers are
+small (local Postgres is fast); staging's will be larger. Two script
+lessons baked in: base URLs without a scheme are normalised, and
+slugs must mirror server/url-utils nameToSlug (punctuation removed,
+underscores) or by-name lookups 404. The pinned-connections
+checkpoint query (PostgresqlCustomSample / active_connections) is
+carried over from section 11.0's inventory of the integration's
+custom queries - confirm its exact form against the live account
+once, the way I3's span count was confirmed.
 
 
 ### 11.4 Acceptance tests (extends §10)

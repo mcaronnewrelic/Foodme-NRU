@@ -407,6 +407,171 @@ export const INVESTIGATIONS: InvestigationDef[] = [
     ],
   },
   {
+    slug: 'one-connection-for-the-whole-restaurant',
+    title: 'One connection for the whole restaurant',
+    summary:
+      'A burst of orders has arrived — and everything has slowed down ' +
+      'uniformly: orders, menus, lists. Postgres is idle, no query is ' +
+      'slow, and yet nothing can get through. Find the shape of the ' +
+      'bottleneck. (If this app ever gets a connection pool, this case ' +
+      'goes cold — retire it rather than re-arming it.)',
+    live: 'armed',
+    liveNote: 'Armed by the burst script your instructor runs (scripts/burst-orders.js), which places concurrent orders as a simulated visitor, SIM-BST1. When it runs, the banner names this investigation.',
+    caseClosed:
+      'The bottleneck was never a query — it was a queue. Every query ' +
+      'in the app funnels through a single database connection, so ' +
+      'concurrency doesn\u2019t parallelize anything; it just lines up. ' +
+      'Throughput capped at one-request-at-a-time while the database ' +
+      'sat idle is the fingerprint: the resource being waited on ' +
+      'wasn\u2019t Postgres, it was the doorway into it. Real-world ' +
+      'next steps: use a connection pool with a deliberate size (and ' +
+      'know why that size), put connection counts on the dashboard ' +
+      'next to latency so the next queue is visible at a glance, and ' +
+      'load-test before and after the change — the same burst that ' +
+      'exposed this should show the ceiling lift.',
+    checkpoints: [
+      {
+        questionId: 'symptom-shape',
+        title: 'Characterize the slowdown',
+        prompt:
+          'While the burst runs, use the site yourself: open menus, ' +
+          'browse restaurants, place an order. Then check APM: it ' +
+          'isn\u2019t one route suffering.',
+        nrql:
+          "SELECT average(duration) AS 'Avg seconds', count(*) AS 'Calls' FROM Transaction WHERE appName = 'OrderUp' FACET name SINCE 10 minutes ago LIMIT 10",
+        learn:
+          'A single sick route points at code. Everything sick at once ' +
+          'points at a shared resource underneath all of them.',
+        kind: 'choice',
+        question: 'What does the slowdown look like?',
+        options: [
+          'Everything is slow, roughly uniformly — menus, lists and orders alike',
+          'Only placing orders is slow',
+          'Only one restaurant\u2019s menu is slow',
+          'Nothing is slow; the burst changed nothing',
+        ],
+        answer: 'Everything is slow, roughly uniformly — menus, lists and orders alike',
+        proves: 'Uniform slowness = a shared resource, not a route.',
+        reveal:
+          'Uniform, across reads and writes that share nothing except ' +
+          'the road into the database. Whatever is saturated, every ' +
+          'page in the app queues behind it.',
+      },
+      {
+        questionId: 'db-not-busy',
+        title: 'Check the usual suspect\u2019s alibi',
+        prompt:
+          'The obvious theory is "the database is overwhelmed." Test ' +
+          'it in the Postgres integration\u2019s data: host CPU, and the ' +
+          'per-query durations inside the traces you\u2019ve been ' +
+          'reading.',
+        kind: 'choice',
+        question: 'What is Postgres itself doing during the burst?',
+        options: [
+          'CPU pinned, queries individually slow — it is overwhelmed',
+          'Mostly idle, and each query is as fast as ever — the wait is elsewhere',
+          'Down — connections are being refused',
+          'Restarting repeatedly',
+        ],
+        answer: 'Mostly idle, and each query is as fast as ever — the wait is elsewhere',
+        proves: 'The database is not the bottleneck; it is barely being used.',
+        reveal:
+          'An idle database with slow applications is a paradox only ' +
+          'until you ask how the app reaches it. The queries are fine. ' +
+          'Something is rationing access to them.',
+      },
+      {
+        questionId: 'pinned-connections',
+        title: 'Count the connections',
+        prompt:
+          'The Postgres integration collects this app\u2019s connection ' +
+          'counts (a custom query counts sessions by state). During ' +
+          'the burst — with a dozen-plus orders in flight — read the ' +
+          'active connection count.',
+        nrql:
+          "SELECT latest(active_connections) AS 'Active connections' FROM PostgresqlCustomSample SINCE 10 minutes ago",
+        learn:
+          'If load rises and the connection count doesn\u2019t, the ' +
+          'application isn\u2019t using the database in parallel — no ' +
+          'matter how concurrent the callers are.',
+        kind: 'number',
+        question: 'How many database connections are active at the peak of the burst?',
+        answer: 1,
+        tolerance: 0,
+        proves: 'Exactly one: the whole restaurant really does share a single connection.',
+        reveal:
+          'One. Not "few" — one. Every transaction, read or write, ' +
+          'takes its turn on a single connection while its caller ' +
+          'waits. (If this number is ever higher, someone has given ' +
+          'the app a pool — and this investigation should be retired, ' +
+          'per its own summary.)',
+      },
+      {
+        questionId: 'throughput-ceiling',
+        title: 'Spot the ceiling',
+        prompt:
+          'Watch the order transaction\u2019s throughput and average ' +
+          'duration together during the burst (APM\u2019s transaction ' +
+          'page graphs both). Sixteen callers are ordering at once.',
+        kind: 'choice',
+        question: 'What do throughput and duration do?',
+        options: [
+          'Throughput climbs with the callers and duration stays flat — healthy parallelism',
+          'Throughput flattens at roughly one order\u2019s pace while duration stretches — requests are effectively processed one at a time',
+          'Throughput falls to zero — the app has crashed',
+          'Both stay at pre-burst levels — the burst isn\u2019t reaching the app',
+        ],
+        answer: 'Throughput flattens at roughly one order\u2019s pace while duration stretches — requests are effectively processed one at a time',
+        proves: 'Duration × throughput ≈ 1: a queue, not a workload problem.',
+        reveal:
+          'That is the arithmetic of a single file line: add callers ' +
+          'and nobody goes faster — everybody just waits longer. The ' +
+          'system\u2019s capacity is one request\u2019s service time, ' +
+          'full stop.',
+      },
+      {
+        questionId: 'the-shape',
+        title: 'Name the bottleneck',
+        prompt:
+          'Assemble it: uniform slowness, an idle database, exactly ' +
+          'one active connection, a throughput ceiling of one at a ' +
+          'time. The code confirms what the data already told you — ' +
+          'server/database.js constructs a single pg Client, not a ' +
+          'pool, and every method queues on it.',
+        kind: 'choice',
+        question: 'What is the bottleneck?',
+        options: [
+          'One slow query that needs an index',
+          'Postgres, which needs a bigger instance',
+          'The shape of the connection: a single client serializing every query in the app',
+          'The network between the app and the database',
+        ],
+        answer: 'The shape of the connection: a single client serializing every query in the app',
+        proves: 'Not a slow query — a narrow door.',
+        reveal:
+          'A queue is not a slow query. No index, no tuning, no ' +
+          'bigger database fixes a doorway that only admits one ' +
+          'request at a time.',
+      },
+      {
+        questionId: 'verdict',
+        title: 'The verdict',
+        prompt: 'Close the case: the fix, and how you would prove it worked.',
+        kind: 'choice',
+        question: 'What is the fix, and the proof?',
+        options: [
+          'Replace the single client with a connection pool of a deliberate size — then re-run the same burst: active connections rise above 1 and the throughput ceiling lifts',
+          'Restart Postgres nightly so connections stay fresh',
+          'Add an index to every table, just in case',
+          'Cache the menu page and call it done',
+        ],
+        answer: 'Replace the single client with a connection pool of a deliberate size — then re-run the same burst: active connections rise above 1 and the throughput ceiling lifts',
+        proves: 'Case ready to close.',
+        reveal: 'Verdict recorded. The summary below is the whole case in one paragraph.',
+      },
+    ],
+  },
+  {
     slug: 'one-page-a-dozen-calls',
     title: "One page, a dozen calls — twice",
     summary:

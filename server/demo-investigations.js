@@ -20,7 +20,8 @@ const path = require('path');
 const STATE_FILE = path.join(__dirname, 'data', 'demo-investigations.json');
 const SLUG_SLOW_ORDER = 'its-not-checkout';
 const SLUG_NGINX_502 = 'the-502-didnt-come-from-the-app';
-const KNOWN_SLUGS = [SLUG_SLOW_ORDER, SLUG_NGINX_502];
+const SLUG_SINGLE_CONNECTION = 'one-connection-for-the-whole-restaurant';
+const KNOWN_SLUGS = [SLUG_SLOW_ORDER, SLUG_NGINX_502, SLUG_SINGLE_CONNECTION];
 const DEFAULT_SECONDS = 3;
 const MAX_SECONDS = 10;
 
