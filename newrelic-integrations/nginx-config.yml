@@ -25,11 +25,12 @@ integrations:
       ACCESS_LOG_PATH: /var/log/nginx/access.log
       ERROR_LOG_PATH: /var/log/nginx/error.log
       
-      # Log parsing format (combined is default nginx format)
-      LOG_FORMAT: combined
-      
-      # Enable log metrics collection
-      COLLECT_LOG_METRICS: true
+      # The access log is JSON (see install-foodme.sh's log_format), which
+      # this integration's log parser cannot read - so log-derived metrics
+      # are off. Status splits are computed from the forwarded JSON log
+      # attributes in NR Logs instead. The stub_status metrics above are
+      # unaffected.
+      COLLECT_LOG_METRICS: false
       
     interval: 30s
     labels:

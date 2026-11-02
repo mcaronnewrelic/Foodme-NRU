@@ -648,6 +648,13 @@ destroyed; disarm restores). Its log checkpoints light up once the
 foodme-logs.yml addition reaches the instance. (Process note: PR
 #31's section 11.0 originally merged into PR #30's branch rather
 than main; it was recovered from that branch and lands with this PR.)
+ The access log also switches to JSON (log_format json_access in
+install-foodme.sh; the error log stays nginx's fixed text - it has
+no log_format by design), so I5's NRQL facets/filters on status and
+uri attributes; nri-nginx's log-derived metrics are turned off in
+exchange (its parser reads combined only) - stub_status metrics are
+unaffected, and status splits move to NR Logs where students can
+compute them directly.
 
 
 ### 11.4 Acceptance tests (extends §10)
