@@ -1,0 +1,72 @@
+<article class="investigation">
+  <header class="investigation-head">
+    <h3>🔍 {{ def.title }}</h3>
+    @if (allSolved) {
+      <span class="investigation-status closed">Case closed ✓</span>
+    } @else if (def.live === 'always') {
+      <span class="investigation-status live">● Live now</span>
+    } @else {
+      <span class="investigation-status armed">Armed by your instructor</span>
+    }
+  </header>
+  <p class="investigation-summary">{{ def.summary }}</p>
+  <p class="investigation-live-note">{{ def.liveNote }}</p>
+  <p class="investigation-progress">{{ solvedCount }} of {{ def.checkpoints.length }} checkpoints</p>
+
+  @for (cp of def.checkpoints; track cp.questionId; let i = $index) {
+    @if (solved(cp)) {
+      <section class="checkpoint solved">
+        <h4>✓ Checkpoint {{ i + 1 }} — {{ cp.title }}</h4>
+        @for (p of paragraphs(cp.reveal); track $index) {
+          <p class="checkpoint-reveal">{{ p }}</p>
+        }
+      </section>
+    } @else if (unlocked(i)) {
+      <section class="checkpoint current">
+        <h4>Checkpoint {{ i + 1 }} — {{ cp.title }}</h4>
+        @for (p of paragraphs(cp.prompt); track $index) {
+          <p>{{ p }}</p>
+        }
+        @if (cp.learn) {
+          <p class="checkpoint-learn"><strong>Learn:</strong> {{ cp.learn }}</p>
+        }
+        @if (cp.nrql) {
+          <app-nr-callout [title]="'Checkpoint ' + (i + 1) + ' evidence'" [nrql]="cp.nrql">
+            <app-nr-check
+              [missionId]="missionId"
+              [questionId]="cp.questionId"
+              [question]="cp.question"
+              [kind]="cp.kind"
+              [options]="cp.options ?? []"
+              [answer]="cp.answer"
+              [tolerance]="cp.tolerance ?? 0"
+              [proves]="cp.proves ?? ''"
+            />
+          </app-nr-callout>
+        } @else {
+          <app-nr-check
+            [missionId]="missionId"
+            [questionId]="cp.questionId"
+            [question]="cp.question"
+            [kind]="cp.kind"
+            [options]="cp.options ?? []"
+            [answer]="cp.answer"
+            [tolerance]="cp.tolerance ?? 0"
+            [proves]="cp.proves ?? ''"
+          />
+        }
+      </section>
+    } @else {
+      <section class="checkpoint locked">
+        <h4>🔒 Checkpoint {{ i + 1 }} — {{ cp.title }}</h4>
+      </section>
+    }
+  }
+
+  @if (allSolved) {
+    <section class="investigation-case-closed">
+      <h4>Case closed</h4>
+      <p>{{ def.caseClosed }}</p>
+    </section>
+  }
+</article>

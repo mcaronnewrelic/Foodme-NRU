@@ -1,0 +1,100 @@
+.investigation {
+  margin: 2rem 0;
+  padding: 1.25rem 1.25rem 0.5rem;
+  border: 2px solid #0d1b1b;
+  border-radius: 0.5rem;
+  background: #f4f8f8;
+  text-align: left;
+}
+
+.investigation-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.investigation-head h3 {
+  margin: 0;
+}
+
+.investigation-status {
+  padding: 0.1rem 0.6rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.investigation-status.live {
+  background: #1ce783;
+  color: #0d1b1b;
+}
+
+.investigation-status.armed {
+  background: #f5c542;
+  color: #0d1b1b;
+}
+
+.investigation-status.closed {
+  background: #0d1b1b;
+  color: #1ce783;
+}
+
+.investigation-summary {
+  margin-bottom: 0.25rem;
+}
+
+.investigation-live-note {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.investigation-progress {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.checkpoint {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.checkpoint h4 {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.checkpoint.solved {
+  border-left: 4px solid #1ce783;
+}
+
+.checkpoint-reveal {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.checkpoint-learn {
+  font-size: 0.95rem;
+}
+
+.checkpoint.locked {
+  opacity: 0.55;
+}
+
+.investigation-case-closed {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #0d1b1b;
+  color: #e6f1f1;
+}
+
+.investigation-case-closed h4 {
+  margin: 0.25rem 0 0.5rem;
+  color: #1ce783;
+}
