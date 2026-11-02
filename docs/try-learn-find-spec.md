@@ -372,7 +372,7 @@ That leaves §11 Investigations as the only unbuilt section.
 
 ## 11. Investigations
 
-The four question-gated Investigations from browser.nru.to, ported — plus five
+The four question-gated Investigations from browser.nru.to, ported — plus six
 that only Foodme can run, because browser.nru.to has no proxy and no real
 database. Same format contract as the originals: **6 checkpoints**, one
 question each; a correct answer reveals the next step and how to see it in New
@@ -386,7 +386,8 @@ review, **at least two checkpoints per investigation are evidence checks**
 instructor present). Foodme investigations are **armed** by the instructor
 through env switches, matching the existing `DEMO_FAILING_*` pattern, and are
 surfaced through the §7 scenario banner — the banner names which investigation
-is live, never the culprit. One investigation armed at a time. Each also gets
+is live, never the culprit. One investigation armed at a time. (I10 is the exception in kind, not
+in mechanics: its switch arms an extra metric rather than a fault.) Each also gets
 a page on a Foodme **Evidence Board** (extension of §8: one page per
 investigation, widgets `SINCE 3 hours ago`, same as the browser.nru.to board).
 NRQL below is indicative — confirm event/attribute names against live data
@@ -507,6 +508,55 @@ judged from whether the errors are JS errors (bundle) or transaction errors
   multiple of live rows. Case closed: vacuum/analyze, autovacuum tuning —
   maintenance as an observability topic, not a mystery.
 
+**I10 · The metric that can't say who** (metric cardinality — a design
+investigation, not a fault) *(Added 2026-11-01.)*
+- *Symptom:* none — nothing is broken. The opening question is one the data
+  should be able to answer: *which visitor placed the most orders this
+  week, and at which restaurant?* Half of it is unanswerable from the
+  orders metric, by design.
+- *Arm:* `DEMO_METRIC_BY_RESTAURANT` — when on, the server records a
+  second, name-baked pair beside the existing one:
+  `Orders/byRestaurant/<slug>/count` and `/total` (surfaced as
+  `Custom/Orders/byRestaurant/<slug>/…`). Prerequisite build is small:
+  the existing call site (`server/index.js`, `incrementMetric` /
+  `recordMetric` on order success) gains the pair, gated on the env
+  switch, with the slug from the codebase's existing `nameToSlug`
+  helper — bake the **slug**, never the display name (names carry
+  spaces and apostrophes and get renamed; a metric name is forever).
+  Off by default: the namespace stays clean outside a class, like the
+  other switches. Note the mechanism for the Learn copy: neither agent
+  API takes a dimension argument — in the APM agent the metric *name*
+  is the only dimension slot a timeslice has.
+- *Chain:* (1) count what the arm created —
+  `SELECT uniques(metricTimesliceName) FROM Metric WHERE metricTimesliceName LIKE 'Custom/Orders/%'`:
+  the base pair plus two per restaurant, a small bounded set; (2) slice
+  orders by restaurant *from the metric* — works, and stays cheap
+  forever; (3) try the per-visitor half from `Metric` — no name carries
+  identity, and no query can recover it: a timeslice aggregates at
+  write time and forgets the occurrence; (4) price the obvious fix —
+  `SELECT uniqueCount(demoCode) FROM Order SINCE 1 week ago` is the
+  number of new series *per metric* that name-baking the visitor would
+  create, growing every week, most written exactly once (and in a
+  shared teaching account, polluting every other class's metric list);
+  (5) answer the original question from the `Order` **event**
+  (`FACET demoCode`, `FACET restaurant`) — the dimensional record, where
+  attributes are query-time, not write-time, decisions; (6) verdict:
+  state the rule, then restate it in OTel terms — a dimensional metric
+  moves the same choice into attributes, and the series count is still
+  the product of the attribute values' cardinalities; the arithmetic
+  does not care which vendor collects it.
+- *Evidence checks:* the exact count of `Custom/Orders/%` timeslice
+  names with the arm on (2 + 2 × the restaurant count — only the data
+  knows it); the projected per-visitor series count from checkpoint 4
+  (nearest bucket); the top visitor's order count from the event
+  (checkpoint 5).
+- *Case closed:* a metric is a pre-aggregated, deliberately
+  identity-free record — cheap forever, answerable only for the
+  dimensions chosen when it was written; next steps — keep a dimension
+  budget for metric names (bounded, slow-growing value sets only),
+  reach for events when the question is per-entity, and apply the same
+  cardinality arithmetic to OTel attribute design.
+
 ### 11.3 Build order (extends §9)
 
 9. I2 + I3 ports first (they reuse Mission 3/4 surfaces and existing callouts).
@@ -515,6 +565,8 @@ judged from whether the errors are JS errors (bundle) or transaction errors
 12. I7 + I8 (DB switches + seed script).
 13. I1 + I4 ports, then I9 if wanted.
 14. Evidence Board pages (§8 extension) alongside each, not after all.
+15. I10 — one env-gated metric pair plus its page; independent of the
+    fault investigations and shippable any time after §8.
 
 ### 11.4 Acceptance tests (extends §10)
 
@@ -531,3 +583,7 @@ judged from whether the errors are JS errors (bundle) or transaction errors
   ungranted locks remain and order placement is normal.
 - **A13** Each investigation's Evidence Board page shows its fault during the
   armed window and is visibly quiet outside it.
+- **A14** With `DEMO_METRIC_BY_RESTAURANT` off, no `byRestaurant` timeslice
+  names appear; with it on, the `Custom/Orders/%` name count is exactly
+  2 + 2 × the seeded restaurant count, and I10's per-visitor checkpoint
+  is answerable only from the `Order` event, never from `Metric`.
