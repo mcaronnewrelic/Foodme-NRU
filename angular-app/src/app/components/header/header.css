@@ -78,7 +78,7 @@
 }
 
 /* Custom styles for better mobile experience */
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
   .navbar-collapse {
     margin-top: 1rem;
     padding-top: 1rem;
@@ -118,4 +118,45 @@
 .nr-toggle-on {
   color: #1ce783 !important;
   font-weight: 600;
+}
+
+/* Single-line nav discipline (2026-11-01): with Missions and
+   Investigations added, the bar outgrew its container - it wrapped
+   to two lines and labels wrapped under their icons. Links now
+   never wrap internally, the brand never wraps, the bar uses the
+   full width and collapses to the hamburger below xl, and
+   wide-but-not-huge screens get slightly tighter links. */
+.navbar .container-fluid {
+  flex-wrap: nowrap;
+}
+
+.navbar-brand {
+  white-space: nowrap;
+}
+
+.navbar .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.navbar .nav-link i {
+  flex: none;
+}
+
+.demo-code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  .navbar-nav .nav-link {
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    font-size: 0.95rem;
+  }
 }
