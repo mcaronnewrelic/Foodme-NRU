@@ -407,9 +407,13 @@ callout mode; the customer experience is untouched.
 `COLLECT_BLOAT_METRICS` on (I7, I9) plus the custom queries emitting
 `database_size` and active/idle connection counts (I6);
 `pg_stat_statements` is preloaded by `cloudformation/install-foodme.sh`
-(the data source I8 stands on). Log forwarding covers nginx, Postgres,
-**and the PM2 app logs** — I5's "the app logs nothing" checkpoint is
-only honest because those app logs are actually in New Relic.
+(the data source I8 stands on). Log forwarding originally covered
+**only the PM2 app logs** (the lines I5's "the app logs nothing"
+checkpoint leans on); the nginx files were parsed by the integration
+for metrics but their lines were never forwarded — the I5 build adds
+the nginx access and error files to `newrelic-integrations/foodme-logs.yml`,
+reaching the instance on the next stack/config pass. Postgres's own
+log file is still not forwarded (its path is instance-specific).
 
 **The one addition: the AWS linked-account integration, for the ALB.**
 Nothing AWS-side reports today, and I5's opening move — split the 502s
@@ -631,6 +635,19 @@ inside the order transaction (env > persisted manual override via
 header banner names the live investigation; armed investigations
 render the A10 not-live state until armed. I2's span-share check
 (90% ±10) assumes the default 3s arm.
+I5 built (2026-11-01): DEMO_NGINX_502 (env or the same manual
+override) arms a socket-destroying middleware on GET /api/restaurant*
+— every second request dies before any route runs, so the real nginx
+mints genuine 502s and logs "upstream prematurely closed connection".
+A deliberate deviation from section 11.2's timeout arm: a
+proxy_read_timeout expiry produces 504s, and this investigation is
+about 502s — the premature close is the honest 502 mechanism, and
+the copy teaches the 502/504 differential explicitly. Verified
+end-to-end against the local server (requests alternate 200 /
+destroyed; disarm restores). Its log checkpoints light up once the
+foodme-logs.yml addition reaches the instance. (Process note: PR
+#31's section 11.0 originally merged into PR #30's branch rather
+than main; it was recovered from that branch and lands with this PR.)
 
 
 ### 11.4 Acceptance tests (extends §10)

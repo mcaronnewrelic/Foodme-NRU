@@ -187,6 +187,21 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // Serve the original static files as fallback (if needed)
   app.use('/legacy', express.static(STATIC_DIR));
 
+  // I5 arm (spec section 11): while "The 502 didn't come from the app" is
+  // armed, every second GET under /api/restaurant has its socket destroyed
+  // before any route runs - nginx, the real proxy in front, experiences an
+  // upstream that dies mid-answer and mints a genuine 502 (its error log:
+  // "upstream prematurely closed connection"). The app produces no error
+  // and no response; that silence in APM is the investigation's evidence.
+  app.use('/api/restaurant', (req, res, next) => {
+    if (req.method === 'GET' && demoInvestigations.shouldDestroySocket()) {
+      logger.info({ url: req.originalUrl, ip: req.ip }, 'I5 arm: destroying socket to simulate a dying upstream');
+      req.socket.destroy();
+      return;
+    }
+    next();
+  });
+
   // create application/json parser
   var jsonParser = bodyParser.json()
 
@@ -391,9 +406,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       logger.info({ ip: req.ip }, 'Demo investigation disarmed by manual override');
       return res.json(state);
     }
-    if (slug !== 'its-not-checkout') {
+    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app') {
       return res.status(400).json({
-        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, or {slug: "off"}'
+        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10} or {slug: "the-502-didnt-come-from-the-app"}, or {slug: "off"}'
       });
     }
     const state = demoInvestigations.setManual(slug, seconds);
