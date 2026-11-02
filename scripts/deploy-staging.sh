@@ -14,9 +14,9 @@ UPDATE_BACKEND=true
 RESTART_SERVICES=true
 
 # Stack and resource names
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
-echo "🚀 FoodMe Code Deployment"
+echo "🚀 OrderUp Code Deployment"
 echo "   Environment: $ENVIRONMENT"
 echo "   AWS Region: $AWS_REGION"
 echo "   AWS Profile: $AWS_PROFILE"
@@ -78,7 +78,7 @@ echo "✅ EC2 instance is running"
 # Function to package and upload code
 package_and_upload() {
     local component="$1"
-    local temp_dir="/tmp/foodme-deployment-$$"
+    local temp_dir="/tmp/orderup-deployment-$$"
     
     mkdir -p "$temp_dir"
     
@@ -170,7 +170,7 @@ if [ "$UPDATE_BACKEND" = true ]; then
     echo "🔄 Updating backend on EC2..."
     BACKEND_COMMANDS="
         set -e
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
         
         # Backup current code
         if [ -d backup ]; then rm -rf backup; fi
@@ -184,7 +184,7 @@ if [ "$UPDATE_BACKEND" = true ]; then
         unzip -q ../server.zip
         
         # Move new files (preserve .env and node_modules)
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
         cp -r temp_server/server/* .
         rm -rf temp_server server.zip
         
@@ -212,7 +212,7 @@ if [ "$UPDATE_FRONTEND" = true ]; then
     echo "🔄 Updating frontend on EC2..."
     FRONTEND_COMMANDS="
         set -e
-        cd /opt/foodme
+        cd /opt/orderup
         
         # Backup current angular-app
         if [ -d angular-app-backup ]; then rm -rf angular-app-backup; fi
@@ -232,7 +232,7 @@ if [ "$UPDATE_FRONTEND" = true ]; then
         sudo -u ec2-user npm run build
         
         # Update symlinks
-        cd /opt/foodme
+        cd /opt/orderup
         rm -rf browser frontend
         ln -sf angular-app/dist/browser browser
         ln -sf angular-app/dist/browser frontend
@@ -255,31 +255,31 @@ if [ "$RESTART_SERVICES" = true ]; then
         set -e
         
         # Check if we have systemd service or PM2
-        if systemctl list-units --full -all | grep -q foodme-backend.service; then
+        if systemctl list-units --full -all | grep -q orderup-backend.service; then
             echo 'Using systemd service...'
-            if systemctl is-active --quiet foodme-backend; then
-                echo 'Restarting foodme-backend service...'
-                systemctl restart foodme-backend
+            if systemctl is-active --quiet orderup-backend; then
+                echo 'Restarting orderup-backend service...'
+                systemctl restart orderup-backend
             else
-                echo 'Starting foodme-backend service...'
-                systemctl start foodme-backend
+                echo 'Starting orderup-backend service...'
+                systemctl start orderup-backend
             fi
             sleep 5
-            if systemctl is-active --quiet foodme-backend; then
+            if systemctl is-active --quiet orderup-backend; then
                 echo 'Backend service is running'
             else
                 echo 'Warning: Backend service failed to start'
-                systemctl status foodme-backend
+                systemctl status orderup-backend
             fi
         else
             echo 'Using PM2...'
-            cd /opt/foodme/backend/server
+            cd /opt/orderup/backend/server
             # Kill any existing PM2 processes
             pm2 kill || true
             # Install dependencies
             npm install --production
             # Start with PM2
-            pm2 start index.js --name foodme-backend
+            pm2 start index.js --name orderup-backend
             sleep 5
             if pm2 list | grep -q 'online'; then
                 echo 'PM2 backend service is running'

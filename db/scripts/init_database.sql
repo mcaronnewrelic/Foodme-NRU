@@ -1,4 +1,4 @@
--- FoodMe Database Initialization Script
+-- OrderUp Database Initialization Script
 -- This script creates the necessary tables and imports initial data
 
 -- Create restaurants table

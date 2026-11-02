@@ -13,7 +13,7 @@ const path = require('path');
 async function testDatabase() {
     // Read database password
     const passwordFile = path.join(__dirname, '../password.txt');
-    let dbPassword = 'foodme_secure_password_2025!'; // fallback
+    let dbPassword = 'orderup_secure_password_2025!'; // fallback
     
     try {
         if (fs.existsSync(passwordFile)) {
@@ -27,8 +27,8 @@ async function testDatabase() {
     const client = new Client({
         host: process.env.DB_HOST || 'localhost',
         port: process.env.DB_PORT || 5432,
-        database: process.env.DB_NAME || 'foodme',
-        user: process.env.DB_USER || 'foodme_user',
+        database: process.env.DB_NAME || 'orderup',
+        user: process.env.DB_USER || 'orderup_user',
         password: process.env.DB_PASSWORD || dbPassword,
     });
 
@@ -99,7 +99,7 @@ async function testDatabase() {
         console.log('   1. Make sure PostgreSQL is running: docker compose ps');
         console.log('   2. Check database logs: docker compose logs db');
         console.log('   3. Verify password file: cat db/password.txt');
-        console.log('   4. Test connection: docker compose exec db psql -U foodme_user -d foodme');
+        console.log('   4. Test connection: docker compose exec db psql -U orderup_user -d orderup');
         process.exit(1);
     } finally {
         await client.end();

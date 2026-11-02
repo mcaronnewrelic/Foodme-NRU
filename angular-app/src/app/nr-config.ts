@@ -39,7 +39,7 @@ export interface DemoInvestigationState {
 }
 
 const NR_BASE_URL = 'https://one.newrelic.com';
-const CALLOUTS_STORAGE_KEY = 'foodme-nr-callouts';
+const CALLOUTS_STORAGE_KEY = 'orderup-nr-callouts';
 const CALLOUTS_SHOWN_BY_DEFAULT = false;
 
 @Injectable({ providedIn: 'root' })

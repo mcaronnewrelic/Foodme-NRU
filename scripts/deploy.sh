@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# FoodMe Deployment Script
+# OrderUp Deployment Script
 # This script handles the complete deployment workflow including New Relic deployment markers
 
 set -e  # Exit on any error
@@ -125,7 +125,7 @@ check_env_vars() {
     print_success "Environment variables are set:"
     print_info "  ENTITY_GUID: ${ENTITY_GUID:0:20}..."
     print_info "  NEW_RELIC_API_KEY: ${NEW_RELIC_API_KEY:0:20}..."
-    print_info "  NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-FoodMe}"
+    print_info "  NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME:-OrderUp}"
 }
 
 # Check if we're in a git repository
@@ -142,7 +142,7 @@ check_git() {
 
 # Build the application
 build_app() {
-    print_info "Building FoodMe application..."
+    print_info "Building OrderUp application..."
     
     # Install dependencies if needed
     if [ ! -d "node_modules" ]; then
@@ -228,7 +228,7 @@ show_deployment_status() {
     print_info "✅ Environment configured from .env file"
     echo ""
     print_info "Your deployment is tracked in New Relic with:"
-    print_info "  App Name: ${NEW_RELIC_APP_NAME:-FoodMe}"
+    print_info "  App Name: ${NEW_RELIC_APP_NAME:-OrderUp}"
     print_info "  Entity GUID: ${ENTITY_GUID:0:20}..."
     echo ""
     print_info "Next steps:"
@@ -240,7 +240,7 @@ show_deployment_status() {
 
 # Start the application
 start_app() {
-    print_info "Starting FoodMe application..."
+    print_info "Starting OrderUp application..."
     print_warning "Application will start with New Relic monitoring enabled"
     print_info "Press Ctrl+C to stop the application"
     
@@ -250,7 +250,7 @@ start_app() {
 
 # Run load tests
 run_load_test() {
-    print_info "Running load tests against FoodMe application..."
+    print_info "Running load tests against OrderUp application..."
     print_warning "Make sure the application is running on http://localhost:3000"
     
     # Check if locust is available
@@ -274,7 +274,7 @@ run_load_test() {
 
 # Main deployment workflow
 main() {
-    print_info "Starting FoodMe deployment workflow..."
+    print_info "Starting OrderUp deployment workflow..."
     echo "=================================================="
     
     # Check prerequisites
@@ -305,7 +305,7 @@ main() {
 
 # Help function
 show_help() {
-    echo "FoodMe Deployment Script"
+    echo "OrderUp Deployment Script"
     echo "========================"
     echo ""
     echo "Usage: $0 [OPTIONS]"
@@ -324,7 +324,7 @@ show_help() {
     echo "    NEW_RELIC_API_KEY Your New Relic User API key"
     echo ""
     echo "  Optional variables:"
-    echo "    NEW_RELIC_APP_NAME     App name in New Relic (default: FoodMe)"
+    echo "    NEW_RELIC_APP_NAME     App name in New Relic (default: OrderUp)"
     echo "    NEW_RELIC_LICENSE_KEY  License key for APM agent"
     echo ""
     echo "Setup:"

@@ -64,9 +64,9 @@ if [ -z "$AWS_REGION" ]; then
     fi
 fi
 
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
-echo "🔍 FoodMe Application Monitoring Validation"
+echo "🔍 OrderUp Application Monitoring Validation"
 echo "=========================================="
 echo "Environment: $ENVIRONMENT"
 echo "AWS Region: $AWS_REGION"
@@ -230,7 +230,7 @@ fi
 
 # Database accessibility
 echo -n "Database accessible: "
-RESULT=$(run_command "sudo -u postgres psql -d foodme -c '\\q' 2>/dev/null && echo OK" "Database access")
+RESULT=$(run_command "sudo -u postgres psql -d orderup -c '\\q' 2>/dev/null && echo OK" "Database access")
 if [[ "$RESULT" == *"OK"* ]]; then
     echo "✅ PASS"
     track_result "PASS"
@@ -241,7 +241,7 @@ fi
 
 # Restaurant data
 echo -n "Restaurant data: "
-RESULT=$(run_command "sudo -u postgres psql -d foodme -tAc 'SELECT COUNT(*) FROM restaurants'" "Restaurant count")
+RESULT=$(run_command "sudo -u postgres psql -d orderup -tAc 'SELECT COUNT(*) FROM restaurants'" "Restaurant count")
 if [[ "$RESULT" =~ ^[0-9]+$ ]] && [[ "$RESULT" -gt 0 ]]; then
     echo "✅ PASS ($RESULT restaurants)"
     track_result "PASS"

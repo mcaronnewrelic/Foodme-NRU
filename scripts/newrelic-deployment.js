@@ -59,7 +59,7 @@ async function createDeploymentMarker() {
     }
 
     // Get app name from environment or use default
-    const appName = process.env.NEW_RELIC_APP_NAME || 'FoodMe';
+    const appName = process.env.NEW_RELIC_APP_NAME || 'OrderUp';
     log(`🔍 Searching for entity: ${appName}`, 'yellow');
 
     // Get git information
@@ -233,9 +233,9 @@ function makeRESTRequest(apiKey, deploymentData) {
           const parsedData = JSON.parse(responseData);
           
           if (parsedData.applications && parsedData.applications.length > 0) {
-            // Find the FoodMe application
+            // Find the OrderUp application
             const app = parsedData.applications.find(app => 
-              app.name === 'FoodMe' || app.name.includes('FoodMe')
+              app.name === 'OrderUp' || app.name.includes('OrderUp')
             ) || parsedData.applications[0]; // Fallback to first app
             
             // Now create deployment for this app

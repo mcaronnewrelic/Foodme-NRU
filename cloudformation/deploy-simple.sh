@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STACK_NAME_PREFIX="foodme"
+STACK_NAME_PREFIX="orderup"
 # Use the simplified monitoring template
 TEMPLATE_FILE="$SCRIPT_DIR/monitoring-stack.yaml"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -74,7 +74,7 @@ create_s3_bucket() {
 
 upload_application_code() {
     local bucket_name="$1"
-    local temp_dir="/tmp/foodme-deployment-$$"
+    local temp_dir="/tmp/orderup-deployment-$$"
     
     echo "📤 Uploading application code to S3..."
     
@@ -113,8 +113,8 @@ upload_application_code() {
     fi
     
     # Upload the enhanced install script with monitoring
-    echo "  ⬆️  Uploading enhanced install-foodme.sh..."
-    aws s3 cp "$SCRIPT_DIR/install-foodme.sh" "s3://$bucket_name/install-foodme.sh"
+    echo "  ⬆️  Uploading enhanced install-orderup.sh..."
+    aws s3 cp "$SCRIPT_DIR/install-orderup.sh" "s3://$bucket_name/install-orderup.sh"
     
     # Cleanup
     rm -rf "$temp_dir"
@@ -139,7 +139,7 @@ deploy_stack() {
     local stack_name="${STACK_NAME_PREFIX}-${environment}"
     local aws_region=$(aws configure get region)
     local aws_account_id=$(aws sts get-caller-identity --query Account --output text)
-    local bucket_name="foodme-deployments-${aws_account_id}-${aws_region}"
+    local bucket_name="orderup-deployments-${aws_account_id}-${aws_region}"
     
     # Create S3 bucket and upload code
     create_s3_bucket "$bucket_name" "$aws_region"
@@ -170,7 +170,7 @@ deploy_stack() {
         --capabilities CAPABILITY_NAMED_IAM \
         --tags \
             Environment="$environment" \
-            Application=FoodMe \
+            Application=OrderUp \
             ManagedBy=CloudFormation \
             MonitoringEnabled=true
     
@@ -209,7 +209,7 @@ get_stack_outputs() {
 }
 
 main() {
-    echo "🌟 FoodMe Simplified Deployment with Enhanced Monitoring"
+    echo "🌟 OrderUp Simplified Deployment with Enhanced Monitoring"
     echo "🎯 Target: Amazon Linux 2023 with PostgreSQL + Nginx monitoring"
     echo ""
     

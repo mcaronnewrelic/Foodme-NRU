@@ -5,7 +5,7 @@ integrations:
       HOSTNAME: localhost
       PORT: 5432
       USERNAME: newrelic
-      DATABASE: foodme
+      DATABASE: orderup
       # Use environment variable for password
       PASSWORD: ${NEWRELIC_DB_PASSWORD}
       # SSL configuration
@@ -20,12 +20,12 @@ integrations:
       COLLECT_DB_LOCK_METRICS: true
       COLLECT_BLOAT_METRICS: true
       # Custom attributes for easier filtering
-      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"${ENVIRONMENT}","application":"foodme","database":"foodme","deployment":"ec2"}'
-      # Enable custom queries for FoodMe-specific metrics
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"${ENVIRONMENT}","application":"orderup","database":"orderup","deployment":"ec2"}'
+      # Enable custom queries for OrderUp-specific metrics
       CUSTOM_METRICS_QUERY: |
         SELECT 
           'database_size' as metric_name,
-          pg_database_size('foodme') as metric_value,
+          pg_database_size('orderup') as metric_value,
           'bytes' as metric_unit
         UNION ALL
         SELECT 
@@ -46,6 +46,6 @@ integrations:
       env: ${ENVIRONMENT}
       role: database
       service: postgresql
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/postgresql

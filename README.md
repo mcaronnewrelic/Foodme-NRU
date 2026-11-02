@@ -157,7 +157,7 @@ npm run dev
 The OrderUp project is organized for clarity and ease of development:
 
 ```
-foodme/
+orderup/
 ├── README.md                    # 👈 Project overview and quick start
 ├── DOCKER_DEVELOPMENT_GUIDE.md # 🐳 Complete Docker development guide
 ├── package.json                # 📦 Main project dependencies and scripts
@@ -234,7 +234,7 @@ foodme/
 
 ### Project Structure
 ```
-foodme/
+orderup/
 ├── angular-app/          # Angular 20 frontend application
 │   ├── src/app/         # Application components and services
 │   └── public/          # Static assets and icons

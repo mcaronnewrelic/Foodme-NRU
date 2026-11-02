@@ -75,12 +75,12 @@ function adminClientConfig() {
   if (!dbPass && fs.existsSync(passwordFile)) {
     try { dbPass = fs.readFileSync(passwordFile, 'utf8').trim(); } catch { /* fall through */ }
   }
-  if (!dbPass) dbPass = 'foodme_secure_password_2025!';
+  if (!dbPass) dbPass = 'orderup_secure_password_2025!';
   const config = {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'foodme',
-    user: process.env.DB_USER || 'foodme_user',
+    database: process.env.DB_NAME || 'orderup',
+    user: process.env.DB_USER || 'orderup_user',
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   };
   config.password = dbPass;

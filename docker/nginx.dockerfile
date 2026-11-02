@@ -1,7 +1,7 @@
 FROM nginx:1.25-alpine
 
 # Copy the nginx configuration
-COPY nginx-config/foodme.dev.conf /etc/nginx/conf.d/default.conf
+COPY nginx-config/orderup.dev.conf /etc/nginx/conf.d/default.conf
 
 # Remove the default nginx configuration
 RUN rm -f /etc/nginx/conf.d/default.conf.bak

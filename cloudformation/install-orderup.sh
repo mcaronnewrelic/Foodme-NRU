@@ -5,7 +5,7 @@ set -e
 # This script installs and configures the complete OrderUp application stack
 #
 # Key Fixes Applied:
-# - Fixed Angular build output path handling (outputs to /opt/foodme/dist directly)
+# - Fixed Angular build output path handling (outputs to /opt/orderup/dist directly)
 # - Corrected New Relic file ownership (root:root instead of root:newrelic-infra)
 # - Fixed file permissions (644 instead of 640)
 # - Improved PostgreSQL integration test (PGPASSWORD method)
@@ -26,7 +26,7 @@ imds() {
 
 # Hostname is ip-10-0-1-x, which tells apart servers that overlap during a redeploy
 host_display_name() {
-    echo "foodme-$(hostname -s)"
+    echo "orderup-$(hostname -s)"
 }
 
 log "Starting OrderUp application installation..."
@@ -62,7 +62,7 @@ configure_postgresql() {
     
     log "Setting up PostgreSQL user and database..."
     sudo -u postgres psql -c "ALTER USER postgres PASSWORD '$db_password';"
-    sudo -u postgres createdb foodme
+    sudo -u postgres createdb orderup
     
     # Update PostgreSQL configuration
     sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" /var/lib/pgsql/data/postgresql.conf
@@ -72,7 +72,7 @@ configure_postgresql() {
     
     # Wait for PostgreSQL to be ready
     log "Waiting for PostgreSQL to be ready..."
-    until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
+    until sudo -u postgres psql -d orderup -c 'SELECT 1;' > /dev/null 2>&1; do
         echo "Waiting for PostgreSQL..."
         sleep 2
     done
@@ -121,17 +121,17 @@ EOF
     systemctl restart postgresql
     
     # Wait for PostgreSQL to be ready
-    until sudo -u postgres psql -d foodme -c 'SELECT 1;' > /dev/null 2>&1; do
+    until sudo -u postgres psql -d orderup -c 'SELECT 1;' > /dev/null 2>&1; do
         echo "Waiting for PostgreSQL to restart..."
         sleep 2
     done
     
     # Create monitoring extensions in the database
     log "Installing PostgreSQL monitoring extensions..."
-    sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
-    sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pg_buffercache;"
-    sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgstattuple;"
-    sudo -u postgres psql -d foodme -c "CREATE EXTENSION IF NOT EXISTS pgrowlocks;"
+    sudo -u postgres psql -d orderup -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+    sudo -u postgres psql -d orderup -c "CREATE EXTENSION IF NOT EXISTS pg_buffercache;"
+    sudo -u postgres psql -d orderup -c "CREATE EXTENSION IF NOT EXISTS pgstattuple;"
+    sudo -u postgres psql -d orderup -c "CREATE EXTENSION IF NOT EXISTS pgrowlocks;"
     
     # Fix PostgreSQL log permissions for New Relic monitoring access
     log "Configuring PostgreSQL log permissions for monitoring..."
@@ -150,13 +150,13 @@ install_application_dependencies() {
 # Setup application directory structure
 setup_application_structure() {
     log "Setting up application directory structure..."
-    mkdir -p /opt/foodme/{frontend,backend,database,logs}
-    chown -R ec2-user:ec2-user /opt/foodme
-    chmod 755 /opt/foodme/logs
+    mkdir -p /opt/orderup/{frontend,backend,database,logs}
+    chown -R ec2-user:ec2-user /opt/orderup
+    chmod 755 /opt/orderup/logs
     
     # Create log rotation configuration for application logs
-    cat > /etc/logrotate.d/foodme << EOF
-/opt/foodme/logs/*.log {
+    cat > /etc/logrotate.d/orderup << EOF
+/opt/orderup/logs/*.log {
     daily
     missingok
     rotate 7
@@ -177,7 +177,7 @@ deploy_backend_application() {
     local node_env="$5"
     
     log "Deploying backend application..."
-    cd /opt/foodme/backend
+    cd /opt/orderup/backend
     
     # Download backend code from S3
     log "Downloading backend code from S3..."
@@ -196,10 +196,10 @@ deploy_backend_application() {
     cat > .env << EOF
 NODE_ENV="$node_env"
 PORT=3000
-DATABASE_URL="postgresql://postgres:$db_password@localhost:5432/foodme"
+DATABASE_URL="postgresql://postgres:$db_password@localhost:5432/orderup"
 JWT_SECRET=$(openssl rand -base64 32)
 CORS_ORIGIN="http://$(imds public-ipv4)"
-ANGULAR_DIR="/opt/foodme/dist/browser"
+ANGULAR_DIR="/opt/orderup/dist/browser"
 NEW_RELIC_LICENSE_KEY="$new_relic_key"
 NRIA_LICENSE_KEY="$new_relic_key"
 NEW_RELIC_APP_NAME="OrderUp"
@@ -217,15 +217,15 @@ EOF
     cat > ecosystem.config.js << EOF
 module.exports = {
   apps: [{
-    name: 'foodme-backend',
+    name: 'orderup-backend',
     script: 'start.js',
     node_args: '--env-file=.env',
-    cwd: '/opt/foodme/backend',
+    cwd: '/opt/orderup/backend',
     instances: 1,
     exec_mode: 'fork',
-    out_file: '/opt/foodme/logs/foodme-backend-out.log',
-    error_file: '/opt/foodme/logs/foodme-backend-error.log',
-    log_file: '/opt/foodme/logs/foodme-backend-combined.log',
+    out_file: '/opt/orderup/logs/orderup-backend-out.log',
+    error_file: '/opt/orderup/logs/orderup-backend-error.log',
+    log_file: '/opt/orderup/logs/orderup-backend-combined.log',
     time: true,
     autorestart: true,
     max_restarts: 10,
@@ -244,7 +244,7 @@ deploy_frontend_application() {
     local s3_bucket="$1"
     
     log "Deploying frontend application..."
-    cd /opt/foodme
+    cd /opt/orderup
     
     # Download Angular frontend from S3
     log "Downloading frontend code from S3..."
@@ -254,22 +254,22 @@ deploy_frontend_application() {
     
     # Fix ownership of angular-app directory
     log "Fixing Angular app permissions..."
-    chown -R ec2-user:ec2-user /opt/foodme/angular-app
+    chown -R ec2-user:ec2-user /opt/orderup/angular-app
     
     # Build Angular application
     log "Building Angular application..."
-    cd /opt/foodme/angular-app
+    cd /opt/orderup/angular-app
     sudo -u ec2-user npm install
     sudo -u ec2-user npm run build
     
     # Verify Angular build output location
     log "Verifying Angular build output..."
-    if [ -d "/opt/foodme/dist/browser" ]; then
-        log "✅ Angular build output found at correct location: /opt/foodme/dist/browser"
+    if [ -d "/opt/orderup/dist/browser" ]; then
+        log "✅ Angular build output found at correct location: /opt/orderup/dist/browser"
     else
         log "❌ Angular build output not found at expected location"
         log "Checking alternative locations..."
-        find /opt/foodme -name "browser" -type d 2>/dev/null | head -5
+        find /opt/orderup -name "browser" -type d 2>/dev/null | head -5
         exit 1
     fi
     
@@ -285,11 +285,23 @@ configure_nginx() {
     sed -i '/^    server {/,/^    }/d' /etc/nginx/nginx.conf
     
     # Create main nginx configuration with monitoring module
-    cat > /etc/nginx/conf.d/foodme.conf << 'EOF'
+    cat > /etc/nginx/conf.d/orderup.conf << 'EOF'
+# JSON access logs: New Relic's log forwarder lifts JSON keys to
+# attributes automatically, so status / uri / upstream timings are
+# queryable fields instead of text to parse. (The error log keeps
+# nginx's fixed text format - it has no log_format by design.)
+log_format json_access escape=json
+    '{"time":"$time_iso8601","remote_addr":"$remote_addr","method":"$request_method",'
+    '"uri":"$uri","status":$status,"bytes":$body_bytes_sent,'
+    '"request_time":$request_time,"upstream_time":"$upstream_response_time",'
+    '"upstream_status":"$upstream_status","user_agent":"$http_user_agent"}';
+
 server {
     listen 80;
     listen 8080;
     server_name _;
+
+    access_log /var/log/nginx/access.log json_access;
     
     # Health check endpoint for monitoring
     location /nginx-health {
@@ -412,10 +424,57 @@ log_file: /var/log/newrelic-infra/newrelic-infra.log
 verbose: 0
 custom_attributes:
   environment: $environment
-  application: foodme
+  application: orderup
   role: web-server
 EOF
-        
+
+        # Log forwarding. Nothing delivered this file before the
+        # orderup rename - the repo copy (newrelic-integrations/
+        # orderup-logs.yml) had no path to the instance, so whether
+        # logs flowed depended on manual setup the stack never made.
+        # Keep this heredoc and the repo copy in sync; this one is
+        # authoritative. (Spec section 11.0: I5's evidence lives in
+        # the nginx entries - the 502s in the access log, which is
+        # JSON and arrives as attributes, and the "upstream
+        # prematurely closed" lines in the error log.)
+        mkdir -p /etc/newrelic-infra/logging.d
+        cat > /etc/newrelic-infra/logging.d/logging.yml << 'EOF'
+logs:
+  - name: orderup-backend-output
+    file: /opt/orderup/logs/orderup-backend-out.log
+    attributes:
+      logtype: orderup-application
+      service: orderup-backend
+      environment: production
+      component: nodejs-backend
+      log_level: info
+
+  - name: orderup-backend-errors
+    file: /opt/orderup/logs/orderup-backend-error.log
+    attributes:
+      logtype: orderup-application
+      service: orderup-backend
+      environment: production
+      component: nodejs-backend
+      log_level: error
+
+  - name: nginx-access
+    file: /var/log/nginx/access.log
+    attributes:
+      logtype: nginx-access
+      service: nginx
+      environment: production
+      component: reverse-proxy
+
+  - name: nginx-error
+    file: /var/log/nginx/error.log
+    attributes:
+      logtype: nginx-error
+      service: nginx
+      environment: production
+      component: reverse-proxy
+EOF
+
         systemctl enable newrelic-infra
         systemctl start newrelic-infra
         log "New Relic Infrastructure monitoring enabled"
@@ -441,12 +500,12 @@ configure_postgresql_monitoring() {
         log "Creating New Relic monitoring user in PostgreSQL..."
         local newrelic_db_password=$(openssl rand -base64 32)
         
-        sudo -u postgres psql -d foodme << EOF
+        sudo -u postgres psql -d orderup << EOF
 -- Create monitoring user
 CREATE USER newrelic WITH PASSWORD '$newrelic_db_password';
 
 -- Grant necessary permissions for monitoring
-GRANT CONNECT ON DATABASE foodme TO newrelic;
+GRANT CONNECT ON DATABASE orderup TO newrelic;
 GRANT USAGE ON SCHEMA public TO newrelic;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO newrelic;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO newrelic;
@@ -475,7 +534,7 @@ integrations:
       HOSTNAME: localhost
       PORT: 5432
       USERNAME: newrelic
-      DATABASE: foodme
+      DATABASE: orderup
       PASSWORD: $newrelic_db_password
       SSL_MODE: disable
       CONNECTION_TIMEOUT: 5
@@ -485,12 +544,12 @@ integrations:
       ENABLE_QUERY_MONITORING: true
       COLLECT_DB_LOCK_METRICS: true
       COLLECT_BLOAT_METRICS: true
-      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"$environment","application":"foodme","database":"foodme","deployment":"ec2"}'
+      CUSTOM_ATTRIBUTES: '{"service":"postgresql","environment":"$environment","application":"orderup","database":"orderup","deployment":"ec2"}'
       CUSTOM_METRICS_QUERY: |
         SELECT 
           'database_size' as metric_name,
           'gauge' as metric_type,
-          pg_database_size('foodme') as metric_value,
+          pg_database_size('orderup') as metric_value,
           'bytes' as metric_unit
         UNION ALL
         SELECT 
@@ -513,7 +572,7 @@ integrations:
       env: $environment
       role: database
       service: postgresql
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/postgresql
 EOF
@@ -524,7 +583,7 @@ EOF
         
         # Test the integration
         log "Testing PostgreSQL integration..."
-        if PGPASSWORD="$newrelic_db_password" psql -h localhost -p 5432 -U newrelic -d foodme -c "SELECT 1;" > /dev/null 2>&1; then
+        if PGPASSWORD="$newrelic_db_password" psql -h localhost -p 5432 -U newrelic -d orderup -c "SELECT 1;" > /dev/null 2>&1; then
             log "✅ PostgreSQL integration connection test successful"
         else
             log "⚠️  PostgreSQL integration connection test failed - check configuration"
@@ -579,24 +638,25 @@ integrations:
       INVENTORY: true
       
       # Custom attributes for better organization
-      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"$environment","application":"foodme","role":"web-server","deployment":"ec2"}'
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"$environment","application":"orderup","role":"web-server","deployment":"ec2"}'
       
       # Optional: Parse nginx access logs for additional metrics
       ACCESS_LOG_PATH: /var/log/nginx/access.log
       ERROR_LOG_PATH: /var/log/nginx/error.log
       
-      # Log parsing format (combined is default nginx format)
-      LOG_FORMAT: combined
-      
-      # Enable log metrics collection
-      COLLECT_LOG_METRICS: true
+      # The access log is JSON (see install-orderup.sh's log_format), which
+      # this integration's log parser cannot read - so log-derived metrics
+      # are off. Status splits are computed from the forwarded JSON log
+      # attributes in NR Logs instead. The stub_status metrics above are
+      # unaffected.
+      COLLECT_LOG_METRICS: false
       
     interval: 30s
     labels:
       env: $environment
       role: web-server
       service: nginx
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/nginx
 EOF
@@ -644,7 +704,7 @@ initialize_database() {
     # Check if database initialization script exists in S3
     if aws s3 ls "s3://$s3_bucket/db-init.zip" > /dev/null 2>&1; then
         log "Downloading database initialization scripts..."
-        cd /opt/foodme/database
+        cd /opt/orderup/database
         aws s3 cp "s3://$s3_bucket/db-init.zip" ./db-init.zip
         unzip -q db-init.zip
         rm db-init.zip
@@ -652,20 +712,20 @@ initialize_database() {
         # Run initialization scripts if they exist
         if [ -f "init-db.sql" ]; then
             log "Running database initialization script..."
-            PGPASSWORD="$db_password" psql -h localhost -U postgres -d foodme -f init-db.sql
+            PGPASSWORD="$db_password" psql -h localhost -U postgres -d orderup -f init-db.sql
         fi
     else
         log "No database initialization scripts found in S3"
     fi
     
     # Run schema initialization from local files if they exist
-    if [ -f "/opt/foodme/database/init/01-init-schema.sql" ]; then
+    if [ -f "/opt/orderup/database/init/01-init-schema.sql" ]; then
         log "Running local database schema initialization..."
-        sudo -u postgres psql foodme < /opt/foodme/database/init/01-init-schema.sql
+        sudo -u postgres psql orderup < /opt/orderup/database/init/01-init-schema.sql
         
-        if [ -f "/opt/foodme/database/init/02-import-restaurants-uuid.sql" ]; then
+        if [ -f "/opt/orderup/database/init/02-import-restaurants-uuid.sql" ]; then
             log "Importing restaurant data..."
-            sudo -u postgres psql foodme < /opt/foodme/database/init/02-import-restaurants-uuid.sql
+            sudo -u postgres psql orderup < /opt/orderup/database/init/02-import-restaurants-uuid.sql
         fi
     else
         log "Warning: Local database initialization scripts not found"
@@ -678,7 +738,7 @@ start_services() {
     
     # Start backend with PM2
     log "Starting backend application with PM2..."
-    cd /opt/foodme/backend
+    cd /opt/orderup/backend
     
     # Kill any existing PM2 processes
     sudo -u ec2-user pm2 kill 2>/dev/null || true
@@ -693,7 +753,7 @@ start_services() {
     else
         log "❌ Failed to start backend with PM2, trying direct node start..."
         # Fallback to direct node start
-        nohup node start.js > /opt/foodme/logs/backend.log 2>&1 &
+        nohup node start.js > /opt/orderup/logs/backend.log 2>&1 &
         log "✅ Backend started directly with node"
     fi
     
@@ -728,7 +788,7 @@ verify_deployment() {
         log "❌ Nginx is not running"
     fi
     
-    if sudo -u ec2-user pm2 list | grep -q "foodme-backend"; then
+    if sudo -u ec2-user pm2 list | grep -q "orderup-backend"; then
         log "✅ Backend application is running"
     else
         log "❌ Backend application is not running"

@@ -107,9 +107,9 @@ if [ -z "$AWS_REGION" ]; then
 fi
 
 # Stack and resource names
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
-echo "🚀 FoodMe Code Deployment"
+echo "🚀 OrderUp Code Deployment"
 echo "   Environment: $ENVIRONMENT"
 echo "   AWS Region: $AWS_REGION"
 echo "   Frontend Update: $UPDATE_FRONTEND"
@@ -166,7 +166,7 @@ echo "✅ EC2 instance is running"
 # Function to package and upload code
 package_and_upload() {
     local component="$1"
-    local temp_dir="/tmp/foodme-deployment-$$"
+    local temp_dir="/tmp/orderup-deployment-$$"
     
     mkdir -p "$temp_dir"
     
@@ -252,9 +252,9 @@ if [ "$DIAGNOSE" = true ]; then
     echo ""
     echo "🩺 Collecting diagnostics from the instance (read-only)..."
     DIAGNOSE_COMMANDS="
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
         echo '===== PM2 STATUS ====='
-        sudo -u ec2-user pm2 list 2>/dev/null | grep -E 'status|foodme' || echo '(pm2 list unavailable)'
+        sudo -u ec2-user pm2 list 2>/dev/null | grep -E 'status|orderup' || echo '(pm2 list unavailable)'
         echo ''
         echo '===== .env KEY CHECK (names only) ====='
         if [ -f .env.bak ]; then
@@ -273,10 +273,10 @@ if [ "$DIAGNOSE" = true ]; then
         tail -50 newrelic_agent.log 2>/dev/null || echo '(newrelic_agent.log not found in the backend directory)'
         echo ''
         echo '===== BACKEND ERROR LOG (last 25 lines) ====='
-        tail -25 /opt/foodme/logs/foodme-backend-error.log 2>/dev/null || echo '(no backend error log)'
+        tail -25 /opt/orderup/logs/orderup-backend-error.log 2>/dev/null || echo '(no backend error log)'
         echo ''
         echo '===== EMPTY NEW RELIC HEADER WARNINGS (count in combined log) ====='
-        grep -ac 'New Relic header is empty' /opt/foodme/logs/foodme-backend-combined.log 2>/dev/null || echo '0'
+        grep -ac 'New Relic header is empty' /opt/orderup/logs/orderup-backend-combined.log 2>/dev/null || echo '0'
     "
     COMMAND_ID=$(execute_on_ec2 "$DIAGNOSE_COMMANDS")
     wait_for_command "$COMMAND_ID"
@@ -304,7 +304,7 @@ if [ "$UPDATE_BACKEND" = true ]; then
         set -e
 
         # Keep the current code (without node_modules) so a bad deploy can be rolled back by hand
-        tar -czf /opt/foodme/backend-backup.tgz --exclude=node_modules -C /opt/foodme/backend .
+        tar -czf /opt/orderup/backend-backup.tgz --exclude=node_modules -C /opt/orderup/backend .
 
         # Download and unpack the new code
         aws s3 cp s3://$S3_BUCKET/server.zip /tmp/server.zip
@@ -313,12 +313,12 @@ if [ "$UPDATE_BACKEND" = true ]; then
 
         # Copy everything, including data/ and views/. The .env file and ecosystem.config.js only exist on
         # the instance, and the zip does not contain them, so they stay as they are.
-        cp -r /tmp/server-new/server/. /opt/foodme/backend/
+        cp -r /tmp/server-new/server/. /opt/orderup/backend/
         rm -rf /tmp/server-new /tmp/server.zip
-        chown -R ec2-user:ec2-user /opt/foodme/backend
+        chown -R ec2-user:ec2-user /opt/orderup/backend
 
         # Install what package.json asks for, as the user that runs the app
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
         sudo -u ec2-user npm install --omit=dev --no-audit --no-fund
 
         echo 'Backend code updated successfully'
@@ -342,7 +342,7 @@ if [ "$UPDATE_FRONTEND" = true ]; then
     echo "🔄 Updating frontend on EC2..."
     FRONTEND_COMMANDS="
         set -e
-        cd /opt/foodme
+        cd /opt/orderup
         
         # Backup current angular-app
         if [ -d angular-app-backup ]; then rm -rf angular-app-backup; fi
@@ -362,7 +362,7 @@ if [ "$UPDATE_FRONTEND" = true ]; then
         sudo -u ec2-user npm run build
         
         # Update symlink
-        cd /opt/foodme
+        cd /opt/orderup
         rm -f browser
         ln -sf angular-app/dist/browser browser
         
@@ -403,7 +403,7 @@ if [ "$UPDATE_BACKEND" = true ] && [ ${#sync_assignments[@]} -gt 0 ]; then
     assignments=$(printf '%s\n' "${sync_assignments[@]}")
     ENV_SYNC_COMMANDS="
         set -e
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
         touch .env
 
         # Repair first: an earlier version of this sync rewrote .env with a
@@ -471,11 +471,11 @@ if [ "$RESTART_SERVICES" = true ]; then
     
     RESTART_COMMANDS="
         set -e
-        cd /opt/foodme/backend
+        cd /opt/orderup/backend
 
         # The backend is a PM2 process owned by ec2-user
-        if sudo -u ec2-user pm2 describe foodme-backend > /dev/null 2>&1; then
-            sudo -u ec2-user pm2 restart foodme-backend --update-env
+        if sudo -u ec2-user pm2 describe orderup-backend > /dev/null 2>&1; then
+            sudo -u ec2-user pm2 restart orderup-backend --update-env
         else
             sudo -u ec2-user pm2 start ecosystem.config.js
         fi
@@ -483,7 +483,7 @@ if [ "$RESTART_SERVICES" = true ]; then
 
         # Give it a moment, then make sure it answers
         sleep 5
-        curl -sf http://localhost:3000/health > /dev/null || { echo 'Backend did not answer /health'; sudo -u ec2-user pm2 logs foodme-backend --nostream --lines 30; exit 1; }
+        curl -sf http://localhost:3000/health > /dev/null || { echo 'Backend did not answer /health'; sudo -u ec2-user pm2 logs orderup-backend --nostream --lines 30; exit 1; }
         echo 'Backend answers /health'
 
         systemctl reload nginx
@@ -531,7 +531,7 @@ if [ "$SHOW_LOGS" = true ]; then
     echo "📜 Recent application logs:"
     LOG_COMMANDS="
         echo '=== Backend Logs ==='
-        sudo -u ec2-user pm2 logs foodme-backend --nostream --lines 20
+        sudo -u ec2-user pm2 logs orderup-backend --nostream --lines 20
         echo
         echo '=== Nginx Error Logs ==='
         tail -20 /var/log/nginx/error.log

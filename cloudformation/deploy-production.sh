@@ -3,9 +3,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STACK_NAME_PREFIX="foodme"
+STACK_NAME_PREFIX="orderup"
 # Use the production-ready template with all troubleshooting fixes
-TEMPLATE_FILE="$SCRIPT_DIR/foodme-production-stack.yaml"
+TEMPLATE_FILE="$SCRIPT_DIR/orderup-production-stack.yaml"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Function to load environment variables from .env file
@@ -74,7 +74,7 @@ create_s3_bucket() {
 
 upload_application_code() {
     local bucket_name="$1"
-    local temp_dir="/tmp/foodme-production-deployment-$$"
+    local temp_dir="/tmp/orderup-production-deployment-$$"
     
     echo "📤 Uploading application code to S3..."
     
@@ -113,8 +113,8 @@ upload_application_code() {
     fi
     
     # Upload the enhanced install script with monitoring
-    echo "  ⬆️  Uploading enhanced install-foodme.sh..."
-    aws s3 cp "$SCRIPT_DIR/install-foodme.sh" "s3://$bucket_name/install-foodme.sh"
+    echo "  ⬆️  Uploading enhanced install-orderup.sh..."
+    aws s3 cp "$SCRIPT_DIR/install-orderup.sh" "s3://$bucket_name/install-orderup.sh"
     
     # Cleanup
     rm -rf "$temp_dir"
@@ -131,6 +131,10 @@ deploy_production_stack() {
     # Optional ACM certificate ARN (6th arg or CERTIFICATE_ARN env). Empty
     # means HTTP only; see the CertificateArn parameter in the template.
     local certificate_arn="${6:-${CERTIFICATE_ARN:-}}"
+    # Install-time config version (7th arg or CONFIG_VERSION env). Bump
+    # it to force instance replacement on the next stack update; see the
+    # ConfigVersion parameter in the template.
+    local config_version="${7:-${CONFIG_VERSION:-1}}"
     
     if [ -z "$key_pair_name" ] || [ -z "$db_password" ]; then
         echo "❌ Missing required parameters"
@@ -142,14 +146,14 @@ deploy_production_stack() {
     local stack_name="${STACK_NAME_PREFIX}-${environment}"
     local aws_region=$(aws configure get region)
     local aws_account_id=$(aws sts get-caller-identity --query Account --output text)
-    local bucket_name="foodme-deployments-${aws_account_id}-${aws_region}"
+    local bucket_name="orderup-deployments-${aws_account_id}-${aws_region}"
     
     # Create S3 bucket and upload code
     create_s3_bucket "$bucket_name" "$aws_region"
     upload_application_code "$bucket_name"
     
     echo "🚀 Deploying Production-Ready CloudFormation stack: $stack_name"
-    echo "🎯 Template: foodme-production-stack.yaml (includes all troubleshooting fixes)"
+    echo "🎯 Template: orderup-production-stack.yaml (includes all troubleshooting fixes)"
     echo "🔍 Using Amazon Linux 2023 (AL2023)"
     echo "🛠️  Includes: Proper Angular routing, Nginx port 8080, PM2 backend management"
     
@@ -177,11 +181,12 @@ deploy_production_stack() {
             DatabasePassword="$db_password" \
             NewRelicLicenseKey="$new_relic_license_key" \
             CertificateArn="$certificate_arn" \
+            ConfigVersion="$config_version" \
             S3BucketName="$bucket_name" \
         --capabilities CAPABILITY_NAMED_IAM \
         --tags \
             Environment="$environment" \
-            Application=FoodMe \
+            Application=OrderUp \
             ManagedBy=CloudFormation \
             MonitoringEnabled=true \
             Version=Production
@@ -232,7 +237,7 @@ get_stack_outputs() {
 }
 
 main() {
-    echo "🚀 FoodMe Production Deployment"
+    echo "🚀 OrderUp Production Deployment"
     echo "🎯 Production-ready template with all troubleshooting fixes"
     echo "📦 Includes: AL2023, Enhanced Monitoring, Load Balancing, Auto-scaling Ready"
     echo ""
