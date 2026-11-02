@@ -640,29 +640,33 @@ data? Yes, and the shape is the classic poison-pill queue failure.
   `OrderPipelineSample` event (count per status + how many it
   advanced), which feeds pipeline widgets on the OrderUp Overview
   dashboard: pending/preparing/out counts and advances per poll.
-  Deliberate flaw, kept for this investigation: the batch advances
-  in ONE statement, `UPDATE ... SET status = CASE status WHEN
-  'pending' THEN 'preparing' ...` over the four known statuses.
+  Deliberate flaw, kept for this investigation: the worker claims
+  everything not in its terminal set (delivered/cancelled), computes
+  each order's next status in JS, and advances the claimed batch in
+  ONE transaction - a status it cannot classify throws, and the
+  throw rolls back the whole batch.
 - *Symptom:* orders place instantly and the site is fast, but no
   order ever leaves pending; My Orders is a wall of pending while
   everything else looks healthy.
 - *Arm:* `DEMO_ORDER_POISON` or the manual override - insert ONE
   synthetic legacy order (order_number `LEGACY-0001`, a "Legacy
   Import" customer) with status `confirmed`, a status from the
-  pre-OrderUp system the worker's CASE never heard of. The CASE
-  yields NULL for it, `orders.status` is NOT NULL, the whole batch
-  rolls back, and every poll fails the same way: the queue freezes
-  and the web tier never notices. Disarm deletes the legacy row;
-  the backlog drains on the next poll.
+  pre-OrderUp system the worker never maps to a next stage. The
+  worker claims it (it is not in the worker's terminal set),
+  cannot classify it, and throws; the batch is one transaction, so
+  the whole batch rolls back and every poll fails the same way:
+  the queue freezes and the web tier never notices. Disarm deletes
+  the legacy row; the backlog drains on the next poll.
 - *Chain:* (1) symptom shape - order now: succeeds instantly, still
   pending minutes later; the stall is total but the site is fine;
   (2) the pipeline view - `OrderPipelineSample`: advances stopped
   at a sharp timestamp, the pending count only grows; (3) the
   worker in APM - background transactions erroring at 100% since
-  that moment while web transactions stay clean, error class a
-  not-null violation on `orders.status`; (4) the statement - one
-  batch UPDATE, a CASE over exactly four statuses, one transaction
-  for everyone: one bad row takes the batch down; (5) the Postgres
+  that moment while web transactions stay clean, the error naming
+  a status it cannot classify - `Unknown order status:
+  "confirmed"`, on order LEGACY-0001; (4) the shape - the worker
+  claims every unfinished order and advances the batch in one
+  transaction, so one throw takes the batch down; (5) the Postgres
   view - the integration's database sample (the Postgres
   dashboard): rollbacks climbing in lockstep with the polls while
   web-tier commits stay normal, and the worker's UPDATE among the
@@ -813,6 +817,24 @@ Behind the scenes - the pages and progress are always available;
 the evidence checks still live in the callouts where the evidence
 is, and the Missions page says so. How It Works keeps its explainer
 content and the error simulator, with signposts to the two pages.
+I11 built (2026-11-01): the order-status worker (server/
+order-status-worker.js - own pg client, 20s poll, one-transaction
+batch, OrderStatusWorker/poll background transactions,
+OrderPipelineSample events) plus the poison arm in
+demo-investigations (DEMO_ORDER_POISON / manual; ensure/remove of
+LEGACY-0001 reconciled in syncSideEffects), the six-checkpoint
+registry entry, the instructor arm button, and an Order pipeline
+page on the Overview dashboard JSON (applies on the next
+newrelic-setup run with update ticked). Verified end-to-end on the
+local Postgres stack with fast timings: an order walked pending ->
+preparing -> out_for_delivery -> delivered; armed, the legacy row
+landed, a fresh order froze at pending while polls failed with
+'Unknown order status: "confirmed"' and the site served 200
+throughout; disarmed, the row vanished and the backlog drained.
+One build catch worth remembering: the /api/demo/investigations
+POST route whitelists slugs in server/index.js separately from
+demo-investigations' KNOWN_SLUGS - a new slug must be added in
+both places.
 
 
 ### 11.4 Acceptance tests (extends §10)
