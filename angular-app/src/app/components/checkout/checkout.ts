@@ -8,6 +8,7 @@ import { CustomerService } from '../../services/customer.service';
 import { Customer } from '../../models/restaurant.model';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
+import { NrCheckComponent } from '../nr-check/nr-check';
 
 interface PaymentInfo {
   type: string;
@@ -19,14 +20,14 @@ interface PaymentInfo {
 
 @Component({
   selector: 'app-checkout',
-  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent],
+  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent],
   templateUrl: './checkout.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './checkout.css'
 })
 export class CheckoutComponent implements OnInit {
   readonly checkoutNrql =
-    "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' SINCE 1 day ago";
+    "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order'";
 
   submitting = signal(false);
   

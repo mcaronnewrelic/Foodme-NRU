@@ -268,6 +268,11 @@
 
       <div class="container mb-5">
         <app-nr-callout title="Placing the order" [nrql]="checkoutNrql" buttonLabel="See recent orders">
-          When you purchase, <code>POST /api/order</code> adds the restaurant, item count and total as custom attributes on its transaction. These are the most recent orders.
+          When you purchase, <code>POST /api/order</code> adds the restaurant, item count and total as custom attributes on its transaction. These are the most recent orders — and notice the query has no SINCE clause, which quietly decides how recent "recent" is.
+          <app-nr-check missionId="mission-3" questionId="default-time-range" kind="choice"
+            question="The query above has no SINCE clause. How far back does New Relic look by default?"
+            [options]="['The last hour', 'The last day', 'Everything — no time limit']"
+            answer="The last hour"
+            proves="With no SINCE, a query defaults to the last 60 minutes. Your order from a moment ago is in the window; yesterday's orders are not — add SINCE when you want them."></app-nr-check>
         </app-nr-callout>
       </div>
