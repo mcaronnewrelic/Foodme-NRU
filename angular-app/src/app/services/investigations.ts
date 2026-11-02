@@ -46,6 +46,164 @@ export function investigationMissionId(slug: string): string {
 
 export const INVESTIGATIONS: InvestigationDef[] = [
   {
+    slug: 'its-not-checkout',
+    title: "It's not checkout",
+    summary:
+      'Checkout has gone slow — placing an order takes seconds, and the ' +
+      'obvious suspect is the checkout code. Prove where the time ' +
+      'actually sits before anyone rewrites anything.',
+    live: 'armed',
+    liveNote: 'Armed by your instructor — when it is live, the banner at the top names it and the checkpoints open.',
+    caseClosed:
+      'The checkout code was innocent: the order spent its time waiting ' +
+      'inside a single database call, and the app around it was idle. ' +
+      'That distinction — waiting vs working — is the first fork in ' +
+      'almost every slowness investigation, and the trace answers it ' +
+      'before any code is read. (In this demo the slow query is a ' +
+      'stand-in your instructor armed; the reading skill is identical ' +
+      'when the culprit is a real query plan.) Real-world next steps: ' +
+      'take the guilty query to the database — its plan (I8\u2019s missing ' +
+      'index), its locks (I7), its load — and alert on datastore time ' +
+      'share, not just endpoint duration, so the next one pages the ' +
+      'right suspect.',
+    checkpoints: [
+      {
+        questionId: 'slow-transaction',
+        title: 'Find the slow transaction',
+        prompt:
+          'Place an order (any cart, your sample customer) and feel the ' +
+          'wait on the Thank You page. Then find it in the data: the ' +
+          'query ranks every transaction by its average duration over ' +
+          'the last half hour.',
+        nrql:
+          "SELECT average(duration) AS 'Avg seconds', count(*) AS 'Calls' FROM Transaction WHERE appName = 'OrderUp' FACET name SINCE 30 minutes ago LIMIT 10",
+        learn:
+          'Start every slowness case by ranking, not guessing: average ' +
+          'duration per transaction name separates the one sick route ' +
+          'from the healthy rest.',
+        kind: 'choice',
+        question: 'Which transaction is carrying the slowness?',
+        options: [
+          'POST /api/order',
+          'GET /api/restaurant/by-name (the menu)',
+          'GET /api/orders (the lookup)',
+          'All of them, about equally',
+        ],
+        answer: 'POST /api/order',
+        proves: 'One route is sick; the rest of the app is healthy.',
+        reveal:
+          'Only the order route is slow. Menus, lists and lookups answer ' +
+          'in their usual milliseconds from the same app and the same ' +
+          'database — so "the site is slow" is already wrong. It is ' +
+          'checkout-shaped. Onward, carefully.',
+      },
+      {
+        questionId: 'time-location',
+        title: 'Open the trace: where does the time sit?',
+        prompt:
+          'Open APM → Transactions → POST /api/order → a recent trace ' +
+          '(pick your own via its requestId if you can). Look at the ' +
+          'waterfall: each span is a piece of work, and the widths are ' +
+          'time.',
+        kind: 'choice',
+        question: 'Where does nearly all of the trace\u2019s time sit?',
+        options: [
+          'In the application code, spread across many small spans',
+          'In a single datastore (Postgres) span',
+          'In the browser, before the request reaches the server',
+          'Evenly — no span stands out',
+        ],
+        answer: 'In a single datastore (Postgres) span',
+        proves: 'The app is waiting on the database, not working.',
+        reveal:
+          'One wide datastore span, and the code around it finishing in ' +
+          'milliseconds. The handler is not slow — it is parked, ' +
+          'waiting for Postgres to answer. Every minute spent reading ' +
+          'checkout code would have been wasted.',
+      },
+      {
+        questionId: 'span-share',
+        title: 'Measure the share',
+        prompt:
+          'Put a number on "nearly all": in that same trace, compare ' +
+          'the big datastore span\u2019s duration with the whole ' +
+          'transaction\u2019s duration, as a percentage.',
+        kind: 'number',
+        question: 'About what share of the transaction\u2019s time is that one datastore span? (%)',
+        answer: 90,
+        tolerance: 10,
+        proves: 'Measured, not eyeballed: the database call IS the transaction.',
+        reveal:
+          'Roughly nine-tenths or more. When one span is ~90% of a ' +
+          'transaction, optimizing anything else is decoration — the ' +
+          'whole incident lives inside that one call.',
+      },
+      {
+        questionId: 'guilty-query',
+        title: 'Read the guilty query',
+        prompt:
+          'Click into that datastore span and read its statement — the ' +
+          'actual SQL the span ran.',
+        kind: 'choice',
+        question: 'What is the slow span doing?',
+        options: [
+          'Inserting the order row (INSERT INTO orders)',
+          'Looking up menu items by name (SELECT FROM menu_items)',
+          'Sleeping — a pg_sleep stand-in for a slow query',
+          'Updating the order status (UPDATE orders)',
+        ],
+        answer: 'Sleeping — a pg_sleep stand-in for a slow query',
+        proves: 'You read the culprit\u2019s name off the span, not off a guess.',
+        reveal:
+          'Honest mechanics: in this demo the slow query is a pg_sleep ' +
+          'your instructor armed — a stand-in. In production this same ' +
+          'span would hold a real statement: an unindexed scan, a ' +
+          'lock wait, a plan gone wrong (I7 and I8 are exactly those ' +
+          'cases). The skill you just used — find the span, read its ' +
+          'statement — does not change.',
+      },
+      {
+        questionId: 'not-the-app',
+        title: 'Clear the suspect',
+        prompt:
+          'Someone in the room has already said "the checkout code is ' +
+          'slow, rewrite it." Using only what the trace showed, close ' +
+          'that theory.',
+        kind: 'choice',
+        question: 'Why is "the checkout code is slow" the wrong conclusion?',
+        options: [
+          'The code\u2019s own spans are milliseconds; the time is spent waiting inside one database call',
+          'Checkout code can never be slow',
+          'The browser agent inflates checkout timings',
+          'Slow orders are normal for a food app',
+        ],
+        answer: 'The code\u2019s own spans are milliseconds; the time is spent waiting inside one database call',
+        proves: 'Waiting vs working — the fork this whole case turns on.',
+        reveal:
+          'Exactly. Duration is not effort: a transaction can be 3 ' +
+          'seconds long while its code runs for 30 milliseconds. ' +
+          'Rewriting the handler would have shipped a refactor and ' +
+          'kept the incident.',
+      },
+      {
+        questionId: 'verdict',
+        title: 'The verdict',
+        prompt: 'Close the case: name the culprit and the first move.',
+        kind: 'choice',
+        question: 'What is the verdict, and where does the fix start?',
+        options: [
+          'The checkout handler — rewrite it in a faster style',
+          'The database call inside checkout — take that query to the database (plan, locks, load) before touching app code',
+          'The network — the data center is far away',
+          'New Relic — the agent is adding the delay',
+        ],
+        answer: 'The database call inside checkout — take that query to the database (plan, locks, load) before touching app code',
+        proves: 'Case ready to close.',
+        reveal: 'Verdict recorded. The summary below is the whole case in one paragraph.',
+      },
+    ],
+  },
+  {
     slug: 'one-page-a-dozen-calls',
     title: "One page, a dozen calls — twice",
     summary:

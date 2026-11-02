@@ -486,6 +486,17 @@ class DatabaseService {
     /**
      * Create a new order with items
      */
+    /**
+     * Run pg_sleep on the shared connection - the I2 investigation arm:
+     * a deliberately slow query whose datastore span carries the order
+     * transaction's time. Called by the order route only when armed
+     * (see server/demo-investigations.js).
+     */
+    async sleepSeconds(seconds) {
+        await this.connect();
+        await this.client.query('SELECT pg_sleep($1)', [seconds]);
+    }
+
     async createOrder(orderData) {
         await this.connect();
         

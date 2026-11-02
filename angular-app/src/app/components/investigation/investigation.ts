@@ -2,6 +2,7 @@ import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { NrCheckComponent } from '../nr-check/nr-check';
 import { MissionProgressService } from '../../services/mission-progress.service';
+import { NrConfigService } from '../../nr-config';
 import {
   InvestigationCheckpoint,
   InvestigationDef,
@@ -26,11 +27,17 @@ import {
 })
 export class InvestigationComponent {
   private progress = inject(MissionProgressService);
+  protected config = inject(NrConfigService);
 
   @Input({ required: true }) def!: InvestigationDef;
 
   protected get missionId(): string {
     return investigationMissionId(this.def.slug);
+  }
+
+  /** Structural investigations are always live; armed ones only while armed. */
+  protected get isLive(): boolean {
+    return this.def.live === 'always' || this.config.armedInvestigation()?.slug === this.def.slug;
   }
 
   protected solved(cp: InvestigationCheckpoint): boolean {

@@ -37,6 +37,8 @@ let useDatabase = false;
 // rotation). See demo-failures.js.
 const DemoFailures = require('./demo-failures');
 const demoFailures = new DemoFailures(logger);
+const DemoInvestigations = require('./demo-investigations');
+const demoInvestigations = new DemoInvestigations(logger);
 
 // Utility function to generate consistent user IDs for New Relic tracking
 function generateUserID(customerData) {
@@ -326,6 +328,7 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   // Lets the Angular "Behind the scenes" callouts build New Relic links for the current account
   app.get('/api/nr-config', (req, res) => {
     const scenario = demoFailures.getState();
+    const investigation = demoInvestigations.getState();
     res.json({
       accountId: process.env.NEW_RELIC_ACCOUNT_ID || null,
       browserEntityGuid: process.env.NEW_RELIC_BROWSER_ENTITY_GUID || null,
@@ -334,6 +337,11 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       // failure in the data. Null when nothing is armed.
       armedScenario: scenario.armed
         ? { ...scenario.armed, source: scenario.source }
+        : null,
+      // Which investigation (spec section 11) is armed, if any: the banner
+      // names it and its page opens. Null when none is live.
+      armedInvestigation: investigation.armed
+        ? { ...investigation.armed, source: investigation.source }
         : null
     });
   });
@@ -366,6 +374,36 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   app.delete('/api/demo/failures', (req, res) => {
     const state = demoFailures.clearManual();
     logger.info({ ip: req.ip }, 'Demo failure manual override cleared');
+    res.json(state);
+  });
+
+  // Demo investigations: read the armed state, arm one manually, clear
+  // the override, or disarm until cleared. Same deliberately
+  // unauthenticated teaching-demo pattern as /api/demo/failures.
+  app.get('/api/demo/investigations', (req, res) => {
+    res.json(demoInvestigations.getState());
+  });
+
+  app.post('/api/demo/investigations', jsonParser, (req, res) => {
+    const { slug, seconds } = req.body || {};
+    if (slug === 'off') {
+      const state = demoInvestigations.setManual('off');
+      logger.info({ ip: req.ip }, 'Demo investigation disarmed by manual override');
+      return res.json(state);
+    }
+    if (slug !== 'its-not-checkout') {
+      return res.status(400).json({
+        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, or {slug: "off"}'
+      });
+    }
+    const state = demoInvestigations.setManual(slug, seconds);
+    logger.info({ slug, seconds: state.armed?.seconds, ip: req.ip }, 'Demo investigation armed by manual override');
+    res.json(state);
+  });
+
+  app.delete('/api/demo/investigations', (req, res) => {
+    const state = demoInvestigations.clearManual();
+    logger.info({ ip: req.ip }, 'Demo investigation manual override cleared');
     res.json(state);
   });
 
@@ -666,6 +704,13 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       if (useDatabase && dbService) {
         try {
           const dbStartTime = Date.now();
+          // I2 arm (spec section 11): an armed slow query inside the
+          // order's database work, so the transaction's time sits in a
+          // datastore span for students to find. See demo-investigations.js.
+          const slowSeconds = demoInvestigations.slowOrderSeconds();
+          if (slowSeconds > 0) {
+            await dbService.sleepSeconds(slowSeconds);
+          }
           const result = await dbService.createOrder(order);
           const dbDuration = Date.now() - dbStartTime;
           
