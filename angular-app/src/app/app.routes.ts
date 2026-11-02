@@ -20,6 +20,18 @@ export const routes: Routes = [
     loadComponent: () => import('./components/orders/orders').then(m => m.OrdersComponent)
   },
   { path: 'customer', component: CustomerComponent },
+  {
+    path: 'missions',
+    loadComponent: () => import('./components/missions-page/missions-page').then(m => m.MissionsPageComponent)
+  },
+  {
+    path: 'investigations',
+    loadComponent: () => import('./components/investigations-page/investigations-page').then(m => m.InvestigationsPageComponent)
+  },
+  {
+    path: 'instructor',
+    loadComponent: () => import('./components/instructor/instructor').then(m => m.InstructorComponent)
+  },
   { 
     path: 'how-it-works', 
     loadComponent: () => import('./components/how-it-works/how-it-works').then(m => m.HowItWorksComponent)

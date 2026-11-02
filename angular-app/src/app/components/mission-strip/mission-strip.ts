@@ -7,7 +7,8 @@ import { MISSIONS, Mission, missionForUrl } from '../../services/missions';
 
 /**
  * The mission progress strip (spec section 2): shown at the top of every
- * page in Behind-the-scenes mode only. Names the mission the current
+ * page, whether or not Behind the scenes is on (ungated 2026-11-01 -
+ * the missions themselves are always available now). Names the mission the current
  * page belongs to ("Mission 2 of 5 · Find a menu in the data") and shows
  * the five stops as ticks - filled once a mission's check is solved,
  * outlined once its Try or Find step has happened. Ticks link to each

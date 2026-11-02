@@ -1,0 +1,79 @@
+<app-header></app-header>
+
+<div class="mt-4"></div>
+
+<div class="container pb-5">
+  <h4 class="text-center mb-3 text-muted">
+    <i class="fas fa-chalkboard-user me-2"></i>
+    Instructor controls
+  </h4>
+  <p class="text-muted small text-center mb-4">
+    This page is not linked from the menu — bookmark it. Everything here takes effect
+    live, for every visitor, until it is changed again.
+  </p>
+
+  <h5 class="text-muted mt-4 mb-2"><i class="fas fa-magnifying-glass me-2"></i>Arm an investigation</h5>
+  <div class="card mb-3">
+    <div class="card-body py-2">
+      <p class="small mb-2">
+        @if (nrConfig.armedInvestigation(); as inv) {
+          <span>{{ NrConfigService.describeInvestigation(inv) }} (via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }})</span>
+        } @else {
+          <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy; I7 locks the orders table for 15 minutes; I8 seeds 200k synthetic customers so the phone lookup has to scan for them. I6 arms itself — run <code>scripts/burst-orders.js</code> against this site and it starts and stops the investigation with the burst.</span>
+        }
+      </p>
+      <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('its-not-checkout', 3)">Arm I2 (3s)</button>
+      <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-502-didnt-come-from-the-app')">Arm I5 (502s)</button>
+      <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-table-is-locked')">Arm I7 (lock, 15 min)</button>
+      <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-slow-lookup')">Arm I8 (seed history)</button>
+      @if (nrConfig.armedInvestigation()?.slug === 'the-slow-lookup' && !nrConfig.armedInvestigation()?.indexApplied) {
+        <button class="btn btn-sm btn-success me-2" (click)="nrConfig.applyInvestigationFix()">Apply I8 fix (create the index)</button>
+      }
+      <button class="btn btn-sm btn-outline-secondary me-2" (click)="nrConfig.disarmInvestigation()">Disarm</button>
+      <button class="btn btn-sm btn-outline-secondary" (click)="nrConfig.clearInvestigationOverride()">Clear override</button>
+    </div>
+  </div>
+
+  <h5 class="text-muted mt-5 mb-2"><i class="fas fa-clapperboard me-2"></i>Demo failure scenario</h5>
+  <p class="text-muted small mb-3">
+    One thing in this demo is always failing on purpose, so there is an error to hunt.
+    It rotates weekly; an instructor can override it here, live — no deploy, and it
+    applies to every visitor until it is changed again.
+  </p>
+  @if (nrConfig.demoState(); as state) {
+    <p class="mb-3">
+      @if (state.armed) {
+        <strong>Right now:</strong> {{ currentDescription() }}
+        <span class="text-muted">({{ state.source === 'rotation' ? 'weekly rotation, week ' + state.week : state.source === 'manual' ? 'instructor override' : 'server environment' }})</span>
+      } @else {
+        <strong>Right now:</strong> nothing is failing
+        <span class="text-muted">({{ state.source === 'manual' ? 'instructor override' : state.source }})</span>
+      }
+    </p>
+  }
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label small" for="scenarioKind">What fails</label>
+      <select id="scenarioKind" class="form-select" [ngModel]="selectedKind()" (ngModelChange)="onKindChange($event)">
+        <option value="restaurant">A restaurant page</option>
+        <option value="order-restaurant">Orders to a restaurant</option>
+        <option value="order-item">Orders with an item</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small" for="scenarioTarget">Which one</label>
+      <select id="scenarioTarget" class="form-select" [ngModel]="selectedTarget()" (ngModelChange)="selectedTarget.set($event)">
+        @for (name of targetsForKind(); track name) {
+          <option [value]="name">{{ name }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-auto">
+      <button type="button" class="btn btn-outline-danger" (click)="armSelected()">Arm this scenario</button>
+    </div>
+  </div>
+  <div class="mt-3">
+    <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="nrConfig.disarmScenario()">Nothing fails</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="nrConfig.clearScenarioOverride()">Back to weekly rotation</button>
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<app-header></app-header>
+
+<div class="mt-4"></div>
+
+<div class="container pb-5">
+  <h4 class="text-center mb-3 text-muted">
+    <i class="fas fa-route me-2"></i>
+    Your journey — the five missions
+  </h4>
+  <p class="text-muted small text-center mb-3">
+    {{ progress.checkedCount() }} of 5 missions checked · {{ progress.firstTryCount() }} solved on the first try.
+    Everyone's answers land on the
+    <a href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">OrderUp Overview dashboard</a>
+    — open it and pick your code at the top to see your own journey.
+  </p>
+
+  <div class="progress mb-4" role="progressbar" aria-label="Mission progress">
+    @for (mission of missions; track mission.id) {
+      <div class="progress-bar {{ progress.isChecked(mission.id) ? 'bg-success' : (progress.missionState(mission.id).tried || progress.missionState(mission.id).found) ? 'bg-warning' : 'bg-light border' }}"
+           style="width: 20%"></div>
+    }
+  </div>
+
+  <p class="text-muted small text-center mb-3">
+    Work each mission on its own pages — the evidence checks live in the
+    <strong>Behind the scenes</strong> callouts there, so flip that toggle on (top right) when you are ready to answer.
+    This page and your progress are here either way.
+  </p>
+
+  <ol class="fm-steps list-group list-group-numbered">
+    @for (mission of missions; track mission.id) {
+      <li class="list-group-item d-flex align-items-center justify-content-between">
+        <div class="ms-2">
+          <strong>{{ mission.title }}</strong>
+          <div class="text-muted small">{{ blurbs[mission.id] }}</div>
+        </div>
+        @if (progress.isChecked(mission.id)) {
+          <span class="badge bg-success"><i class="fas fa-check me-1"></i>Checked</span>
+        } @else if (progress.missionState(mission.id).tried || progress.missionState(mission.id).found) {
+          <a [routerLink]="mission.link" class="badge bg-warning text-dark text-decoration-none">In progress</a>
+        } @else {
+          <a [routerLink]="mission.link" class="badge bg-secondary text-decoration-none">Start</a>
+        }
+      </li>
+    }
+  </ol>
+
+  @if (progress.checkedCount() === 5) {
+    <div class="alert alert-success text-center mt-4">
+      <strong>Case closed.</strong> All five missions checked — every stop on the journey, found in the data.
+      <div class="mt-2">
+        <a class="btn btn-success btn-sm" href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">
+          See the OrderUp Overview dashboard <i class="fas fa-arrow-up-right-from-square ms-1"></i>
+        </a>
+      </div>
+    </div>
+  }
+</div>

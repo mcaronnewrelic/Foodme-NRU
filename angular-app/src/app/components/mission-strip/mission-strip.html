@@ -1,12 +1,11 @@
-@if (config.showCallouts()) {
-  <div class="mission-strip">
-    <span class="mission-strip-label">
+<div class="mission-strip">
+    <a class="mission-strip-label text-decoration-none" routerLink="/missions">
       @if (current; as mission) {
         Mission {{ mission.number }} of 5 · {{ mission.title }}
       } @else {
         Your missions · {{ checkedCount }} of 5 checked
       }
-    </span>
+    </a>
     <span class="mission-strip-ticks">
       @for (mission of missions; track mission.id) {
         <a class="mission-tick"
@@ -24,4 +23,3 @@
       }
     </span>
   </div>
-}

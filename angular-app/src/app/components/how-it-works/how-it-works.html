@@ -53,139 +53,23 @@
           </a>
         </div>
         
-        <!-- Your journey: the mission hub (spec section 6, behind the scenes only) -->
-        @if (nrConfig.showCallouts()) {
-          <div class="mt-5 pt-4 border-top">
-            <h4 class="text-center mb-3 text-muted">
-              <i class="fas fa-route me-2"></i>
-              Your journey
-            </h4>
-            <p class="text-muted small text-center mb-3">
-              {{ progress.checkedCount() }} of 5 missions checked · {{ progress.firstTryCount() }} solved on the first try.
-              Everyone's answers land on the
-              <a href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">OrderUp Overview dashboard</a>
-              — open it and pick your code at the top to see your own journey.
-            </p>
-            <ol class="fm-steps list-group list-group-numbered">
-              @for (mission of missions; track mission.id) {
-                <li class="list-group-item d-flex align-items-center justify-content-between">
-                  <div class="ms-2">
-                    <strong>{{ mission.title }}</strong>
-                    @if (mission.id === 'mission-5') {
-                      <span class="text-muted small"> — this page</span>
-                    }
-                  </div>
-                  @if (progress.isChecked(mission.id)) {
-                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Checked</span>
-                  } @else if (progress.missionState(mission.id).tried || progress.missionState(mission.id).found) {
-                    <a [routerLink]="mission.link" class="badge bg-warning text-dark text-decoration-none">In progress</a>
-                  } @else {
-                    <a [routerLink]="mission.link" class="badge bg-secondary text-decoration-none">Start</a>
-                  }
-                </li>
-              }
-            </ol>
-            @if (progress.checkedCount() === 5) {
-              <div class="alert alert-success text-center mt-4">
-                <strong>Case closed.</strong> All five missions checked — every stop on the journey, found in the data.
-                <div class="mt-2">
-                  <a class="btn btn-success btn-sm" href="https://one.newrelic.com/redirect/entity/MTM1MjgxMXxWSVp8REFTSEJPQVJEfGRhOjEzNDMxMzI3" target="newrelic">
-                    See the OrderUp Overview dashboard <i class="fas fa-arrow-up-right-from-square ms-1"></i>
-                  </a>
-                </div>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Investigations (spec section 11, behind the scenes only) -->
-        @if (nrConfig.showCallouts()) {
-          <div class="mt-5 pt-4 border-top">
-            <h4 class="text-center mb-3 text-muted">
-              <i class="fas fa-magnifying-glass me-2"></i>
-              Investigations
-            </h4>
-            <p class="text-muted small text-center mb-3">
-              Longer cases beyond the five missions: six checkpoints each, every answer recorded
-              under the investigation's name. A correct answer opens the next checkpoint.
-            </p>
-            <div class="card mb-3">
-              <div class="card-body py-2">
-                <p class="small mb-2">
-                  <strong>Instructor — arm an investigation:</strong>
-                  @if (nrConfig.armedInvestigation(); as inv) {
-                    <span>{{ NrConfigService.describeInvestigation(inv) }} (via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }})</span>
-                  } @else {
-                    <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy; I7 locks the orders table for 15 minutes; I8 seeds 200k synthetic customers so the phone lookup has to scan for them. I6 arms itself — run <code>scripts/burst-orders.js</code> against this site and it starts and stops the investigation with the burst.</span>
-                  }
-                </p>
-                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('its-not-checkout', 3)">Arm I2 (3s)</button>
-                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-502-didnt-come-from-the-app')">Arm I5 (502s)</button>
-                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-table-is-locked')">Arm I7 (lock, 15 min)</button>
-                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-slow-lookup')">Arm I8 (seed history)</button>
-                @if (nrConfig.armedInvestigation()?.slug === 'the-slow-lookup' && !nrConfig.armedInvestigation()?.indexApplied) {
-                  <button class="btn btn-sm btn-success me-2" (click)="nrConfig.applyInvestigationFix()">Apply I8 fix (create the index)</button>
-                }
-                <button class="btn btn-sm btn-outline-secondary me-2" (click)="nrConfig.disarmInvestigation()">Disarm</button>
-                <button class="btn btn-sm btn-outline-secondary" (click)="nrConfig.clearInvestigationOverride()">Clear override</button>
-              </div>
-            </div>
-            @for (def of investigations; track def.slug) {
-              <app-investigation [def]="def" />
-            }
-          </div>
-        }
-
-        <!-- Demo failure scenario: instructor controls (behind the scenes only) -->
-        @if (nrConfig.showCallouts()) {
-          <div class="mt-5 pt-4 border-top">
-            <h4 class="text-center mb-3 text-muted">
-              <i class="fas fa-clapperboard me-2"></i>
-              Demo failure scenario
-            </h4>
-            <p class="text-muted small text-center mb-3">
-              One thing in this demo is always failing on purpose, so there is an error to hunt.
-              It rotates weekly; an instructor can override it here, live — no deploy, and it
-              applies to every visitor until it is changed again.
-            </p>
-            @if (nrConfig.demoState(); as state) {
-              <p class="text-center mb-3">
-                @if (state.armed) {
-                  <strong>Right now:</strong> {{ currentDescription() }}
-                  <span class="text-muted">({{ state.source === 'rotation' ? 'weekly rotation, week ' + state.week : state.source === 'manual' ? 'instructor override' : 'server environment' }})</span>
-                } @else {
-                  <strong>Right now:</strong> nothing is failing
-                  <span class="text-muted">({{ state.source === 'manual' ? 'instructor override' : state.source }})</span>
-                }
-              </p>
-            }
-            <div class="row justify-content-center g-2 align-items-end">
-              <div class="col-md-3">
-                <label class="form-label small" for="scenarioKind">What fails</label>
-                <select id="scenarioKind" class="form-select" [ngModel]="selectedKind()" (ngModelChange)="onKindChange($event)">
-                  <option value="restaurant">A restaurant page</option>
-                  <option value="order-restaurant">Orders to a restaurant</option>
-                  <option value="order-item">Orders with an item</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small" for="scenarioTarget">Which one</label>
-                <select id="scenarioTarget" class="form-select" [ngModel]="selectedTarget()" (ngModelChange)="selectedTarget.set($event)">
-                  @for (name of targetsForKind(); track name) {
-                    <option [value]="name">{{ name }}</option>
-                  }
-                </select>
-              </div>
-              <div class="col-md-auto">
-                <button type="button" class="btn btn-outline-danger" (click)="armSelected()">Arm this scenario</button>
-              </div>
-            </div>
-            <div class="text-center mt-3">
-              <button type="button" class="btn btn-outline-secondary btn-sm me-2" (click)="nrConfig.disarmScenario()">Nothing fails</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="nrConfig.clearScenarioOverride()">Back to weekly rotation</button>
-            </div>
-          </div>
-        }
+        <!-- Missions and Investigations live on their own pages now -->
+        <div class="mt-5 pt-4 border-top text-center">
+          <h4 class="mb-3 text-muted">
+            <i class="fas fa-compass me-2"></i>
+            Keep going
+          </h4>
+          <p class="text-muted small mb-3">
+            The five missions and the longer investigations have their own pages —
+            they are always available, whether or not Behind the scenes is on.
+          </p>
+          <a routerLink="/missions" class="btn btn-primary me-2">
+            <i class="fas fa-route me-2"></i>Your missions
+          </a>
+          <a routerLink="/investigations" class="btn btn-outline-primary">
+            <i class="fas fa-magnifying-glass me-2"></i>Investigations
+          </a>
+        </div>
 
         <!-- APM Testing Section -->
         <div class="mt-5 pt-4 border-top">
