@@ -39,6 +39,9 @@ const DemoFailures = require('./demo-failures');
 const demoFailures = new DemoFailures(logger);
 const DemoInvestigations = require('./demo-investigations');
 const demoInvestigations = new DemoInvestigations(logger);
+// I7/I8 carry live side effects (lock helper, seed data): start them if
+// an env var or a persisted manual override already has one armed.
+void demoInvestigations.syncSideEffects();
 
 // Utility function to generate consistent user IDs for New Relic tracking
 function generateUserID(customerData) {
@@ -399,26 +402,36 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
     res.json(demoInvestigations.getState());
   });
 
-  app.post('/api/demo/investigations', jsonParser, (req, res) => {
-    const { slug, seconds } = req.body || {};
+  app.post('/api/demo/investigations', jsonParser, async (req, res) => {
+    const { slug, seconds, action } = req.body || {};
+    if (action === 'apply-index') {
+      // I8's fix, applied by the instructor mid-investigation.
+      const result = await demoInvestigations.applyIndexFix();
+      if (!result.ok) return res.status(409).json(result);
+      logger.info({ ip: req.ip }, 'Demo investigation fix applied: index on customers(phone)');
+      return res.json(result.state);
+    }
     if (slug === 'off') {
       const state = demoInvestigations.setManual('off');
       logger.info({ ip: req.ip }, 'Demo investigation disarmed by manual override');
+      void demoInvestigations.syncSideEffects();
       return res.json(state);
     }
-    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app' && slug !== 'one-connection-for-the-whole-restaurant') {
+    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app' && slug !== 'one-connection-for-the-whole-restaurant' && slug !== 'the-table-is-locked' && slug !== 'the-slow-lookup') {
       return res.status(400).json({
-        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, {slug: "the-502-didnt-come-from-the-app"} or {slug: "one-connection-for-the-whole-restaurant"} (armed by scripts/burst-orders.js), or {slug: "off"}'
+        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, {slug: "the-502-didnt-come-from-the-app"}, {slug: "one-connection-for-the-whole-restaurant"} (armed by scripts/burst-orders.js), {slug: "the-table-is-locked"}, {slug: "the-slow-lookup"}, {action: "apply-index"} (I8 fix, while I8 is armed), or {slug: "off"}'
       });
     }
     const state = demoInvestigations.setManual(slug, seconds);
     logger.info({ slug, seconds: state.armed?.seconds, ip: req.ip }, 'Demo investigation armed by manual override');
+    void demoInvestigations.syncSideEffects();
     res.json(state);
   });
 
   app.delete('/api/demo/investigations', (req, res) => {
     const state = demoInvestigations.clearManual();
     logger.info({ ip: req.ip }, 'Demo investigation manual override cleared');
+    void demoInvestigations.syncSideEffects();
     res.json(state);
   });
 

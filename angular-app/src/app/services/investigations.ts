@@ -572,6 +572,356 @@ export const INVESTIGATIONS: InvestigationDef[] = [
     ],
   },
   {
+    slug: 'the-table-is-locked',
+    title: 'The table is locked',
+    summary:
+      'Placing an order hangs — and in this app, one stuck query ' +
+      'doesn\u2019t stay in its lane. Postgres is idle, no query is ' +
+      'slow, and yet nothing can get a write through. Learn to tell ' +
+      'blocked from blocking, and why you check before you kill.',
+    live: 'armed',
+    liveNote: 'Armed by your instructor: a helper transaction locks the orders table for a 15-minute window, then releases it no matter what. The banner names this investigation while it runs, and the instructor panel shows the helper\u2019s backend PID.',
+    caseClosed:
+      'The order wasn\u2019t slow — it was waiting, behind a lock held ' +
+      'by a transaction that had opened, done its one statement, and ' +
+      'never committed: idle in transaction, the most dangerous ' +
+      'ordinary state in Postgres. Two lessons compound here. First, ' +
+      'blocked vs blocking: the sessions you see waiting are the ' +
+      'victims, not the cause; the fix targets the one session ' +
+      'holding the lock, and only after you\u2019ve identified it. ' +
+      'Second, the spread: because every query in this app shares ' +
+      'one connection (I6\u2019s lesson), one blocked write queued the ' +
+      'whole site behind it. Real-world next steps: never hold a ' +
+      'transaction open across user think-time, set lock_timeout so ' +
+      'waiters fail loudly instead of silently, alert on ungranted ' +
+      'locks and on idle-in-transaction age — and if you must kill a ' +
+      'backend, pg_terminate_backend on the blocker, after the check, ' +
+      'is the whole procedure. The demo helper releases itself after ' +
+      '15 minutes; production transactions have no such mercy, which ' +
+      'is exactly the point.',
+    checkpoints: [
+      {
+        questionId: 'first-symptom',
+        title: 'Reproduce the hang',
+        prompt:
+          'Place an order — any restaurant, any items — and watch it. ' +
+          'Not slow: stuck. Give it a good ten seconds before you ' +
+          'conclude anything.',
+        kind: 'choice',
+        question: 'What happens when you place the order?',
+        options: [
+          'It never completes — the request just hangs',
+          'It completes, but slowly (about 3 seconds)',
+          'It fails immediately with a 500 error',
+          'It completes at normal speed',
+        ],
+        answer: 'It never completes — the request just hangs',
+        proves: 'Stuck is not slow: a hang is a wait, and waits have owners.',
+        reveal:
+          'A slow request is doing work. A hung request is waiting ' +
+          'for something — and something specific always owns a wait. ' +
+          'The rest of this case is finding the owner.',
+      },
+      {
+        questionId: 'the-spread',
+        title: 'Watch it spread',
+        prompt:
+          'Leave that order hanging and keep using the site: open the ' +
+          'restaurant list, open a menu. Compare with how the site ' +
+          'felt before you placed the order.',
+        learn:
+          'Every query in this app shares a single database ' +
+          'connection (I6). One blocked query doesn\u2019t just wait — ' +
+          'everything issued after it queues behind it.',
+        kind: 'choice',
+        question: 'What happens to the rest of the site?',
+        options: [
+          'Everything stalls — pages that were instant now hang too',
+          'Everything else stays fast; only order placement hangs',
+          'The site crashes and restarts',
+          'Nothing else changes at all',
+        ],
+        answer: 'Everything stalls — pages that were instant now hang too',
+        proves: 'The hang spread through the shared connection, not through Postgres.',
+        reveal:
+          'The lock blocks one statement — the order insert. But ' +
+          'that statement is sitting in the app\u2019s only connection, ' +
+          'so every later query lines up behind it. In a pooled app ' +
+          'this incident hurts one path; in this architecture it ' +
+          'hurts the whole house. Same lock, bigger blast radius.',
+      },
+      {
+        questionId: 'wait-not-work',
+        title: 'Wait, not work',
+        prompt:
+          'When the lock window ends (15 minutes, or your instructor ' +
+          'disarms), the stuck order finally lands. Find the ' +
+          'POST /api/order transaction for that moment in APM and ' +
+          'look at where its time went.',
+        nrql:
+          "SELECT max(duration) AS 'Slowest order (s)', average(duration) AS 'Avg (s)' FROM Transaction WHERE name LIKE '%order%' SINCE 1 hour ago",
+        kind: 'choice',
+        question: 'Where did the order transaction\u2019s time go?',
+        options: [
+          'Waiting — the statement wasn\u2019t running at all; it was queued for a lock',
+          'Executing SQL on the server, start to finish',
+          'Network time between the app and Postgres',
+          'In the checkout application code',
+        ],
+        answer: 'Waiting — the statement wasn\u2019t running at all; it was queued for a lock',
+        proves: 'Duration without execution is the signature of a lock wait.',
+        reveal:
+          'Minutes of duration, microseconds of actual work. When a ' +
+          'transaction\u2019s clock runs but its statements don\u2019t, ' +
+          'something else holds a resource it needs — and Postgres ' +
+          'keeps the receipts: the lock data.',
+      },
+      {
+        questionId: 'ungranted-lock',
+        title: 'Read the lock data',
+        prompt:
+          'Open the Postgres integration (its config collects lock ' +
+          'metrics for this database). During the window there is a ' +
+          'lock on the orders table that has been requested but not ' +
+          'granted — and a session holding the conflicting lock.',
+        nrql:
+          "SELECT latest(locksWaiting) AS 'Waiting locks' FROM PostgresqlDatabaseSample SINCE 30 minutes ago",
+        kind: 'choice',
+        question: 'What does the lock data show?',
+        options: [
+          'An ungranted lock: a session waiting on the orders table, and another session holding the lock that blocks it',
+          'Hundreds of granted locks, all healthy',
+          'No lock activity at all',
+          'A deadlock between two order transactions',
+        ],
+        answer: 'An ungranted lock: a session waiting on the orders table, and another session holding the lock that blocks it',
+        proves: 'Blocked and blocking are two different sessions — the waiter is the victim.',
+        reveal:
+          'Two roles, and mixing them up is the classic mistake: the ' +
+          'waiting session is the stuck order (the victim); the ' +
+          'holding session is the cause. Interventions target the ' +
+          'holder. So: what is the holder doing?',
+      },
+      {
+        questionId: 'blocking-state',
+        title: 'Interrogate the blocker',
+        prompt:
+          'The instructor panel names the helper\u2019s backend PID. ' +
+          'Find that session in the database activity data (the ' +
+          'integration\u2019s activity view, or pg_stat_activity if ' +
+          'you have shell access) and read its state.',
+        kind: 'choice',
+        question: 'What is the blocking session doing?',
+        options: [
+          'Nothing — it is idle in transaction: it opened a transaction, took the lock, and never committed',
+          'Actively running a long UPDATE over millions of rows',
+          'Waiting on a lock of its own',
+          'Running a backup',
+        ],
+        answer: 'Nothing — it is idle in transaction: it opened a transaction, took the lock, and never committed',
+        proves: 'Idle in transaction: the lock\u2019s owner is absent, not busy.',
+        reveal:
+          'The most dangerous ordinary state in Postgres. The ' +
+          'transaction did its work long ago; it\u2019s the uncommitted ' +
+          'openness that holds the lock — a connection checked out ' +
+          'and forgotten, a code path that waits for a human before ' +
+          'committing. (The demo helper holds it on purpose, and ' +
+          'lets go after 15 minutes no matter what.)',
+      },
+      {
+        questionId: 'verdict',
+        title: 'The verdict',
+        prompt: 'Close the case: the safe intervention, and the fix that prevents the rerun.',
+        kind: 'choice',
+        question: 'What do you do — now, and for good?',
+        options: [
+          'Identify the blocker first, then end its transaction if it is safe to do so — and for good: never hold transactions open across think-time, and set lock timeouts so waiters fail loudly',
+          'Kill every waiting session — there are more of them',
+          'Restart Postgres immediately; locks clear on restart',
+          'Add an index to the orders table',
+        ],
+        answer: 'Identify the blocker first, then end its transaction if it is safe to do so — and for good: never hold transactions open across think-time, and set lock timeouts so waiters fail loudly',
+        proves: 'Case ready to close.',
+        reveal: 'Verdict recorded. The summary below is the whole case in one paragraph.',
+      },
+    ],
+  },
+  {
+    slug: 'the-slow-lookup',
+    title: 'The slow lookup',
+    summary:
+      'The Orders lookup — type a phone number, get your orders — ' +
+      'has been getting slower for weeks. Everything else is fine. ' +
+      'History grew underneath it, one ordinary day at a time. Find ' +
+      'the query, prove why it\u2019s slow, fix it, and verify the fix ' +
+      'in the same data that convicted it.',
+    live: 'armed',
+    liveNote: 'Armed by your instructor: the server seeds about 200,000 synthetic customers and their order history (clearly synthetic — 555 numbers, SEED- order numbers). Seeding takes a minute or two after the banner appears. Disarming removes the seed.',
+    caseClosed:
+      'Nothing was ever wrong with the lookup\u2019s code — the table ' +
+      'outgrew the plan. An unindexed filter is a full table scan, ' +
+      'and a scan\u2019s cost grows linearly with history: invisible ' +
+      'at a hundred customers, obvious at two hundred thousand. The ' +
+      'discipline this case teaches: rank queries by total time, ' +
+      'not by count or by how a single run feels; read rows examined ' +
+      'against rows returned — that ratio is the index\u2019s job ' +
+      'description; and verify a fix in the same measurement that ' +
+      'found the problem. Real-world next steps: index for the ' +
+      'queries you actually run, keep an eye on top-by-total-time ' +
+      'weekly, and remember the demo seeded in two minutes what ' +
+      'production accumulates in two years — slowly enough that ' +
+      'nobody notices until the scan crosses a threshold.',
+    checkpoints: [
+      {
+        questionId: 'only-the-lookup',
+        title: 'Isolate the symptom',
+        prompt:
+          'Use the site: browse menus, place an order (Mission 3 ' +
+          'still works — try it), then run the Orders phone lookup ' +
+          'with your sample customer\u2019s number. APM\u2019s ' +
+          'transaction table shows the same split.',
+        nrql:
+          "SELECT average(duration) AS 'Avg seconds', count(*) AS 'Calls' FROM Transaction WHERE appName = 'OrderUp' FACET name SINCE 30 minutes ago LIMIT 10",
+        kind: 'choice',
+        question: 'Which part of the site is slow?',
+        options: [
+          'Only the Orders phone lookup — menus, ordering, everything else are normal',
+          'Everything, roughly uniformly',
+          'Only placing orders',
+          'Only the restaurant list',
+        ],
+        answer: 'Only the Orders phone lookup — menus, ordering, everything else are normal',
+        proves: 'One slow path, healthy database: a query problem, not a system problem.',
+        reveal:
+          'The mirror image of I6 and I7: not a shared resource, not ' +
+          'a lock — one feature, limping on its own. The suspect ' +
+          'list narrows to the queries that feature runs.',
+      },
+      {
+        questionId: 'top-by-total-time',
+        title: 'Rank by total time',
+        prompt:
+          'The Postgres query-performance data ranks statements by ' +
+          'the time they consume in total (the APM datastore view ' +
+          'below tells the same story). Don\u2019t rank by call count, ' +
+          'and don\u2019t rank by how one run feels — rank by total ' +
+          'time and read the top entry\u2019s text.',
+        nrql:
+          "SELECT sum(duration) AS 'Total seconds in DB' FROM Span WHERE category = 'datastore' FACET name SINCE 30 minutes ago LIMIT 10",
+        kind: 'choice',
+        question: 'Which query eats the most total database time?',
+        options: [
+          'The phone lookup — one query, run on every lookup, reading the whole customers table every time',
+          'The menu item fetch',
+          'The order insert',
+          'No single query — dozens share it evenly',
+        ],
+        answer: 'The phone lookup — one query, run on every lookup, reading the whole customers table every time',
+        proves: 'Top by total time = a mediocre query at high frequency, or a bad one at any frequency.',
+        reveal:
+          'The lookup joins orders to customers and filters on ' +
+          'customers.phone. There is no index on that column — the ' +
+          'schema indexes orders.customer_id carefully and never ' +
+          'gave the lookup\u2019s own filter a thought. So every ' +
+          'lookup reads every customer who ever ordered.',
+      },
+      {
+        questionId: 'rows-examined',
+        title: 'Count the waste',
+        prompt:
+          'The query-performance data (and any EXPLAIN) reports rows ' +
+          'examined alongside rows returned. One lookup, for one ' +
+          'customer\u2019s handful of orders: how many customer rows ' +
+          'does Postgres have to read to answer it?',
+        learn:
+          'Rows examined vs rows returned is the most honest ratio ' +
+          'in database work. Near 1:1, an index is doing its job. ' +
+          'Thousands to one, you are paying for a scan.',
+        kind: 'number',
+        question: 'Roughly how many customer rows does one phone lookup examine?',
+        answer: 200000,
+        tolerance: 60000,
+        proves: 'The whole table, every time — the scan is the symptom.',
+        reveal:
+          'About two hundred thousand rows examined to return one ' +
+          'customer\u2019s orders. That\u2019s the seeded history — ' +
+          'and in production it\u2019s simply what two years of ' +
+          'signups looks like. The query didn\u2019t change; the ' +
+          'table did.',
+      },
+      {
+        questionId: 'why-now',
+        title: 'Why now?',
+        prompt:
+          'This lookup was fast when the site launched. Nobody ' +
+          'deployed anything to it. The database-size data in the ' +
+          'Postgres integration and the panel\u2019s seeded count ' +
+          'tell the story.',
+        nrql:
+          "SELECT latest(database_size) AS 'Database size (bytes)' FROM PostgresqlCustomSample SINCE 30 minutes ago",
+        kind: 'choice',
+        question: 'Why did the lookup get slow?',
+        options: [
+          'The customers table grew — and an unindexed scan costs in proportion to the table, so the lookup slowed a little every day',
+          'A deploy changed the lookup query recently',
+          'Postgres just needs a restart',
+          'The network between the app and the database got slower',
+        ],
+        answer: 'The customers table grew — and an unindexed scan costs in proportion to the table, so the lookup slowed a little every day',
+        proves: 'Growth is a change, even when no deploy is.',
+        reveal:
+          'No change event, no culprit deploy — just arithmetic. ' +
+          'This is why "it was fine last quarter" is evidence of ' +
+          'nothing: scans degrade on a slope, and the slope only ' +
+          'announces itself when it crosses what a user can feel.',
+      },
+      {
+        questionId: 'the-fix',
+        title: 'Name the fix',
+        prompt:
+          'One change removes the scan. When the class is ready, ' +
+          'your instructor applies it from the panel above ' +
+          '("Apply I8 fix") — then the next checkpoint makes them ' +
+          'prove it.',
+        kind: 'choice',
+        question: 'What is the fix?',
+        options: [
+          'Create an index on customers(phone) — the column the lookup filters by',
+          'Create an index on orders(created_at)',
+          'VACUUM the customers table',
+          'Give Postgres more memory',
+        ],
+        answer: 'Create an index on customers(phone) — the column the lookup filters by',
+        proves: 'Index the predicate you actually filter on.',
+        reveal:
+          'An index on the filtered column turns "read everyone, ' +
+          'keep one" into "go straight to the one." Indexes are not ' +
+          'free — every write maintains them — which is why you ' +
+          'index for the queries you run, not for every column you ' +
+          'own.',
+      },
+      {
+        questionId: 'verify-fix',
+        title: 'Verify in the same data',
+        prompt:
+          'The index is in. Run the phone lookup again — then check ' +
+          'the same evidence that convicted it: rows examined, and ' +
+          'the lookup\u2019s duration in APM.',
+        kind: 'choice',
+        question: 'What does the same measurement show now?',
+        options: [
+          'It collapsed — the lookup reads just the matching rows instead of the whole table, and its database time falls to a fraction of what the scan cost',
+          'About the same — the index changed nothing',
+          'Slightly better — maybe 20% faster',
+          'Worse — indexes slow down reads',
+        ],
+        answer: 'It collapsed — the lookup reads just the matching rows instead of the whole table, and its database time falls to a fraction of what the scan cost',
+        proves: 'A fix isn\u2019t done when it\u2019s applied; it\u2019s done when the evidence moves.',
+        reveal: 'Verdict recorded. The summary below is the whole case in one paragraph.',
+      },
+    ],
+  },
+  {
     slug: 'one-page-a-dozen-calls',
     title: "One page, a dozen calls — twice",
     summary:
