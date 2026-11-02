@@ -65,9 +65,9 @@ if [ -z "$AWS_REGION" ]; then
     fi
 fi
 
-STACK_NAME="foodme-${ENVIRONMENT}"
+STACK_NAME="orderup-${ENVIRONMENT}"
 
-echo "🔍 FoodMe Monitoring Validation Report"
+echo "🔍 OrderUp Monitoring Validation Report"
 echo "======================================"
 echo "Environment: $ENVIRONMENT"
 echo "AWS Region: $AWS_REGION"
@@ -333,19 +333,19 @@ else
 fi
 
 # Check database exists and is accessible
-echo -n "FoodMe database accessible: "
-if execute_on_ec2_quiet "sudo -u postgres psql -d foodme -c '\q' 2>/dev/null && echo 'OK'" 2>/dev/null | grep -q "OK"; then
+echo -n "OrderUp database accessible: "
+if execute_on_ec2_quiet "sudo -u postgres psql -d orderup -c '\q' 2>/dev/null && echo 'OK'" 2>/dev/null | grep -q "OK"; then
     echo "✅ PASS"
     track_result "PASS"
 else
-    echo "❌ FAIL - Cannot access foodme database"
+    echo "❌ FAIL - Cannot access orderup database"
     track_result "FAIL"
-    echo "   Fix: Ensure foodme database exists and is accessible"
+    echo "   Fix: Ensure orderup database exists and is accessible"
 fi
 
 # Check if application can connect to database
 echo -n "Application database connection: "
-if execute_on_ec2_quiet "cd /opt/foodme/server && node -e 'const db = require(\"./database.js\"); db.testConnection().then(() => console.log(\"OK\")).catch(() => process.exit(1))' 2>/dev/null" 2>/dev/null | grep -q "OK"; then
+if execute_on_ec2_quiet "cd /opt/orderup/server && node -e 'const db = require(\"./database.js\"); db.testConnection().then(() => console.log(\"OK\")).catch(() => process.exit(1))' 2>/dev/null" 2>/dev/null | grep -q "OK"; then
     echo "✅ PASS"
     track_result "PASS"
 else
@@ -356,7 +356,7 @@ fi
 
 # Check database has data (restaurants)
 echo -n "Database contains restaurant data: "
-if execute_on_ec2_quiet "sudo -u postgres psql -d foodme -tAc \"SELECT COUNT(*) FROM restaurants\"" 2>/dev/null | grep -E "^[0-9]+$" | awk '$1 > 0 {print "OK"}' | grep -q "OK"; then
+if execute_on_ec2_quiet "sudo -u postgres psql -d orderup -tAc \"SELECT COUNT(*) FROM restaurants\"" 2>/dev/null | grep -E "^[0-9]+$" | awk '$1 > 0 {print "OK"}' | grep -q "OK"; then
     echo "✅ PASS"
     track_result "PASS"
 else
@@ -457,7 +457,7 @@ DB_TEST_RESULT=$(execute_on_ec2_quiet "
     if [ -f /etc/newrelic-infra/integrations.d/postgresql-config.yml ]; then
         PASS=\$(grep 'PASSWORD:' /etc/newrelic-infra/integrations.d/postgresql-config.yml | awk '{print \$2}' | tr -d '\"')
         if [ -n \"\$PASS\" ]; then
-            PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT 1;' >/dev/null 2>&1 && echo 'SUCCESS' || echo 'FAILED'
+            PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT 1;' >/dev/null 2>&1 && echo 'SUCCESS' || echo 'FAILED'
         else
             echo 'NO_PASSWORD'
         fi
@@ -498,7 +498,7 @@ MONITOR_TEST_RESULT=$(execute_on_ec2_quiet "
     if [ -f /etc/newrelic-infra/integrations.d/postgresql-config.yml ]; then
         PASS=\$(grep 'PASSWORD:' /etc/newrelic-infra/integrations.d/postgresql-config.yml | awk '{print \$2}' | tr -d '\"')
         if [ -n \"\$PASS\" ]; then
-            PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d foodme -c 'SELECT COUNT(*) FROM pg_stat_activity;' >/dev/null 2>&1 && echo 'SUCCESS' || echo 'FAILED'
+            PGPASSWORD=\"\$PASS\" psql -h localhost -p 5432 -U newrelic -d orderup -c 'SELECT COUNT(*) FROM pg_stat_activity;' >/dev/null 2>&1 && echo 'SUCCESS' || echo 'FAILED'
         else
             echo 'NO_PASSWORD'
         fi

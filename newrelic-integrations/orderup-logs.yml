@@ -1,0 +1,47 @@
+# Log forwarding for the infra agent. REFERENCE COPY: the instance
+# receives this content from the logging heredoc in
+# cloudformation/install-orderup.sh (written to
+# /etc/newrelic-infra/logging.d/logging.yml at install time) - nothing
+# ships this file itself. Keep the two in sync; the heredoc is
+# authoritative. (Before the orderup rename, no delivery path existed
+# at all.)
+#
+# App entries point at the PM2 ecosystem's configured log files under
+# /opt/orderup/logs (not PM2's ~/.pm2 defaults). Spec section 11.0:
+# I5's evidence lives in the nginx entries - the 502s in the access
+# log (JSON since the rename, so its fields arrive as attributes) and
+# the "upstream prematurely closed" lines in the error log.
+logs:
+  - name: orderup-backend-output
+    file: /opt/orderup/logs/orderup-backend-out.log
+    attributes:
+      logtype: orderup-application
+      service: orderup-backend
+      environment: production
+      component: nodejs-backend
+      log_level: info
+
+  - name: orderup-backend-errors
+    file: /opt/orderup/logs/orderup-backend-error.log
+    attributes:
+      logtype: orderup-application
+      service: orderup-backend
+      environment: production
+      component: nodejs-backend
+      log_level: error
+
+  - name: nginx-access
+    file: /var/log/nginx/access.log
+    attributes:
+      logtype: nginx-access
+      service: nginx
+      environment: production
+      component: reverse-proxy
+
+  - name: nginx-error
+    file: /var/log/nginx/error.log
+    attributes:
+      logtype: nginx-error
+      service: nginx
+      environment: production
+      component: reverse-proxy

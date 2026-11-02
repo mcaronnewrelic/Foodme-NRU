@@ -4,7 +4,7 @@
 # It includes the necessary tools and configurations to work with Node.js and JavaScript projects.
 # If you want to use the custom Dockerfile instead, update your devcontainer.json:
 # {
-#    "name": "FoodMe Development Container",
+#    "name": "OrderUp Development Container",
 #    "build": {
 #        "dockerfile": "Dockerfile"
 #    },

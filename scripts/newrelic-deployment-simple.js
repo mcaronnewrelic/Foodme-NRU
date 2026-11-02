@@ -75,8 +75,8 @@ async function createDeploymentMarker() {
     // Try using New Relic Insights API (simpler approach)
     const eventData = {
       eventType: 'Deployment',
-      appName: 'FoodMe',
-      description: 'FoodMe Node.js Server Deployment',
+      appName: 'OrderUp',
+      description: 'OrderUp Node.js Server Deployment',
       user: user,
       changelog: changelog,
       revision: commit,

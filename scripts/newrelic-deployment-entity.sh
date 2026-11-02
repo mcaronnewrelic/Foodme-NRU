@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # New Relic Deployment Marker Script with Entity Search
-# This script searches for the FoodMe APM entity and creates a deployment marker
+# This script searches for the OrderUp APM entity and creates a deployment marker
 
 set -e
 
@@ -43,7 +43,7 @@ if [ -z "$NEW_RELIC_API_KEY" ]; then
 fi
 
 # Set default app name if not provided
-APP_NAME=${NEW_RELIC_APP_NAME:-"FoodMe"}
+APP_NAME=${NEW_RELIC_APP_NAME:-"OrderUp"}
 echo -e "${YELLOW}🔍 Searching for entity: $APP_NAME${NC}"
 
 # Check if we're in a git repository

@@ -1,6 +1,6 @@
-# New Relic Infrastructure Integrations for FoodMe
+# New Relic Infrastructure Integrations for OrderUp
 
-This directory contains New Relic infrastructure integration configurations for monitoring the FoodMe application stack.
+This directory contains New Relic infrastructure integration configurations for monitoring the OrderUp application stack.
 
 ## 🔧 Configured Integrations
 
@@ -29,16 +29,16 @@ This directory contains New Relic infrastructure integration configurations for 
   - Query performance
   - Database size and growth
   - Lock contention metrics
-  - Custom FoodMe business metrics (restaurant/menu counts)
+  - Custom OrderUp business metrics (restaurant/menu counts)
 - **Configuration**: `postgres-config.yml`
-- **Custom Queries**: Tracks FoodMe-specific table row counts
+- **Custom Queries**: Tracks OrderUp-specific table row counts
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - New Relic account with license key
 - Docker and Docker Compose
-- FoodMe application running
+- OrderUp application running
 
 ### Setup Steps
 
@@ -91,7 +91,7 @@ This directory contains New Relic infrastructure integration configurations for 
 ### Custom Attributes
 All integrations include custom attributes for easier filtering:
 - `environment`: "docker-compose"
-- `application`: "foodme"
+- `application`: "orderup"
 - Service-specific attributes (service, role, etc.)
 
 ### Security
@@ -130,7 +130,7 @@ All integrations include custom attributes for easier filtering:
 curl http://localhost/nginx_status
 
 # Check PostgreSQL connection
-docker-compose exec db psql -U foodme_user -d foodme -c "SELECT version();"
+docker-compose exec db psql -U orderup_user -d orderup -c "SELECT version();"
 
 # View integration logs
 docker-compose logs -f newrelic-infra
@@ -143,7 +143,7 @@ docker-compose restart newrelic-nginx
 
 ## 📈 Custom Metrics
 
-### FoodMe Business Metrics
+### OrderUp Business Metrics
 The PostgreSQL integration includes custom queries that track:
 - Total restaurants in the system
 - Total menu items across all restaurants

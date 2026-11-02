@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'FoodMe Application - Production Ready with Enhanced Monitoring (AL2023)'
+Description: 'OrderUp Application - Production Ready with Enhanced Monitoring (AL2023)'
 
 Parameters:
   Environment:
@@ -49,6 +49,19 @@ Parameters:
       before it is passed here; DNS validation records are handled outside
       this template.
 
+  ConfigVersion:
+    Type: String
+    Default: '1'
+    Description: >-
+      Install-time configuration version, stamped into the instance
+      UserData. The instance is configured only when it launches, so a
+      stack update that leaves the UserData unchanged leaves the
+      running instance (and its install-time config: New Relic infra
+      key and integrations, nginx and log configuration) untouched.
+      Bump this version to force instance replacement - and a fresh
+      install - on the next stack update, without touching the load
+      balancer or its DNS name.
+
 Mappings:
   RegionConfig:
     us-east-1:
@@ -71,14 +84,14 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-vpc
+          Value: !Sub ${Environment}-orderup-vpc
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-igw
+          Value: !Sub ${Environment}-orderup-igw
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -95,7 +108,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-public-subnet-1
+          Value: !Sub ${Environment}-orderup-public-subnet-1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -106,7 +119,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-public-subnet-2
+          Value: !Sub ${Environment}-orderup-public-subnet-2
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -114,7 +127,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-public-rt
+          Value: !Sub ${Environment}-orderup-public-rt
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -140,7 +153,7 @@ Resources:
   EC2SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for FoodMe EC2 instance
+      GroupDescription: Security group for the OrderUp EC2 instance
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -163,7 +176,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-ec2-sg
+          Value: !Sub ${Environment}-orderup-ec2-sg
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -186,13 +199,13 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-alb-sg
+          Value: !Sub ${Environment}-orderup-alb-sg
 
   # IAM Role for EC2
   EC2Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${Environment}-foodme-ec2-role
+      RoleName: !Sub ${Environment}-orderup-ec2-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -236,10 +249,11 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          # ConfigVersion: ${ConfigVersion}
           # Log all output
           exec > >(tee /var/log/user-data.log) 2>&1
           
-          echo "[$(date)] === FoodMe Installation Starting ==="
+          echo "[$(date)] === OrderUp Installation Starting ==="
           yum update -y
           
           # Install AWS CLI v2 and dependencies
@@ -264,21 +278,21 @@ Resources:
           
           # Download and execute the installation script
           echo "[$(date)] Downloading installation script..."
-          aws s3 cp s3://${S3BucketName}/install-foodme.sh /tmp/install-foodme.sh
-          chmod +x /tmp/install-foodme.sh
+          aws s3 cp s3://${S3BucketName}/install-orderup.sh /tmp/install-orderup.sh
+          chmod +x /tmp/install-orderup.sh
           
           # Execute installation with error handling
           echo "[$(date)] Executing installation script..."
-          if /tmp/install-foodme.sh "$DATABASE_PASSWORD" "$S3_BUCKET_NAME" "$NEW_RELIC_LICENSE_KEY" "$ENVIRONMENT" "production"; then
+          if /tmp/install-orderup.sh "$DATABASE_PASSWORD" "$S3_BUCKET_NAME" "$NEW_RELIC_LICENSE_KEY" "$ENVIRONMENT" "production"; then
               echo "[$(date)] Installation completed successfully"
-              echo "[$(date)] === FoodMe Installation Completed Successfully ==="
+              echo "[$(date)] === OrderUp Installation Completed Successfully ==="
           else
               echo "[$(date)] Installation script failed with exit code $?"
               exit 1
           fi
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-instance
+          Value: !Sub ${Environment}-orderup-instance
         - Key: Environment
           Value: !Ref Environment
 
@@ -286,7 +300,7 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub ${Environment}-foodme-alb
+      Name: !Sub ${Environment}-orderup-alb
       Scheme: internet-facing
       Type: application
       SecurityGroups:
@@ -296,13 +310,13 @@ Resources:
         - !Ref PublicSubnet2
       Tags:
         - Key: Name
-          Value: !Sub ${Environment}-foodme-alb
+          Value: !Sub ${Environment}-orderup-alb
 
   # Target Group for Backend API
   BackendTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${Environment}-foodme-backend-tg
+      Name: !Sub ${Environment}-orderup-backend-tg
       Port: 3000
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -320,7 +334,7 @@ Resources:
   FrontendTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub ${Environment}-foodme-frontend-tg
+      Name: !Sub ${Environment}-orderup-frontend-tg
       Port: 8080
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -405,13 +419,13 @@ Outputs:
     Description: DNS name of the load balancer
     Value: !GetAtt LoadBalancer.DNSName
     Export:
-      Name: !Sub ${Environment}-foodme-alb-dns
+      Name: !Sub ${Environment}-orderup-alb-dns
 
   LoadBalancerHostedZone:
     Description: Hosted zone ID of the load balancer
     Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
     Export:
-      Name: !Sub ${Environment}-foodme-alb-zone
+      Name: !Sub ${Environment}-orderup-alb-zone
 
   ApplicationURL:
     Description: Application URL
@@ -438,13 +452,13 @@ Outputs:
     Description: EC2 Instance ID
     Value: !Ref EC2Instance
     Export:
-      Name: !Sub ${Environment}-foodme-instance-id
+      Name: !Sub ${Environment}-orderup-instance-id
 
   VPCId:
     Description: VPC ID
     Value: !Ref VPC
     Export:
-      Name: !Sub ${Environment}-foodme-vpc-id
+      Name: !Sub ${Environment}-orderup-vpc-id
 
   Environment:
     Description: Environment name

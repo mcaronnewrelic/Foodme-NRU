@@ -1,14 +1,14 @@
-# FoodMe CloudFormation Deployment - File Organization Guide
+# OrderUp CloudFormation Deployment - File Organization Guide
 
 ## 🎯 **RECOMMENDED FILES TO USE**
 
 ### **Production Deployment (RECOMMENDED)**
-- **Template**: `foodme-production-stack.yaml` ✅ **USE THIS**
+- **Template**: `orderup-production-stack.yaml` ✅ **USE THIS**
 - **Script**: `deploy-production.sh` ✅ **USE THIS**
 - **Purpose**: Production-ready template with all troubleshooting fixes incorporated
 
 ### **Supporting Files (KEEP)**
-- `install-foodme.sh` ✅ **KEEP** - Enhanced installation script with monitoring
+- `install-orderup.sh` ✅ **KEEP** - Enhanced installation script with monitoring
 - `validate-monitoring.sh` ✅ **KEEP** - Validates PostgreSQL and Nginx monitoring
 - `diagnose-postgresql-monitoring.sh` ✅ **KEEP** - PostgreSQL troubleshooting
 - `diagnose-nginx-monitoring.sh` ✅ **KEEP** - Nginx troubleshooting
@@ -21,26 +21,26 @@
 
 | File                           | Status                | Purpose                                      | Recommendation |
 | ------------------------------ | --------------------- | -------------------------------------------- | -------------- |
-| `foodme-production-stack.yaml` | ✅ **NEW/RECOMMENDED** | Production-ready with all fixes              | **USE THIS**   |
-| `foodme-stack.yaml`            | ⚠️ Legacy              | Original full stack (has load testing)       | Archive/backup |
-| `foodme-monitoring-stack.yaml` | ⚠️ Legacy              | Monitoring-focused variant                   | Archive/backup |
+| `orderup-production-stack.yaml` | ✅ **NEW/RECOMMENDED** | Production-ready with all fixes              | **USE THIS**   |
+| `orderup-stack.yaml`            | ⚠️ Legacy              | Original full stack (has load testing)       | Archive/backup |
+| `orderup-monitoring-stack.yaml` | ⚠️ Legacy              | Monitoring-focused variant                   | Archive/backup |
 | `monitoring-stack.yaml`        | ⚠️ Legacy              | Simplified variant (used in troubleshooting) | Archive/backup |
 
 ### **Deployment Scripts**
 
 | File                         | Status                | Template Used                  | Recommendation |
 | ---------------------------- | --------------------- | ------------------------------ | -------------- |
-| `deploy-production.sh`       | ✅ **NEW/RECOMMENDED** | `foodme-production-stack.yaml` | **USE THIS**   |
-| `deploy-stack.sh`            | ⚠️ Legacy              | `foodme-stack.yaml`            | Archive/backup |
+| `deploy-production.sh`       | ✅ **NEW/RECOMMENDED** | `orderup-production-stack.yaml` | **USE THIS**   |
+| `deploy-stack.sh`            | ⚠️ Legacy              | `orderup-stack.yaml`            | Archive/backup |
 | `deploy-simple.sh`           | ⚠️ Troubleshooting     | `monitoring-stack.yaml`        | Archive/backup |
-| `deploy-monitoring-stack.sh` | ⚠️ Legacy              | `foodme-monitoring-stack.yaml` | Archive/backup |
+| `deploy-monitoring-stack.sh` | ⚠️ Legacy              | `orderup-monitoring-stack.yaml` | Archive/backup |
 | `deploy-code.sh`             | ❌ Incomplete          | N/A - Code only                | **DELETE**     |
 
 ### **Utility Scripts**
 
 | File                                | Status      | Purpose                    | Recommendation |
 | ----------------------------------- | ----------- | -------------------------- | -------------- |
-| `install-foodme.sh`                 | ✅ Essential | Main installation script   | **KEEP**       |
+| `install-orderup.sh`                 | ✅ Essential | Main installation script   | **KEEP**       |
 | `validate-monitoring.sh`            | ✅ Useful    | Monitoring validation      | **KEEP**       |
 | `diagnose-postgresql-monitoring.sh` | ✅ Useful    | PostgreSQL troubleshooting | **KEEP**       |
 | `diagnose-nginx-monitoring.sh`      | ✅ Useful    | Nginx troubleshooting      | **KEEP**       |
@@ -60,7 +60,7 @@ The **deploy-cloudformation** workflow runs these same scripts. Run it from the 
 ### **Quick Deployment from your machine**
 ```bash
 cd cloudformation
-./deploy-production.sh staging t3.medium foodme-keypair mysecurepasswordexample
+./deploy-production.sh staging t3.medium orderup-keypair mysecurepasswordexample
 ```
 
 ### **What This Includes**
@@ -79,8 +79,8 @@ cd cloudformation
 ### **Files to Archive/Move to `archive/` folder**
 ```bash
 mkdir -p archive
-mv foodme-stack.yaml archive/
-mv foodme-monitoring-stack.yaml archive/
+mv orderup-stack.yaml archive/
+mv orderup-monitoring-stack.yaml archive/
 mv monitoring-stack.yaml archive/
 mv deploy-stack.sh archive/
 mv deploy-simple.sh archive/
@@ -140,9 +140,9 @@ curl http://YOUR-ALB-DNS/api/
 ## 🎯 **SUMMARY**
 
 **Use these files for production deployments:**
-- `foodme-production-stack.yaml` (CloudFormation template)
+- `orderup-production-stack.yaml` (CloudFormation template)
 - `deploy-production.sh` (Deployment script)
-- `install-foodme.sh` (Installation script)
+- `install-orderup.sh` (Installation script)
 - `validate-monitoring.sh` (Validation script)
 
 **Archive the rest** - they were useful for development and troubleshooting but are no longer needed for production use.

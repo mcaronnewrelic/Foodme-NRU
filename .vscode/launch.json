@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug FoodMe Server",
+            "name": "Debug OrderUp Server",
             "type": "node",
             "request": "launch",
             "program": "${workspaceFolder}/server/start.js",
@@ -27,7 +27,7 @@
             "outputCapture": "console"
         },
         {
-            "name": "Debug FoodMe Server (No New Relic)",
+            "name": "Debug OrderUp Server (No New Relic)",
             "type": "node",
             "request": "launch",
             "program": "${workspaceFolder}/server/index.js",
@@ -104,7 +104,7 @@
         {
             "name": "Debug Full Stack",
             "configurations": [
-                "Debug FoodMe Server"
+                "Debug OrderUp Server"
             ],
             "preLaunchTask": "Build Angular App",
             "stopAll": true

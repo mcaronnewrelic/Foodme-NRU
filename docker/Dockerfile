@@ -35,7 +35,7 @@ FROM node:24-alpine AS production
 RUN apk update && apk upgrade && apk add --no-cache dumb-init
 
 # Set the working directory
-WORKDIR /usr/src/foodme
+WORKDIR /usr/src/orderup
 
 # Copy only production files
 COPY --from=build /usr/src/app/dist ./dist
@@ -43,7 +43,7 @@ COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/package.json ./
 
 # Change ownership of the application files to the existing node user
-RUN chown -R node:node /usr/src/foodme
+RUN chown -R node:node /usr/src/orderup
 
 # Switch to non-root user (node user already exists in node:alpine)
 USER node

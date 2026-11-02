@@ -121,9 +121,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   
   // Serve Angular app static files (excluding index.html)
   // The Angular build lands in a different place per layout, so use whichever exists:
-  // ../browser      production image: /foodme/app/server/ -> /foodme/app/browser/
-  // ../dist/browser local dev, local Docker mount, and EC2 (/opt/foodme/backend -> /opt/foodme/dist/browser)
-  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/foodme';
+  // ../browser      production image: /orderup/app/server/ -> /orderup/app/browser/
+  // ../dist/browser local dev, local Docker mount, and EC2 (/opt/orderup/backend -> /opt/orderup/dist/browser)
+  const isDocker = process.env.DOCKER_COMPOSE === 'true' || process.cwd() === '/orderup';
   const ANGULAR_DIST_CANDIDATES = [
     path.join(__dirname, '../browser'),
     path.join(__dirname, '../dist/browser')

@@ -1,10 +1,10 @@
--- FoodMe Database Initialization Script
--- This script sets up the initial database schema for the FoodMe application
+-- OrderUp Database Initialization Script
+-- This script sets up the initial database schema for the OrderUp application
 
 -- Create database extensions if needed
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create tables for the FoodMe application
+-- Create tables for the OrderUp application
 CREATE TABLE IF NOT EXISTS restaurants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     original_id VARCHAR(100) UNIQUE NOT NULL,
@@ -104,5 +104,5 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXE
 -- Success message
 DO $$
 BEGIN
-    RAISE NOTICE 'FoodMe database initialization completed successfully!';
+    RAISE NOTICE 'OrderUp database initialization completed successfully!';
 END $$;

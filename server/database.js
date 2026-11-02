@@ -1,5 +1,5 @@
 /**
- * Database Service for FoodMe Application
+ * Database Service for the OrderUp application
  * ======================================
  * Handles database connections and restaurant data operations
  */
@@ -46,14 +46,14 @@ class DatabaseService {
             
             // Fallback password
             if (!dbPassword) {
-                dbPassword = 'foodme_secure_password_2025!';
+                dbPassword = 'orderup_secure_password_2025!';
             }
 
             this.client = new Client({
                 host: process.env.DB_HOST || 'localhost',
                 port: process.env.DB_PORT || 5432,
-                database: process.env.DB_NAME || 'foodme',
-                user: process.env.DB_USER || 'foodme_user',
+                database: process.env.DB_NAME || 'orderup',
+                user: process.env.DB_USER || 'orderup_user',
                 password: dbPassword,
                 ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
             });

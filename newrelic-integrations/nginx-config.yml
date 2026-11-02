@@ -19,13 +19,13 @@ integrations:
       REMOTE_MONITORING: false
       
       # Custom attributes for better organization
-      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"staging","application":"foodme","role":"web-server","deployment":"ec2"}'
+      CUSTOM_ATTRIBUTES: '{"service":"nginx","environment":"staging","application":"orderup","role":"web-server","deployment":"ec2"}'
       
       # Optional: Parse nginx access logs for additional metrics
       ACCESS_LOG_PATH: /var/log/nginx/access.log
       ERROR_LOG_PATH: /var/log/nginx/error.log
       
-      # The access log is JSON (see install-foodme.sh's log_format), which
+      # The access log is JSON (see install-orderup.sh's log_format), which
       # this integration's log parser cannot read - so log-derived metrics
       # are off. Status splits are computed from the forwarded JSON log
       # attributes in NR Logs instead. The stub_status metrics above are
@@ -37,6 +37,6 @@ integrations:
       env: staging
       role: web-server
       service: nginx
-      application: foodme
+      application: orderup
       deployment: ec2
     inventory_source: config/nginx

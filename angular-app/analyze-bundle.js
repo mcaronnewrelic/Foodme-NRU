@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Bundle Analysis Script for FoodMe Angular App
+ * Bundle Analysis Script for OrderUp Angular App
  * This script helps analyze and optimize bundle sizes
  */
 
@@ -24,7 +24,7 @@ function analyzeDistFolder() {
     return;
   }
 
-  console.log('📊 FoodMe Bundle Analysis');
+  console.log('📊 OrderUp Bundle Analysis');
   console.log('========================\n');
 
   const files = fs.readdirSync(distPath);

@@ -709,6 +709,31 @@ absolute numbers will be larger; the rows-examined ratio (200k vs 1)
 is the robust evidence either way. One more NRQL spelling is
 provisional for the live-confirmation pass, alongside I6's:
 PostgresqlDatabaseSample / locksWaiting in I7's lock checkpoint.
+Rename + stack pass (2026-11-01): everything user- or
+data-visible that still said foodme now says orderup, done in the
+same change as a planned delete-and-recreate of the stack: the
+stack name (orderup-<env>), the ALB / target-group / IAM / SSM
+names, the deployment S3 bucket, the database (orderup, user
+orderup_user), the on-instance layout (/opt/orderup, PM2 app
+orderup-backend, conf.d/orderup.conf), the New Relic data labels
+(application: orderup in the integration configs and the infra
+agent's own attributes; host display name orderup-<host>), and the
+file names in the repo (orderup-production-stack.yaml,
+install-orderup.sh, orderup-logs.yml). Two repairs ride along: the
+JSON access-log commit (3921bbd) turned out never to have reached
+main - PR #34 merged with only its first commit - and is
+cherry-picked back here; and install-orderup.sh now writes the
+infra agent's logging config (/etc/newrelic-infra/logging.d/
+logging.yml) itself, since the repo's log config previously had no
+delivery path to the instance at all. The template also gains a
+ConfigVersion parameter, stamped into the instance UserData: the
+instance is configured only at launch, so bumping it is how future
+stack updates force a fresh install (new keys and configs) WITHOUT
+replacing the load balancer - an in-place update never renames the
+ALB, so the DNS CNAME Michael is about to set (orderup.nru.to)
+should only ever be set once. Left alone: the archive/ tree, the
+legacy foodme-stack.yaml, the docs' historical record, and the
+GitHub repository name.
 
 
 ### 11.4 Acceptance tests (extends §10)

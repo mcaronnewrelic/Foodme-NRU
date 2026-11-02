@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * FoodMe Restaurant Data Importer (UUID Version)
+ * OrderUp Restaurant Data Importer (UUID Version)
  * ==============================================
  * This script reads the restaurants.json file and generates SQL INSERT statements
  * for populating the PostgreSQL database with UUID-based restaurant and menu item data.
