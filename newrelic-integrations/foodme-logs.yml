@@ -34,3 +34,22 @@ logs:
       environment: production
       component: nodejs-backend
       log_level: error
+  # nginx's own logs (spec section 11.0): I5's evidence lives here - the
+  # 502s in the access log and the "upstream prematurely closed" lines in
+  # the error log. Until now only the integration parsed these files for
+  # metrics; the lines themselves were never forwarded.
+  - name: nginx-access
+    file: /var/log/nginx/access.log
+    attributes:
+      logtype: nginx-access
+      service: nginx
+      environment: production
+      component: reverse-proxy
+
+  - name: nginx-error
+    file: /var/log/nginx/error.log
+    attributes:
+      logtype: nginx-error
+      service: nginx
+      environment: production
+      component: reverse-proxy

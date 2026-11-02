@@ -114,12 +114,13 @@
                 <p class="small mb-2">
                   <strong>Instructor — arm an investigation:</strong>
                   @if (nrConfig.armedInvestigation(); as inv) {
-                    <span>“It’s not checkout” is live ({{ inv.seconds }}s slow query, via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }}).</span>
+                    <span>{{ NrConfigService.describeInvestigation(inv) }} (via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }})</span>
                   } @else {
-                    <span>No investigation is armed. Arming I2 makes every order's database work include a 3-second slow query.</span>
+                    <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy.</span>
                   }
                 </p>
-                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation(3)">Arm I2 (3s)</button>
+                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('its-not-checkout', 3)">Arm I2 (3s)</button>
+                <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('the-502-didnt-come-from-the-app')">Arm I5 (502s)</button>
                 <button class="btn btn-sm btn-outline-secondary me-2" (click)="nrConfig.disarmInvestigation()">Disarm</button>
                 <button class="btn btn-sm btn-outline-secondary" (click)="nrConfig.clearInvestigationOverride()">Clear override</button>
               </div>

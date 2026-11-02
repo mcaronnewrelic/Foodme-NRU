@@ -397,6 +397,57 @@ while building (nri-nginx → `NginxSample` + parsed access logs; nri-postgresql
 Placement: linked from How It Works under “Investigations”, shown only in
 callout mode; the customer experience is untouched.
 
+### 11.0 Integration prerequisites
+
+*(Added 2026-11-01.)* What the investigations stand on, checked against
+`newrelic-integrations/` in this repo before any §11 build starts.
+
+**Already in place — do not re-add.** `nri-nginx` (stub_status) and
+`nri-postgresql` with `COLLECT_DB_LOCK_METRICS` and
+`COLLECT_BLOAT_METRICS` on (I7, I9) plus the custom queries emitting
+`database_size` and active/idle connection counts (I6);
+`pg_stat_statements` is preloaded by `cloudformation/install-foodme.sh`
+(the data source I8 stands on). Log forwarding originally covered
+**only the PM2 app logs** (the lines I5's "the app logs nothing"
+checkpoint leans on); the nginx files were parsed by the integration
+for metrics but their lines were never forwarded — the I5 build adds
+the nginx access and error files to `newrelic-integrations/foodme-logs.yml`,
+reaching the instance on the next stack/config pass. Postgres's own
+log file is still not forwarded (its path is instance-specific).
+
+**The one addition: the AWS linked-account integration, for the ALB.**
+Nothing AWS-side reports today, and I5's opening move — split the 502s
+by source: ALB vs nginx vs app — currently has no ALB leg; students
+would have to infer it from absent evidence. The linked account
+supplies `AlbSample` (ELB-generated vs target-generated 5XX counts,
+target health, ALB latency), making that checkpoint direct evidence.
+Classic API polling is enough (minutes of lag against 3-hour
+investigation windows); Metric Streams is not worth its setup here.
+The link is cloud-side (IAM role + account linking) — no host change.
+
+**Verify, don't add: Postgres query-performance data.** The extension
+is preloaded, but I8's rows-examined-vs-returned evidence needs the
+`pg_stat_statements`-backed data actually flowing into the account.
+Five-minute check before building I8; if absent, it is a config fix
+in the integration already installed, not a new integration.
+
+**Optional: `nri-flex` for demo state.** A Flex config polling
+`/api/demo/failures` and `/api/nr-config` can emit the armed scenario
+as infrastructure data, letting an Evidence Board widget show what is
+armed from New Relic itself. YAML only, no app code; nice-to-have,
+nothing depends on it.
+
+**Deliberately not used:** RDS / ECS / ElastiCache integrations (none
+of those services are in the live stack — ECS rides this same linked
+account if the Locust-on-Fargate work is ever ported), container or
+Kubernetes integrations (the app runs under PM2 on the host), and the
+CloudWatch agent (redundant beside the infra agent).
+
+**Sequencing:** host-side integration config changes bundle naturally
+with the pending stack rebuild (the infra agent's stale license key
+and the 1.81.0 pin ride the same run); the AWS account link can happen
+any time, independently.
+
 ### 11.1 The four ports
 
 **I1 · Who's stealing the CPU?** — identical chain, real cast: symptom
@@ -584,6 +635,19 @@ inside the order transaction (env > persisted manual override via
 header banner names the live investigation; armed investigations
 render the A10 not-live state until armed. I2's span-share check
 (90% ±10) assumes the default 3s arm.
+I5 built (2026-11-01): DEMO_NGINX_502 (env or the same manual
+override) arms a socket-destroying middleware on GET /api/restaurant*
+— every second request dies before any route runs, so the real nginx
+mints genuine 502s and logs "upstream prematurely closed connection".
+A deliberate deviation from section 11.2's timeout arm: a
+proxy_read_timeout expiry produces 504s, and this investigation is
+about 502s — the premature close is the honest 502 mechanism, and
+the copy teaches the 502/504 differential explicitly. Verified
+end-to-end against the local server (requests alternate 200 /
+destroyed; disarm restores). Its log checkpoints light up once the
+foodme-logs.yml addition reaches the instance. (Process note: PR
+#31's section 11.0 originally merged into PR #30's branch rather
+than main; it was recovered from that branch and lands with this PR.)
 
 
 ### 11.4 Acceptance tests (extends §10)
@@ -605,3 +669,6 @@ render the A10 not-live state until armed. I2's span-share check
   names appear; with it on, the `Custom/Orders/%` name count is exactly
   2 + 2 × the seeded restaurant count, and I10's per-visitor checkpoint
   is answerable only from the `Order` event, never from `Metric`.
+- **A15** With the AWS account linked, `AlbSample` data exists for the
+  staging ALB and I5's source-split checkpoint (ELB vs target 5XX) is
+  answerable from it directly.

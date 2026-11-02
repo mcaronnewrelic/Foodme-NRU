@@ -20,14 +20,14 @@ export interface DemoFailureState {
 
 export interface ArmedInvestigation {
   slug: string;
-  /** For I2: the slow query's length in seconds. */
-  seconds: number;
+  /** For I2: the slow query's length in seconds. Absent for other arms. */
+  seconds?: number;
   source: 'env' | 'manual';
 }
 
 export interface DemoInvestigationState {
   source: 'env' | 'manual' | 'none';
-  armed: { slug: string; seconds: number } | null;
+  armed: { slug: string; seconds?: number } | null;
 }
 
 const NR_BASE_URL = 'https://one.newrelic.com';
@@ -105,13 +105,21 @@ export class NrConfigService {
   static investigationTitle(slug: string): string {
     switch (slug) {
       case 'its-not-checkout': return 'It’s not checkout';
+      case 'the-502-didnt-come-from-the-app': return 'The 502 didn’t come from the app';
       default: return slug;
     }
   }
 
   /** Plain-language description of the armed investigation, for the banner. */
   static describeInvestigation(a: ArmedInvestigation): string {
-    return `“${NrConfigService.investigationTitle(a.slug)}” is live: every order’s database work includes a ${a.seconds}s slow query.`;
+    switch (a.slug) {
+      case 'its-not-checkout':
+        return `“It’s not checkout” is live: every order’s database work includes a ${a.seconds}s slow query.`;
+      case 'the-502-didnt-come-from-the-app':
+        return '“The 502 didn’t come from the app” is live: about half of restaurant and menu requests are dying at the proxy.';
+      default:
+        return `Investigation “${a.slug}” is live.`;
+    }
   }
 
   refreshInvestigationState(): void {
@@ -121,9 +129,9 @@ export class NrConfigService {
     });
   }
 
-  /** Arm I2 manually (instructor override). */
-  armInvestigation(seconds = 3): void {
-    this.http.post<DemoInvestigationState>('/api/demo/investigations', { slug: 'its-not-checkout', seconds }).subscribe({
+  /** Arm an investigation manually (instructor override). */
+  armInvestigation(slug: string, seconds?: number): void {
+    this.http.post<DemoInvestigationState>('/api/demo/investigations', { slug, seconds }).subscribe({
       next: state => this.applyInvestigationState(state),
       error: () => {}
     });
