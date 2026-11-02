@@ -406,9 +406,9 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       logger.info({ ip: req.ip }, 'Demo investigation disarmed by manual override');
       return res.json(state);
     }
-    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app') {
+    if (slug !== 'its-not-checkout' && slug !== 'the-502-didnt-come-from-the-app' && slug !== 'one-connection-for-the-whole-restaurant') {
       return res.status(400).json({
-        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10} or {slug: "the-502-didnt-come-from-the-app"}, or {slug: "off"}'
+        error: 'Body must be {slug: "its-not-checkout", seconds?: 1-10}, {slug: "the-502-didnt-come-from-the-app"} or {slug: "one-connection-for-the-whole-restaurant"} (armed by scripts/burst-orders.js), or {slug: "off"}'
       });
     }
     const state = demoInvestigations.setManual(slug, seconds);

@@ -106,6 +106,7 @@ export class NrConfigService {
     switch (slug) {
       case 'its-not-checkout': return 'It’s not checkout';
       case 'the-502-didnt-come-from-the-app': return 'The 502 didn’t come from the app';
+      case 'one-connection-for-the-whole-restaurant': return 'One connection for the whole restaurant';
       default: return slug;
     }
   }
@@ -117,6 +118,8 @@ export class NrConfigService {
         return `“It’s not checkout” is live: every order’s database work includes a ${a.seconds}s slow query.`;
       case 'the-502-didnt-come-from-the-app':
         return '“The 502 didn’t come from the app” is live: about half of restaurant and menu requests are dying at the proxy.';
+      case 'one-connection-for-the-whole-restaurant':
+        return '“One connection for the whole restaurant” is live: a simulated visitor (SIM-BST1) is placing concurrent orders.';
       default:
         return `Investigation “${a.slug}” is live.`;
     }

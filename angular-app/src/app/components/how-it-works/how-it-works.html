@@ -116,7 +116,7 @@
                   @if (nrConfig.armedInvestigation(); as inv) {
                     <span>{{ NrConfigService.describeInvestigation(inv) }} (via {{ inv.source === 'env' ? 'the server environment' : 'manual override' }})</span>
                   } @else {
-                    <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy.</span>
+                    <span>No investigation is armed. One at a time: I2 slows every order's database work by 3s; I5 makes about half of restaurant and menu requests die at the proxy. I6 arms itself — run <code>scripts/burst-orders.js</code> against this site and it starts and stops the investigation with the burst.</span>
                   }
                 </p>
                 <button class="btn btn-sm btn-warning me-2" (click)="nrConfig.armInvestigation('its-not-checkout', 3)">Arm I2 (3s)</button>
