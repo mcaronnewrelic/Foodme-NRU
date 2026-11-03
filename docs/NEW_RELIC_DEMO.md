@@ -12,7 +12,7 @@ Green dashed boxes on the pages show the New Relic data that page creates, with 
 | Restaurants | The `GET /api/restaurant` transaction |
 | Menu | Each menu request, and the same requests by status code |
 | Checkout | Recent `POST /api/order` transactions |
-| Thank you | Your own `Order` event and transaction (found by `requestId`), plus the `Custom/Orders/*` metrics |
+| Thank you | The order Transaction, `ItemsOrdered` detail events, an `orderId` JOIN, and global/per-restaurant total metrics |
 | Orders | Order lookups, without any email address |
 | How It Works | The simulated error, its page action, and its round-trip time |
 
@@ -29,6 +29,64 @@ Green dashed boxes on the pages show the New Relic data that page creates, with 
 Import `NrCalloutComponent` in the page's component and define `myNrql` as a property. Add `[showBrowserErrors]="true"` for a second button that opens Errors Inbox for the browser app.
 
 **How the links are built.** The Angular app asks the server for `GET /api/nr-config`, which returns the account ID and browser entity GUID from `.env`. Nothing New Relic specific is stored in the Angular code. The buttons open in one shared tab named `newrelic`. That endpoint is ignored by the APM agent (`rules.ignore` in `server/newrelic.js`), so it doesn't show up as a transaction.
+
+## Order telemetry trade-offs
+
+The server returns `orderId` only after accepting an order. Database mode uses the
+database-generated ID; JSON demo mode generates a UUID. The receipt shows that ID
+and the cart's line items. `requestId` remains an HTTP/log correlation identifier,
+not the receipt or item-event join key.
+
+- **Custom attributes:** the existing checkout Transaction holds `orderId`,
+  `customer`, `restaurant`, `itemCount`, `orderTotal`, and `demoCode` alongside
+  duration and HTTP status. Failed checkouts retain their business context but
+  have no accepted `orderId`.
+- **Custom events:** one `ItemsOrdered` event per cart line holds `orderId`,
+  `itemName`, `itemCount` (quantity), `unitPrice`, `itemTotal`, and `demoCode`.
+  Item events are emitted after acceptance and do not repeat the customer,
+  restaurant, or order total. More lines mean more event ingest.
+- **Custom metrics:** each accepted order records its decimal total with
+  `recordMetric('total', total)` and `recordMetric('<restaurant-slug>/total', total)`.
+  The Node agent adds `Custom/` automatically. A total timeslice already includes
+  a count, so a separate count metric is redundant. Query each global or
+  restaurant series separately to avoid double-counting revenue.
+
+For the same time window, the global metric has one name and the restaurant
+breakdown has at most one name per restaurant receiving an order. Using order IDs,
+request IDs, or customer codes in metric names would create continually growing
+cardinality. Rollups retain aggregate totals and counts but discard individual
+orders and reduce time resolution. They do not require discarding cents. Lower
+data volume is not a universal pricing guarantee; cost depends on the plan.
+
+An item-to-order JOIN (replace the example ID with the receipt's ID):
+
+```sql
+FROM ItemsOrdered
+JOIN (
+  FROM Transaction
+  SELECT orderId, customer, restaurant, orderTotal, duration, http.statusCode
+  WHERE appName = 'OrderUp'
+    AND name = 'WebTransaction/Expressjs/POST//api/order'
+    AND orderId = 'example-order-id'
+  LIMIT MAX
+) ON orderId
+SELECT orderId, customer, restaurant, itemName, itemCount, unitPrice,
+       itemTotal, orderTotal, duration, http.statusCode
+WHERE orderId = 'example-order-id'
+SINCE 1 day ago LIMIT MAX
+```
+
+Order IDs are strings on both sides because NRQL JOINs do not coerce types.
+The outer item rows join to the one parent checkout Transaction. Do not sum
+`orderTotal` across detail rows: it repeats for every item. Use `itemTotal` for
+line-item totals. Transaction sampling and independent ingestion can leave an
+inner JOIN temporarily incomplete or permanently without a sampled parent.
+The dashboard's Transaction counts are also subject to APM event sampling.
+
+The old `Order` event and `Custom/Orders/*` metrics are no longer emitted. Existing
+historical data remains in New Relic; deploy the updated dashboard definition to
+change its queries. No live dashboard or account configuration is changed by a
+local source edit.
 
 ## Settings
 
@@ -57,7 +115,8 @@ docker-compose -f docker/docker-compose.dev-simple.yml up -d --build --force-rec
 | `DEMO_FAILING_ORDER_RESTAURANT` | "Purchase failed" for every order from that restaurant | `Kitchen at "..." is not accepting orders` on `POST /api/order`, with the restaurant on the transaction |
 | `DEMO_FAILING_ORDER_ITEM` | "Purchase failed" when the cart has that item | `Inventory check failed for "..."` and a `failedItem` attribute. Harder to spot: only some orders fail. |
 
-A failed order is not counted: it fails before the `Order` event and the `Orders/*` metrics are recorded.
+A failed order emits no `ItemsOrdered` events or sales metrics. A database write
+failure is returned as an error rather than a successful fallback receipt.
 
 A path for students: the status-code callout on the Menu page shows one URL with a 500, `FROM TransactionError WHERE restaurantSlug IS NOT NULL` shows the message, the trace shows where it failed, and Errors Inbox shows how the error is grouped.
 

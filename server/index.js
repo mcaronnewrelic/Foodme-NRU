@@ -16,6 +16,7 @@ var morgan = require("morgan");
 var bodyParser = require("body-parser");
 const { engine } = require("express-handlebars");
 const path = require("path");
+const { randomUUID } = require("node:crypto");
 
 var fs = require("fs");
 var open = require("open").default; // open 11 is an ES module
@@ -758,8 +759,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         });
     }
 
+    let restaurant;
     try {
-      const restaurant = useDatabase
+      restaurant = useDatabase
         ? await dbService.getRestaurantById(restaurantId)
         : storage.getById(restaurantId);
       if (!restaurant) {
@@ -811,8 +813,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       var orderTotal = 0;
       order.items.forEach(function (item) {
         itemCount += item.qty;
-        orderTotal += item.price * item.qty;
+        orderTotal += Math.round(item.price * 100) * item.qty;
       });
+      orderTotal /= 100;
 
       logger.info(
         {
@@ -839,9 +842,6 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         "User ID set for order creation transaction",
       );
 
-      // The client's demoCode (spec section 1), if it sent a well-formed one:
-      // stamped on the transaction and the Order event so the order is
-      // findable by code as well as by requestId.
       const demoCode = /^(OU|SIM)-[A-Z0-9]{4}$/.test(order.demoCode || "")
         ? order.demoCode
         : null;
@@ -851,7 +851,7 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         ...(demoCode ? { demoCode } : {}),
         customer: order.deliverTo?.name || order.customer?.name || "Unknown",
         userID: userID || "anonymous",
-        restaurant: order.restaurant?.name || "Unknown",
+        restaurant: restaurant.name,
         itemCount: itemCount,
         orderTotal: orderTotal,
         requestId: req.requestId,
@@ -859,7 +859,7 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
 
       // Planned failures for the "find the failed order in New Relic" exercise; each is off unless its variable is set.
       // They run after the attributes above, so the failed transaction still says who ordered what, and before the
-      // Order event and metrics below, so a failed order isn't counted as a sale.
+      // Item events and metrics below, so a failed order isn't counted as a sale.
       const { nameToSlug } = require("./url-utils");
       const failing = demoFailures.getFailing();
       const failingItem = failing.orderItem
@@ -875,28 +875,15 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       }
       if (
         failing.orderRestaurant &&
-        nameToSlug(order.restaurant?.name || "") === failing.orderRestaurant
+        nameToSlug(restaurant.name) === failing.orderRestaurant
       ) {
         throw new Error(
-          `Kitchen at "${order.restaurant.name}" is not accepting orders: ticket printer offline`,
+          `Kitchen at "${restaurant.name}" is not accepting orders: ticket printer offline`,
         );
       }
 
-      newrelic.incrementMetric("Orders/count", 1);
-      newrelic.recordMetric("Orders/total", parseInt(orderTotal));
-
-      newrelic.recordCustomEvent("Order", {
-        ...(demoCode ? { demoCode } : {}),
-        customer: order.deliverTo?.name || order.customer?.name || "Unknown",
-        userID: userID || "anonymous",
-        restaurant: order.restaurant?.name || "Unknown",
-        itemCount: itemCount,
-        orderTotal: orderTotal,
-        requestId: req.requestId,
-      });
-
       // Actually create the order in the database if using database
-      let orderId = Date.now(); // fallback for in-memory storage
+      let orderId;
 
       if (useDatabase && dbService) {
         try {
@@ -940,13 +927,10 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
             "Database order creation failed",
           );
 
-          // Continue with fallback behavior for backward compatibility
-          logger.info(
-            { requestId: req.requestId },
-            "Falling back to memory-based order processing",
-          );
+          throw dbError;
         }
       } else {
+        orderId = randomUUID();
         logger.info(
           {
             requestId: req.requestId,
@@ -957,7 +941,20 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         );
       }
 
+      orderId = String(orderId);
       newrelic.addCustomAttributes({ orderId });
+      for (const item of order.items) {
+        newrelic.recordCustomEvent("ItemsOrdered", {
+          ...(demoCode ? { demoCode } : {}),
+          orderId,
+          itemName: item.name,
+          itemCount: item.qty,
+          unitPrice: item.price,
+          itemTotal: Math.round(item.price * 100) * item.qty / 100,
+        });
+      }
+      newrelic.recordMetric("total", orderTotal);
+      newrelic.recordMetric(`${nameToSlug(restaurant.name)}/total`, orderTotal);
 
       const totalDuration = Date.now() - startTime;
       logger.info(

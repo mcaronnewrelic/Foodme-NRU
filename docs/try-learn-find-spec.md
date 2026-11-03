@@ -89,8 +89,8 @@ short code.
   and BrowserInteraction all carry it.
 - Server side: the API already propagates `requestId`; also accept the code from
   the client (header or order payload) and stamp it as a custom attribute on
-  the `POST /api/order` transaction and the `Order` custom event, so the
-  Thank You queries can filter by code as well as requestId.
+  the `POST /api/order` transaction and each `ItemsOrdered` custom event, so the
+  Thank You queries can filter by code as well as the server-returned orderId.
 - The Customer page's existing callout stays the “who you are” explainer; add
   the code to its copy: name → `enduser.id`, code → `demoCode`, both attached
   to everything after.
@@ -144,14 +144,15 @@ the Find button, then the Check.
 ### Mission 3 — Place the order, keep the receipt (Checkout → Thank You)
 
 - **Try:** check out with any cart and reach Thank You.
-- **Learn:** the order is three records of one act: an `Order` custom event, a
-  `POST /api/order` transaction, and `Custom/Orders/*` metrics — all sharing
-  the `requestId` printed on this page. That shared key is how you stitch a
-  user action to backend truth.
-- **Find:** the Thank You page's three existing callouts, unchanged — they are
-  already requestId-scoped, the best Find on the site.
+- **Learn:** order-level business attributes enrich the existing checkout
+  Transaction; one `ItemsOrdered` event per line adds detail, joined to the
+  parent by `orderId`. `Custom/total` and `Custom/<restaurant-slug>/total`
+  provide compact aggregate rollups without order identity. The total metric's
+  count makes a separate order-count metric redundant.
+- **Find:** the Thank You page's Transaction, item events, orderId JOIN, and
+  metric callouts. The receipt displays the server-returned orderId and items.
 - **Check (evidence):** “Paste the last 4 characters of this order's
-  requestId.” Text entry, exact match against the page's own value. (Trivial
+  orderId.” Text entry, exact match against the page's own value. (Trivial
   for the visitor, impossible to fake having reached this page with an order —
   it proves the Try happened. The harder variant: ask for the order's
   `duration` from the transaction query, rounded to the nearest 10 ms,

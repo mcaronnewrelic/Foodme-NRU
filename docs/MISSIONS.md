@@ -27,7 +27,7 @@ invisible to students.
 |---|---------|------|-----------------|-----------|-------|
 | 1 | Say who you are | Customer | `setUserId()` makes the name the `enduser.id`; a second stamp, the `demoCode`, rides every browser event | Personal — faceted by `demoCode` | Evidence (choice): how many event types carry your code so far |
 | 2 | Find a menu in the data | Restaurants → Menu | Every menu load is an APM transaction; filtering the list is client-side and creates **no** request — the absence is the lesson | Cohort — labelled "Shows everyone's data" | Reasoning (choice): why no new request appeared |
-| 3 | Place the order, keep the receipt | Checkout → Thank You | One order is three records — an `Order` custom event, a `POST /api/order` transaction, `Custom/Orders/*` metrics — stitched by one `requestId` | Personal — scoped by `requestId` | Evidence (text): the last 4 characters of this order's `requestId` |
+| 3 | Place the order, keep the receipt | Checkout → Thank You | Order attributes on a Transaction, one `ItemsOrdered` event per line joined by `orderId`, and global/restaurant metric rollups without per-order identity | Personal events scoped by `orderId`; cohort metrics | Evidence (text): the last 4 characters of the receipt's `orderId` |
 | 4 | Find it again later | Orders | Lookup works with no email; `requestId` and `demoCode` are the join keys — and the transaction's `userID` is the code in disguise | Personal — filtered by `userID` | Reasoning (multi-select): which two values identify your order |
 | 5 | Break it on purpose | How It Works | One click, three traces (JavaScriptError, PageAction, round-trip time); then hunting a planted failure to its exact error message | Personal + cohort errors | Evidence (text): the simulated error's `errorType` — or the armed failure's exact message (either half completes the mission) |
 
@@ -49,7 +49,7 @@ not where you'd first look.
 - **Mission 2** is a static reasoning check; the behaviour it names
   (filtering is client-side) lives in `RestaurantsComponent`'s filter
   signals. Using a filter is also what marks the mission *tried*.
-- **Mission 3** is judged against the Thank You page's own `requestId`
+- **Mission 3** is judged against the Thank You page's server-returned `orderId`
   (router state from checkout). Trivial to answer from the page,
   impossible to fake having placed the order. A solved check stays
   solved for later orders.
@@ -101,7 +101,7 @@ by linking to any page with `?demoCode=SIM-XXXX` (the identity service
 accepts both prefixes and the URL wins; the server likewise accepts
 both on the order payload). Because the sample customer's name is the
 code, a simulated visitor's data is marked everywhere a real one's is:
-`demoCode` on browser events, `Order` events and `OrderupQuizAnswer`,
+`demoCode` on browser events, checkout Transactions, `ItemsOrdered` events and `OrderupQuizAnswer`,
 and `userID = user_sim_xxxx` on its APM transactions.
 
 Exclusion recipes for queries:

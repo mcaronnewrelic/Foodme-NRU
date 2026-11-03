@@ -24,7 +24,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' SINCE 1 week ago"
               }
             ]
           }
@@ -46,7 +46,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -68,7 +68,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Orders' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Orders' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
           }
@@ -90,7 +90,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT sum(orderTotal) AS 'Revenue' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
+                "query": "SELECT sum(orderTotal) AS 'Revenue' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
           }
@@ -118,7 +118,7 @@
           }
         },
         {
-          "title": "Order metrics (Custom/Orders/*)",
+          "title": "Order metrics (global and restaurant totals)",
           "layout": {
             "column": 7,
             "row": 7,
@@ -134,7 +134,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(newrelic.timeslice.value) FROM Metric WHERE appName = 'OrderUp' AND metricTimesliceName IN ('Custom/Orders/count', 'Custom/Orders/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
+                "query": "SELECT count(newrelic.timeslice.value) AS 'Orders', sum(newrelic.timeslice.value) AS 'Revenue' FROM Metric WHERE appName = 'OrderUp' AND (metricTimesliceName = 'Custom/total' OR metricTimesliceName LIKE 'Custom/%/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
           }
@@ -732,7 +732,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT count(*) AS 'Your orders' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' AND demoCode = {{demoCode}} SINCE 1 week ago"
+                "query": "SELECT count(*) AS 'Your orders' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND demoCode = {{demoCode}} SINCE 1 week ago"
               }
             ]
           }
@@ -804,7 +804,7 @@
                 "accountIds": [
                   1352811
                 ],
-                "query": "SELECT uniqueCount(demoCode) AS 'Placed an order' FROM `Order` WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
+                "query": "SELECT uniqueCount(demoCode) AS 'Placed an order' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
           }

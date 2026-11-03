@@ -137,13 +137,18 @@ export class CheckoutComponent implements OnInit {
       const orderResponse = await firstValueFrom(this.cartService.submitOrder(customerData));
       
       console.log('Order submitted successfully:', orderResponse);
+      const items = this.cartService.cartItems().map(item => ({
+        ...item,
+        menuItem: { ...item.menuItem },
+        restaurant: { ...item.restaurant }
+      }));
       
       // Clear the cart after successful purchase
       this.cartService.clearCart();
       
       // Navigate to thank you page
       this.router.navigate(['/thank-you'], {
-        state: { orderId: orderResponse.orderId, requestId: orderResponse.requestId }
+        state: { orderId: orderResponse.orderId, items }
       });
     } catch (error) {
       console.error('Purchase failed:', error);

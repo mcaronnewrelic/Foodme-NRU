@@ -3,14 +3,16 @@ const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const { test } = require("node:test");
 const vm = require("node:vm");
+const { nameToSlug } = require("./url-utils");
 
-function createCheckout(databaseMode) {
+function createCheckout(databaseMode, { failOrder = false, failing = {} } = {}) {
   const routes = new Map();
   const restaurant = {
     id: "restaurant-a",
+    name: "Restaurant A",
     menuItems: [{ id: "item-a", name: "Soup" }],
   };
-  const calls = { metrics: 0, orders: 0 };
+  const calls = { metrics: 0, orders: 0, events: [], metricValues: [], attributes: {}, sequence: [] };
   const app = {
     locals: {},
     use() {},
@@ -32,6 +34,8 @@ function createCheckout(databaseMode) {
     }
     async createOrder() {
       calls.orders++;
+      calls.sequence.push("createOrder");
+      if (failOrder) throw new Error("Database write failed");
       return { orderId: 123 };
     }
   }
@@ -43,7 +47,7 @@ function createCheckout(databaseMode) {
   class Demo {
     async syncSideEffects() {}
     getFailing() {
-      return {};
+      return failing;
     }
     slowOrderSeconds() {
       return 0;
@@ -51,10 +55,17 @@ function createCheckout(databaseMode) {
   }
   const dependencies = {
     newrelic: {
-      addCustomAttributes() {},
+      addCustomAttributes(attributes) { Object.assign(calls.attributes, attributes); },
       setUserID() {},
-      recordMetric() {},
-      recordCustomEvent() {},
+      recordMetric(name, value) {
+        calls.metrics++;
+        calls.metricValues.push({ name, value });
+        calls.sequence.push("metric");
+      },
+      recordCustomEvent(name, attributes) {
+        calls.events.push({ name, attributes });
+        calls.sequence.push("event");
+      },
       incrementMetric() {
         calls.metrics++;
       },
@@ -65,6 +76,7 @@ function createCheckout(databaseMode) {
     "body-parser": { json: () => () => {} },
     "express-handlebars": {},
     path,
+    "node:crypto": require("node:crypto"),
     fs: { existsSync: () => false, readFile() {} },
     open: { default() {} },
     "./model": {},
@@ -74,7 +86,7 @@ function createCheckout(databaseMode) {
     "./demo-investigations": Demo,
     "./order-status-worker": class {},
     axios: {},
-    "./url-utils": { nameToSlug: (value) => value },
+    "./url-utils": { nameToSlug },
   };
   const context = {
     exports: {},
@@ -117,9 +129,7 @@ function createCheckout(databaseMode) {
     await routes.get("/api/order")(
       { body: order, requestId: "test" },
       response,
-      (error) => {
-        throw error;
-      },
+      (error) => { response.error = error; },
     );
     return { response, calls };
   };
@@ -166,7 +176,7 @@ for (const databaseMode of [false, true]) {
         order([item]),
       );
       assert.equal(response.statusCode, 201);
-      assert.equal(calls.metrics, 1);
+      assert.equal(calls.metrics, 2);
       assert.equal(calls.orders, databaseMode ? 1 : 0);
     }
   });
@@ -184,4 +194,65 @@ for (const databaseMode of [false, true]) {
       assert.equal(response.statusCode, 400);
     }
   });
+
+  test(`${mode}: records item details and bounded metrics using the accepted order ID`, async () => {
+    const { response, calls } = await createCheckout(databaseMode)({
+      ...order([ownItem, { ...ownItem, qty: 3, price: 5.95 }]),
+      deliverTo: { name: "OU-TEST" }, demoCode: "OU-TEST"
+    });
+    assert.equal(response.statusCode, 201);
+    assert.equal(calls.attributes.orderId, response.body.orderId);
+    assert.equal(calls.attributes.customer, "OU-TEST");
+    assert.equal(calls.attributes.restaurant, "Restaurant A");
+    assert.equal(calls.attributes.itemCount, 4);
+    assert.equal(calls.attributes.orderTotal, 22.85);
+    assert.equal(calls.events.length, 2);
+    for (const [index, event] of calls.events.entries()) {
+      assert.equal(event.name, "ItemsOrdered");
+      assert.equal(event.attributes.orderId, response.body.orderId);
+      assert.equal(event.attributes.itemName, "Soup");
+      assert.equal(event.attributes.itemCount, index === 0 ? 1 : 3);
+      assert.equal(event.attributes.customer, undefined);
+      assert.equal(event.attributes.restaurant, undefined);
+      assert.equal(event.attributes.demoCode, "OU-TEST");
+    }
+    assert.deepEqual(calls.metricValues, [
+      { name: "total", value: 22.85 },
+      { name: "restaurant_a/total", value: 22.85 }
+    ]);
+    if (databaseMode) assert.equal(calls.sequence[0], "createOrder");
+  });
 }
+
+test("database: a failed write emits no accepted-order events or metrics", async () => {
+  const { response, calls } = await createCheckout(true, { failOrder: true })({
+    restaurant: { id: "restaurant-a" }, items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }]
+  });
+  assert.equal(response.error?.message, "Database write failed");
+  assert.equal(response.body, undefined);
+  assert.equal(calls.metrics, 0);
+  assert.equal(calls.events.length, 0);
+  assert.equal(calls.attributes.orderId, undefined);
+});
+
+test("planned failures keep business attributes but emit no sales telemetry", async () => {
+  const { response, calls } = await createCheckout(true, { failing: { orderItem: "soup" } })({
+    restaurant: { id: "restaurant-a" }, items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }]
+  });
+  assert.match(response.error?.message, /Inventory check failed/);
+  assert.equal(calls.attributes.restaurant, "Restaurant A");
+  assert.equal(calls.attributes.itemCount, 1);
+  assert.equal(calls.metrics, 0);
+  assert.equal(calls.events.length, 0);
+});
+
+test("memory: accepted orders receive distinct server-generated IDs", async () => {
+  const checkout = createCheckout(false);
+  const order = { orderId: "client-id", restaurant: { id: "restaurant-a" },
+    items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }] };
+  const first = await checkout(order);
+  const second = await checkout(order);
+  assert.match(first.response.body.orderId, /^[0-9a-f-]{36}$/);
+  assert.notEqual(first.response.body.orderId, second.response.body.orderId);
+  assert.notEqual(first.response.body.orderId, order.orderId);
+});

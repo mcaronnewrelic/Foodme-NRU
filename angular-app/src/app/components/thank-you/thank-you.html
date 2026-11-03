@@ -5,10 +5,36 @@
   <div class="row justify-content-center">
     <div class="col-md-8 text-center">
       <div class="mt-5 mb-5">
+        @if (orderId) {
         <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
         <h1 class="mt-4 mb-3">Thank You!</h1>
         <p class="lead">Your order has been successfully placed.</p>
-        <p>This is a demo, so no confirmation email is sent — your order details are below, and the Orders page can find them again from your phone number.</p>
+        <p class="order-reference">Order ID: <strong>{{ orderId }}</strong></p>
+        <p>This is a demo, so no confirmation email is sent. The Orders page can find your order again from your phone number when the database is enabled.</p>
+        @if (items.length > 0) {
+          <section class="text-start mt-4" aria-label="Order receipt">
+            <h2 class="h5">{{ restaurantName }}</h2>
+            <div class="table-responsive">
+              <table class="table">
+                <thead><tr><th>Item</th><th class="text-end">Quantity</th><th class="text-end">Subtotal</th></tr></thead>
+                <tbody>
+                  @for (item of items; track $index) {
+                    <tr>
+                      <td>{{ item.menuItem.name }}</td>
+                      <td class="text-end">{{ item.quantity }}</td>
+                      <td class="text-end">${{ (Math.round(item.menuItem.price * 100) * item.quantity / 100).toFixed(2) }}</td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot><tr><th>Total ({{ itemCount }} items)</th><td></td><th class="text-end">${{ orderTotal.toFixed(2) }}</th></tr></tfoot>
+              </table>
+            </div>
+          </section>
+        }
+        } @else {
+          <h1 class="mt-4 mb-3">No Recent Order</h1>
+          <p>Place an order to see your receipt here, or visit My Orders to find a previous order.</p>
+        }
         
         <div class="mt-4">
           <a routerLink="/restaurants" class="btn btn-primary me-3">
@@ -21,27 +47,49 @@
           </a>
         </div>
 
-        @if (requestId) {
-          <app-nr-callout title="Your order, as a custom event" [nrql]="orderEventNrql" buttonLabel="See your Order event"
+        @if (orderId) {
+          <app-nr-callout title="Order summary on the Transaction" [nrql]="transactionNrql" buttonLabel="See your transaction"
             missionId="mission-3"
-            tryText="Check out with any cart and reach this page — done. The three records below are that one order.">
-            The server records an <b>Order</b> event with the customer, restaurant, item count and total.
-            This query finds yours by its request ID, <code>{{ requestId }}</code>. One order, three records
-            (this event, the transaction below, and the metrics): the requestId is the thread that stitches them together.
-            <app-nr-check missionId="mission-3" questionId="request-id-tail" kind="text"
-              question="Paste the last 4 characters of this order's requestId."
-              [answer]="requestIdTail"
-              proves="That requestId is the join key — it finds this order's event, transaction and trace, and nothing else's."></app-nr-check>
+            tryText="Find the order ID on your receipt in the Transaction data.">
+            Custom attributes add <b>customer</b>, <b>restaurant</b>, <b>orderTotal</b>, and the total
+            <b>itemCount</b> to the existing <b>POST /api/order</b> Transaction. They sit alongside
+            duration and HTTP status without creating another event for the same order summary.
+            The server returns <code>orderId</code> after accepting the order; in database mode,
+            this is the database-generated ID. It is not an ID supplied by the browser.
+            <app-nr-check missionId="mission-3" questionId="order-id-tail" kind="text"
+              question="Paste the last 4 characters of this order's orderId."
+              [answer]="orderIdTail"
+              proves="The server-returned orderId connects the order Transaction to its item-detail events."></app-nr-check>
           </app-nr-callout>
-          <app-nr-callout title="Your order, as transaction attributes" [nrql]="transactionNrql" buttonLabel="See your transaction"
+          <app-nr-callout title="Item details as custom events" [nrql]="itemsOrderedNrql" buttonLabel="See your ItemsOrdered events"
             missionId="mission-3">
-            The same details are attached to the <b>POST /api/order</b> transaction as custom attributes,
-            along with the new order ID ({{ orderId }}). Open it to see them next to the trace.
+            The server records one <b>ItemsOrdered</b> event per cart line after acceptance.
+            Each event carries <b>orderId</b>, <b>itemName</b>, <b>itemCount</b> (that line's quantity),
+            <b>unitPrice</b>, and <b>itemTotal</b>. An order with three different items produces
+            three detail events, not three orders. More event detail means more event ingest volume.
+          </app-nr-callout>
+          <app-nr-callout title="JOIN the order to its items" [nrql]="joinedItemsNrql" buttonLabel="Join items to the Transaction"
+            missionId="mission-3">
+            <b>orderId</b> is the join key. ItemsOrdered is the outer query, with many item rows
+            joining to one order Transaction in the subquery. The result combines customer,
+            restaurant, and order total from the Transaction; item name and quantity from each
+            detail event; and duration and HTTP status from APM. Do not sum <b>orderTotal</b>
+            across these rows: the same order total appears once per item. Sum <b>itemTotal</b> instead.
+            Transaction events can be sampled, and the two event types arrive independently,
+            so an inner JOIN can omit items until their matching Transaction is available.
           </app-nr-callout>
           <app-nr-callout title="Order metrics for everyone" [nrql]="metricsNrql" buttonLabel="See the metrics"
             missionId="mission-3" scope="cohort">
-            <b>Orders/count</b> and <b>Orders/total</b> are custom metrics. They roll up every order
-            in a minute, so this chart includes orders from other visitors too.
+            Each accepted order records its total in <b>Custom/total</b> and
+            <b>Custom/&lt;restaurant-slug&gt;/total</b>. The same total metric already retains
+            a count, so no separate count metric is needed. Compare each series separately;
+            adding the global and restaurant totals together would count sales twice.
+            One global metric has low cardinality. A finite set of restaurant names adds useful
+            breakdowns at higher cardinality. An order ID or request ID in a metric name would
+            create an unbounded stream of new metrics, so neither is used.
+            Timeslice rollups retain counts, sums, and averages, not individual order IDs or items.
+            This compact aggregation trades per-order detail and time resolution for lower data
+            volume; actual cost depends on your pricing. It does not require rounding away cents.
           </app-nr-callout>
         }
       </div>
