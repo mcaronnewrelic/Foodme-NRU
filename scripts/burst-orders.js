@@ -22,7 +22,7 @@
 'use strict';
 
 const args = process.argv.slice(2);
-let baseUrl = (args.find(a => !a.startsWith('--')) || 'http://staging-foodme-alb-327574077.us-west-2.elb.amazonaws.com').replace(/\/$/, '');
+let baseUrl = (args.find(a => !a.startsWith('--')) || 'https://orderup.nru.to').replace(/\/$/, '');
 if (!/^https?:\/\//.test(baseUrl)) baseUrl = 'http://' + baseUrl;
 function flag(name, fallback) {
   const i = args.indexOf('--' + name);
