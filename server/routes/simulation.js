@@ -1,7 +1,58 @@
 const { Router } = require("express");
 const axios = require("axios");
 
-module.exports = function createSimulationRouter({ logger }) {
+const TICKET_PATTERN = /^INC-[A-Z0-9]{4}$/;
+const DEMO_CODE_PATTERN = /^(OU|SIM)-[A-Z0-9]{4}$/;
+
+// Each scenario fails differently but puts the caller's ticket in the error
+// message, so the learner has to read it out of the TransactionError event.
+const incidentScenarios = {
+  "menu-cache": ({ ticket }) => {
+    throw new Error(
+      `Menu cache refresh failed: upstream returned a corrupt payload (incident ${ticket})`,
+    );
+  },
+  "pricing-sync": async ({ ticket }) => {
+    await new Promise((resolve, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Pricing sync aborted: worker promise rejected before the batch committed (incident ${ticket})`,
+            ),
+          ),
+        100,
+      );
+    });
+  },
+  "payment-gateway": async ({ ticket, req }) => {
+    const timeoutMs = 2000;
+    try {
+      await axios.get(
+        `http://127.0.0.1:${req.socket.localPort}/simulate/slow-response?delay=3000`,
+        { timeout: timeoutMs },
+      );
+    } catch (cause) {
+      const error = new Error(
+        `Payment gateway did not answer within ${timeoutMs}ms (incident ${ticket})`,
+        { cause },
+      );
+      error.statusCode = 504;
+      throw error;
+    }
+  },
+};
+
+const randomScenario = () => {
+  const names = Object.keys(incidentScenarios);
+  return names[Math.floor(Math.random() * names.length)];
+};
+
+module.exports = function createSimulationRouter({
+  logger,
+  newrelic,
+  pickScenario = randomScenario,
+}) {
   const router = Router();
 
   router.get("/error/sync", (req, res, next) => {
@@ -115,6 +166,26 @@ module.exports = function createSimulationRouter({ logger }) {
       nonExistentFunction();
     }, 100);
     res.send("Attempting to trigger an uncaught exception...");
+  });
+
+  router.get("/error/incident", async (req, res) => {
+    const { ticket, demoCode } = req.query;
+    if (!TICKET_PATTERN.test(ticket)) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "ticket must look like INC-XXXX" });
+    }
+
+    const scenario = pickScenario();
+    newrelic?.addCustomAttributes({
+      scenario,
+      ...(DEMO_CODE_PATTERN.test(demoCode) ? { demoCode } : {}),
+    });
+    logger.info(
+      { requestId: req.requestId, scenario, ticket },
+      "Starting incident simulation",
+    );
+    await incidentScenarios[scenario]({ ticket, req });
   });
 
   return router;

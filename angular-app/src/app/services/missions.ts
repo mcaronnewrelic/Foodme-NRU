@@ -45,7 +45,7 @@ export const MISSIONS: Mission[] = [
     number: 5,
     title: 'Break it on purpose',
     link: '/how-it-works',
-    questionId: 'simulated-error-type',
+    questionId: 'incident-code',
     altQuestionId: 'armed-error-message',
   },
 ];

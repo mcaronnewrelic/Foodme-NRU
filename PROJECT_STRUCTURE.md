@@ -73,9 +73,15 @@ Route factories live in `server/routes/` and receive their services explicitly:
 - `demo.js`: mounted at `/api`, serving demo controls, `/nr-config`, and `/dashboard`.
 - `simulation.js`: mounted at `/simulate`, with memory-leak state isolated per router instance.
 
-`server/index.js` keeps shared Pino request tracing, static and Angular HTML serving, `/health`, and the global error handler after all routers. Public endpoint URLs remain unchanged.
+Middleware factories live in `server/middleware/`:
 
-`start(PORT, STATIC_DIR, DATA_FILE, TEST_DIR)` remains the lifecycle entry point used by `server/start.js`. It checks the database, loads JSON data when needed, constructs the app, starts the listener and worker, and handles process signals. Tests can import `server/index.js` and call `createApp` without starting the application.
+- `request-tracing.js`: request IDs and request/response logging, registered first.
+- `angular-fallback.js`: serves Angular's `index.html` for non-API routes and injects the New Relic browser timing header.
+- `error-handler.js`: the global error handler, registered last, after all routers and the Angular fallback.
+
+`server/index.js` wires these together with the static file serving and `/health`. Public endpoint URLs remain unchanged.
+
+`server/start.js` is the entry point and owns the lifecycle: `start(PORT, STATIC_DIR, DATA_FILE)` checks the database, loads JSON data when needed, constructs the app, starts the listener and worker, and handles process signals. Tests can import `server/index.js` and call `createApp` without starting the application.
 
 ## 🎨 Design Principles
 

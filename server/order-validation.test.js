@@ -234,7 +234,11 @@ function createCheckout(
       require(name) {
         if (name.startsWith(".")) {
           const resolved = path.resolve(path.dirname(filePath), name);
-          if (resolved.startsWith(path.join(__dirname, "routes") + path.sep)) {
+          if (
+            ["routes", "middleware"].some((dir) =>
+              resolved.startsWith(path.join(__dirname, dir) + path.sep),
+            )
+          ) {
             return loadModule(resolved + ".js");
           }
           name = "./" + path.relative(__dirname, resolved);
@@ -414,6 +418,7 @@ test("four routers contain every extracted route and HTTP method", () => {
     [
       "get /error/sync",
       "get /error/async-unhandled",
+      "get /error/incident",
       "get /cpu-hog",
       "get /memory-leak",
       "get /memory-leak/clear",
@@ -589,6 +594,55 @@ test("mounted simulations retain async errors, timeout responses, and lightweigh
   const slow = await fetch(`${url}/simulate/slow-response?delay=1`);
   assert.equal(slow.status, 200);
   assert.equal(await slow.text(), "Response after 1ms delay.");
+});
+
+test("incident simulation puts the ticket in every scenario's error message but not in the response", async (context) => {
+  const express = require("express");
+  const createSimulationRouter = require("./routes/simulation");
+  const createErrorHandler = require("./middleware/error-handler");
+  const logger = { info() {}, warn() {}, error() {} };
+  for (const scenario of ["menu-cache", "pricing-sync", "payment-gateway"]) {
+    const attributes = [];
+    const errors = [];
+    const app = express();
+    app.use(
+      "/simulate",
+      createSimulationRouter({
+        logger,
+        newrelic: { addCustomAttributes: (a) => attributes.push(a) },
+        pickScenario: () => scenario,
+      }),
+    );
+    app.use((err, req, res, next) => {
+      errors.push(err);
+      next(err);
+    });
+    app.use(createErrorHandler({ logger, environment: {} }));
+    const url = await serveApp(app, context);
+
+    const response = await fetch(
+      `${url}/simulate/error/incident?ticket=INC-7K2M&demoCode=OU-ABCD`,
+    );
+    assert.ok(response.status >= 500, scenario);
+    assert.match(errors[0].message, /INC-7K2M/, scenario);
+    assert.deepEqual(attributes[0], { scenario, demoCode: "OU-ABCD" });
+    assert.doesNotMatch(JSON.stringify(await response.json()), /INC-7K2M/);
+  }
+});
+
+test("incident simulation rejects a missing or malformed ticket", async (context) => {
+  const express = require("express");
+  const createSimulationRouter = require("./routes/simulation");
+  const app = express();
+  app.use(
+    "/simulate",
+    createSimulationRouter({ logger: { info() {} }, newrelic: {} }),
+  );
+  const url = await serveApp(app, context);
+  for (const query of ["", "?ticket=nope", "?ticket=INC-7K2M-extra"]) {
+    const response = await fetch(`${url}/simulate/error/incident${query}`);
+    assert.equal(response.status, 400, query);
+  }
 });
 
 test("dashboard route opens the configured dashboard without exposing credentials", async () => {

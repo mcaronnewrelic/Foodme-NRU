@@ -33,7 +33,7 @@ export class MissionsPageComponent {
     'mission-4':
       'Come back and find that order again by its phone number. The check asks which two keys tie the order to you.',
     'mission-5':
-      'Break something on purpose: trigger the simulated error on How It Works, or hunt the planted failure that is always live. Either check closes the mission.',
+      'Break something on purpose: press Simulate an Error on How It Works and find its incident code in the failing transaction, or hunt the planted failure that is always live. Either check closes the mission.',
   };
 
   constructor(

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -7,6 +7,8 @@ import { NrCalloutComponent } from '../nr-callout/nr-callout';
 import { NrCheckComponent } from '../nr-check/nr-check';
 import { MissionProgressService } from '../../services/mission-progress.service';
 import { NewRelicService } from '../../services/newrelic.service';
+import { DemoIdentityService } from '../../services/demo-identity.service';
+import { CODE_ALPHABET } from '../../services/demo-identity-bootstrap';
 import { NrConfigService } from '../../nr-config';
 import { errorToJson, flattenError, getErrorSummary, getUserFriendlyErrorMessage } from '../../utils/error.utils';
 
@@ -27,9 +29,13 @@ export class HowItWorksComponent {
   readonly huntNrql =
     "SELECT timestamp, error.message, transactionName, requestId FROM TransactionError SINCE 1 day ago";
 
+  /** The code in the last simulated error's message. Held in memory only, so the answer lives in the data. */
+  readonly incidentTicket = signal<string | null>(null);
+
   constructor(
     private http: HttpClient,
     private newRelicService: NewRelicService,
+    private identity: DemoIdentityService,
     public nrConfig: NrConfigService,
     public progress: MissionProgressService
   ) {
@@ -39,6 +45,10 @@ export class HowItWorksComponent {
     // Set a custom attribute for this page
     this.newRelicService.setCustomAttribute('page', 'how-it-works');
 
+  }
+
+  get incidentNrql(): string {
+    return `SELECT timestamp, error.message, error.class, transactionName, scenario FROM TransactionError WHERE demoCode = '${this.identity.code()}' SINCE 1 hour ago`;
   }
 
   /** The armed scenario in plain language, from the app-wide nr-config signal. */
@@ -70,29 +80,40 @@ export class HowItWorksComponent {
 
 
 
+  private newIncidentTicket(): string {
+    let suffix = '';
+    for (let index = 0; index < 4; index++) {
+      suffix += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    }
+    return `INC-${suffix}`;
+  }
+
   simulateError() {
     const startedAt = performance.now();
-    
-    this.http.get('/simulate/error/sync').subscribe({
-      next: (response) => {
-        console.log('Unexpected success:', response);
-      },
-      error: (error) => {
-        console.error(errorToJson(error));
-        this.newRelicService.noticeError(new Error(getErrorSummary(error)));
-        this.newRelicService.addPageAction('error_simulation_triggered', {
-          errorType: 'sync',
-          endpoint: '/simulate/error/sync',
-          errorSummary: getErrorSummary(error),
-          durationMs: Math.round(performance.now() - startedAt)
-        });
-        // Triggering the simulated error is Mission 5's Try (spec section 2).
-        this.progress.markTried('mission-5');
-        
-        // Show user-friendly message
-        const userMessage = getUserFriendlyErrorMessage(error);
-        alert(`${userMessage}\n\nTechnical details: ${getErrorSummary(error)}\n\nCheck your APM dashboard for the error event.`);
-      }
-    });
+    const ticket = this.newIncidentTicket();
+    this.incidentTicket.set(ticket);
+
+    // The server picks which failure happens and writes the ticket into its error message.
+    this.http
+      .get('/simulate/error/incident', { params: { ticket, demoCode: this.identity.code() } })
+      .subscribe({
+        next: (response) => {
+          console.log('Unexpected success:', response);
+        },
+        error: (error) => {
+          console.error(errorToJson(error));
+          this.newRelicService.noticeError(new Error(getErrorSummary(error)));
+          this.newRelicService.addPageAction('error_simulation_triggered', {
+            errorType: 'incident',
+            endpoint: '/simulate/error/incident',
+            errorSummary: getErrorSummary(error),
+            durationMs: Math.round(performance.now() - startedAt)
+          });
+          // Triggering the simulated error is Mission 5's Try (spec section 2).
+          this.progress.markTried('mission-5');
+
+          alert(`${getUserFriendlyErrorMessage(error)}\n\nThe browser only sees the HTTP failure. The server knows what actually broke. Find your incident code in New Relic.`);
+        }
+      });
   }
 }

@@ -86,23 +86,32 @@
               class="btn btn-outline-danger"
               (click)="simulateError()">
               <i class="fas fa-exclamation-triangle me-2"></i>
-              Simulate Synchronous Error
+              Simulate an Error
             </button>
           </div>
 
-          <app-nr-callout title="The error you just caused" [nrql]="errorNrql" [showBrowserErrors]="true"
+          <app-nr-callout title="What the browser saw" [nrql]="errorNrql" [showBrowserErrors]="true"
             missionId="mission-5"
-            tryText="Press Simulate Synchronous Error above — one click, three traces: the three callouts here.">
-            The button calls <code>noticeError()</code> after the server returns a 500.
-            The error lands in <b>JavaScriptError</b>, and in Errors Inbox.
+            tryText="Press Simulate an Error above. The server picks a random failure, so you won't know which one you got.">
+            The button calls <code>noticeError()</code> after the server returns an error.
+            The browser agent records it in <b>JavaScriptError</b>, but all it can see is the HTTP
+            failure, so the message is generic.
           </app-nr-callout>
+          @if (incidentTicket()) {
+            <app-nr-callout title="What the server saw" [nrql]="incidentNrql" buttonLabel="Find your failing transaction"
+              missionId="mission-5">
+              The server's agent saw the real exception. It lands in <b>TransactionError</b> with the
+              message, the error class, and a link to the trace. The query filters to your
+              <code>demoCode</code>, and each failure carries a random <b>scenario</b> attribute.
+              <app-nr-check missionId="mission-5" questionId="incident-code" kind="text"
+                question="Your error message ends with an incident code (INC-XXXX). What is it?"
+                [answer]="incidentTicket()!"
+                proves="The server agent captured the real exception message, which the browser never saw."></app-nr-check>
+            </app-nr-callout>
+          }
           <app-nr-callout title="The page action" [nrql]="actionNrql" buttonLabel="See the page action"
             missionId="mission-5">
             <code>addPageAction('error_simulation_triggered')</code> records which endpoint failed and why.
-            <app-nr-check missionId="mission-5" questionId="simulated-error-type" kind="text"
-              question="In the PageAction data, what errorType did your simulated error record?"
-              answer="sync"
-              proves="The page action carries the error's shape — type, endpoint, summary, duration — alongside the error itself."></app-nr-check>
           </app-nr-callout>
           <app-nr-callout title="How long it took" [nrql]="timingNrql" buttonLabel="See the timing"
             missionId="mission-5">
