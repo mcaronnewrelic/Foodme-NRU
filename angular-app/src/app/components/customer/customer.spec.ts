@@ -105,6 +105,7 @@ describe('CustomerComponent demo identity reset', () => {
     expect(telemetry.setCustomAttribute).toHaveBeenCalledWith(
       'demoCode',
       customer.name,
+      true,
     );
     expect(telemetry.setUserId).toHaveBeenCalledWith(customer.name);
     expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();

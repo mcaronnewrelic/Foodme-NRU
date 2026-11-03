@@ -3,11 +3,12 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { EventTypesService } from './event-types.service';
 import { NewRelicService } from './newrelic.service';
-
-const DEMO_CODE_STORAGE_KEY = 'orderup-demo-code';
-// Unambiguous alphabet: no 0/O, 1/I/L to confuse when read aloud or copied.
-const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const CODE_PATTERN = /^(OU|SIM)-[A-Z0-9]{4}$/;
+import {
+  CODE_ALPHABET,
+  DEMO_CODE_STORAGE_KEY,
+  generateDemoCode,
+  loadOrCreateDemoCode,
+} from './demo-identity-bootstrap';
 
 /**
  * The visitor's demoCode (spec: try-learn-find-spec.md section 1).
@@ -16,7 +17,7 @@ const CODE_PATTERN = /^(OU|SIM)-[A-Z0-9]{4}$/;
  * by a short code, so every visitor gets an OU-XXXX code alongside their
  * enduser.id. It is stamped on everything the browser agent sends, and the
  * cart service includes it in orders so the server can stamp it on the
- * order transaction and the Order event too.
+ * order transaction and the ItemsOrdered events too.
  *
  * Simulated visitors carry SIM-XXXX instead (the browser.nru.to
  * convention), so cohort queries can leave them out with
@@ -32,7 +33,7 @@ export class DemoIdentityService {
   private eventTypes = inject(EventTypesService);
   private router = inject(Router);
 
-  readonly code = signal(this.loadOrCreateCode());
+  readonly code = signal(loadOrCreateDemoCode());
 
   constructor() {
     this.stamp();
@@ -48,12 +49,13 @@ export class DemoIdentityService {
   }
 
   private stamp(): void {
-    this.newRelicService.setCustomAttribute('demoCode', this.code());
+    this.newRelicService.setUserId(this.code());
+    this.newRelicService.setCustomAttribute('demoCode', this.code(), true);
   }
 
   resetCode(): string {
     const prefix = this.code().startsWith('SIM-') ? 'SIM-' : 'OU-';
-    let code = prefix + this.generateCode().slice(3);
+    let code = prefix + generateDemoCode().slice(3);
     if (code === this.code()) {
       const lastCharacter = code.slice(-1);
       const nextIndex =
@@ -73,34 +75,5 @@ export class DemoIdentityService {
     }
     this.stamp();
     return code;
-  }
-
-  private loadOrCreateCode(): string {
-    try {
-      // A code handed over in the URL wins over the stored one: it is how
-      // a simulated visitor pins its SIM- identity for the visit.
-      const fromUrl = new URLSearchParams(location.search).get('demoCode');
-      if (fromUrl && CODE_PATTERN.test(fromUrl)) {
-        localStorage.setItem(DEMO_CODE_STORAGE_KEY, fromUrl);
-        return fromUrl;
-      }
-      const stored = localStorage.getItem(DEMO_CODE_STORAGE_KEY);
-      if (stored && CODE_PATTERN.test(stored)) return stored;
-      const created = this.generateCode();
-      localStorage.setItem(DEMO_CODE_STORAGE_KEY, created);
-      return created;
-    } catch {
-      // Storage unavailable (private mode etc.): a per-load code still
-      // ties this visit's data together.
-      return this.generateCode();
-    }
-  }
-
-  private generateCode(): string {
-    let suffix = '';
-    for (let i = 0; i < 4; i++) {
-      suffix += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
-    }
-    return `OU-${suffix}`;
   }
 }

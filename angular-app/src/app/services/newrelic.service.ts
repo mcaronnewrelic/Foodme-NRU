@@ -9,7 +9,7 @@ declare global {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NewRelicService {
   private eventTypes = inject(EventTypesService);
@@ -40,13 +40,13 @@ export class NewRelicService {
     }
   }
 
-    /**
+  /**
    * Log an error to New Relic
    * @param error - The error to log
    */
   log(logmessage: any): void {
     if (this.isAvailable() && typeof this.newrelic.log === 'function') {
-      this.newrelic.log(logmessage); 
+      this.newrelic.log(logmessage);
     } else {
       console.warn('New Relic browser agent not available for error logging');
     }
@@ -57,12 +57,17 @@ export class NewRelicService {
    * @param attributes - Object containing key-value pairs of attributes
    */
   addPageAction(actionName: string, attributes?: Record<string, any>): void {
-    if (this.isAvailable() && typeof this.newrelic.addPageAction === 'function') {
+    if (
+      this.isAvailable() &&
+      typeof this.newrelic.addPageAction === 'function'
+    ) {
       this.newrelic.addPageAction(actionName, attributes);
       this.eventTypes.mark('PageAction');
       console.log(`Page action '${actionName}' logged to New Relic`);
     } else {
-      console.warn('New Relic browser agent not available for page action logging');
+      console.warn(
+        'New Relic browser agent not available for page action logging',
+      );
     }
   }
 
@@ -73,7 +78,9 @@ export class NewRelicService {
    */
   recordCustomEvent(eventType: string, attributes?: Record<string, any>): void {
     if (!this.isAvailable()) {
-      console.warn('New Relic browser agent not available for custom event logging');
+      console.warn(
+        'New Relic browser agent not available for custom event logging',
+      );
       return;
     }
     if (typeof this.newrelic.recordCustomEvent === 'function') {
@@ -87,12 +94,17 @@ export class NewRelicService {
    * Set custom attributes for the current page view
    * @param attributes - Object containing key-value pairs of attributes
    */
-  setCustomAttribute(name: string, value: any): void {
-    if (this.isAvailable() && typeof this.newrelic.setCustomAttribute === 'function') {
-      this.newrelic.setCustomAttribute(name, value);
+  setCustomAttribute(name: string, value: any, persist = false): void {
+    if (
+      this.isAvailable() &&
+      typeof this.newrelic.setCustomAttribute === 'function'
+    ) {
+      this.newrelic.setCustomAttribute(name, value, persist);
       console.log(`Custom attribute '${name}' set in New Relic`);
     } else {
-      console.warn('New Relic browser agent not available for custom attributes');
+      console.warn(
+        'New Relic browser agent not available for custom attributes',
+      );
     }
   }
 
@@ -116,8 +128,10 @@ export class NewRelicService {
     if (this.isAvailable()) {
       console.log('New Relic Browser Agent Info:', {
         available: true,
-        methods: Object.keys(this.newrelic).filter(key => typeof this.newrelic[key] === 'function'),
-        info: this.newrelic.info || 'No info available'
+        methods: Object.keys(this.newrelic).filter(
+          (key) => typeof this.newrelic[key] === 'function',
+        ),
+        info: this.newrelic.info || 'No info available',
       });
     } else {
       console.log('New Relic Browser Agent: Not available');

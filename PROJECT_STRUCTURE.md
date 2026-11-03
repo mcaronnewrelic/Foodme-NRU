@@ -60,6 +60,23 @@ foodme/
 - Log files (newrelic_agent.log)
 - Temporary files
 
+## Backend Construction And Startup
+
+`server/index.js` exports `createApp(dependencies)`, which returns the configured Express app without listening, registering process handlers, loading restaurant data, synchronizing demo side effects, or starting the order-status worker. It keeps Pino request logging and New Relic instrumentation.
+
+The optional dependency object accepts `storage`, `dbService`, `useDatabase`, `logger`, `newrelic`, `demoFailures`, `demoInvestigations`, `dashboardLinks`, `environment`, `staticDir`, and `angularDistDir`. Defaults use the normal services and process environment; injected storage should already contain its restaurant data.
+
+Route factories live in `server/routes/` and receive their services explicitly:
+
+- `restaurant.js`: mounted at `/api/restaurant`, including the demo socket-failure middleware.
+- `order.js`: mounted at `/api`, serving `/order` checkout and `/orders` lookups.
+- `demo.js`: mounted at `/api`, serving demo controls, `/nr-config`, and `/dashboard`.
+- `simulation.js`: mounted at `/simulate`, with memory-leak state isolated per router instance.
+
+`server/index.js` keeps shared Pino request tracing, static and Angular HTML serving, `/health`, and the global error handler after all routers. Public endpoint URLs remain unchanged.
+
+`start(PORT, STATIC_DIR, DATA_FILE, TEST_DIR)` remains the lifecycle entry point used by `server/start.js`. It checks the database, loads JSON data when needed, constructs the app, starts the listener and worker, and handles process signals. Tests can import `server/index.js` and call `createApp` without starting the application.
+
 ## 🎨 Design Principles
 
 1. **Root Directory**: Only essential files for getting started

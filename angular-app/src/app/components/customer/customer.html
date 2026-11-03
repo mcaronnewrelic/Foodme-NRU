@@ -94,13 +94,13 @@
     missionId="mission-1"
     tryText="Your sample customer is already filled in above — press Continue to Restaurants."
   >
-    When you continue, the browser agent calls <code>setUserId()</code> with
-    your name. Every page view, AJAX call, action and error after that carries
-    it as <code>enduser.id</code>. Your name never goes to the server as an
-    account, only as that attribute. You also have a short session code (in the
-    header) stamped on the same data as <code>demoCode</code> — names collide in
-    a workshop, codes don't. The query below counts the data by your code
-    instead: one row per event type that carries it.
+    Before Angular starts, the browser agent receives your session code as
+    <code>demoCode</code> and <code>enduser.id</code>. New Demo Customer updates
+    both for subsequent telemetry, and the code is persisted for later page
+    loads. A PageView that was already sent is not changed retroactively. Your
+    name never goes to the server as an account, only as business data and a
+    telemetry attribute. The query below counts the data by your code: one row
+    per event type that carries it.
     <app-nr-check
       missionId="mission-1"
       questionId="event-type-count"
