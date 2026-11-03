@@ -189,4 +189,19 @@
   <app-nr-callout title="The restaurant list request" [nrql]="listNrql" buttonLabel="See the transaction">
     This page loads its restaurants from <code>GET /api/restaurant</code>. New Relic times every call, so you can see how fast the list comes back.
   </app-nr-callout>
+  <app-nr-callout title="Each menu is its own request" [nrql]="menuNrql" buttonLabel="See menu requests" scope="cohort"
+    missionId="mission-2"
+    tryText="Use one of the filters above — then look for that action in this data.">
+    Opening a restaurant calls <code>GET /api/restaurant/by-name/:name</code>. New Relic groups them under one transaction name and keeps the real URL, so you can see which restaurants get the most visits.
+    <app-nr-check missionId="mission-2" questionId="filter-no-request" kind="choice"
+      question="You filtered the list and no new request appeared in the data. Why?"
+      [options]="['The filter runs in your browser', 'The server hid the request', 'New Relic dropped the request']"
+      answer="The filter runs in your browser"
+      proves="Filtering is client-side, so it never reaches the API — the absence in the data is the evidence."></app-nr-check>
+  </app-nr-callout>
+  <app-nr-callout title="Does every menu load?" [nrql]="menuStatusNrql" buttonLabel="Check the status codes" scope="cohort"
+    missionId="mission-2">
+    Not every request has to succeed. This groups the same requests by HTTP status code.
+    If a menu ever fails to load, it shows up here before anyone tells you.
+  </app-nr-callout>
 </div>

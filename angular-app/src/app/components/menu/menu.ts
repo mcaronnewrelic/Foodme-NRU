@@ -9,8 +9,6 @@ import {
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header';
-import { NrCalloutComponent } from '../nr-callout/nr-callout';
-import { NrCheckComponent } from '../nr-check/nr-check';
 import { RestaurantService } from '../../services/restaurant.service';
 import { CartService } from '../../services/cart.service';
 import { CustomerService } from '../../services/customer.service';
@@ -18,23 +16,12 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [
-    RouterModule,
-    HeaderComponent,
-    FormsModule,
-    NrCalloutComponent,
-    NrCheckComponent,
-  ],
+  imports: [RouterModule, HeaderComponent, FormsModule],
   templateUrl: './menu.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './menu.css',
 })
 export class MenuComponent implements OnInit {
-  readonly menuStatusNrql =
-    "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri, http.statusCode SINCE 1 day ago";
-  readonly menuNrql =
-    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
-
   restaurant = signal<Restaurant | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
