@@ -162,7 +162,11 @@ export class CheckoutComponent implements OnInit {
 
       // Navigate to thank you page
       this.router.navigate(['/thank-you'], {
-        state: { orderId: orderResponse.orderId, items },
+        state: {
+          orderId: orderResponse.orderId,
+          requestId: orderResponse.requestId,
+          items,
+        },
       });
     } catch (error) {
       console.error('Purchase failed:', error);

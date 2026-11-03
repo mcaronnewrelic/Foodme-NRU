@@ -151,12 +151,12 @@ the Find button, then the Check.
   count makes a separate order-count metric redundant.
 - **Find:** the Thank You page's Transaction, item events, orderId JOIN, and
   metric callouts. The receipt displays the server-returned orderId and items.
-- **Check (evidence):** “Paste the last 4 characters of this order's
-  orderId.” Text entry, exact match against the page's own value. (Trivial
-  for the visitor, impossible to fake having reached this page with an order —
-  it proves the Try happened. The harder variant: ask for the order's
-  `duration` from the transaction query, rounded to the nearest 10 ms,
-  tolerance ±20 ms.)
+- **Check (evidence):** "Paste the last 4 characters of the checkout requestId
+  from your query results." The queries filter by orderId and select requestId;
+  the receipt does not print requestId. Check against the server-returned request
+  ID passed privately in router state. Explain that every HTTP request gets a
+  new requestId, while orderId identifies the persistent order. Request IDs are
+  alphanumeric, so the question asks for characters rather than digits.
 
 ### Mission 4 — Find it again later (Orders page)
 

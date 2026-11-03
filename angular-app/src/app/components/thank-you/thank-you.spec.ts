@@ -14,6 +14,7 @@ describe('ThankYouComponent receipt and telemetry', () => {
   const showCallouts = signal(false);
   const markTried = jasmine.createSpy('markTried');
   const orderId = 'abc12345-1234-1234-1234-123456789abc';
+  const requestId = 'req_1793662354033_s42hfazbr';
   const item: CartItem = {
     restaurant: {
       id: 'a',
@@ -34,7 +35,7 @@ describe('ThankYouComponent receipt and telemetry', () => {
 
   beforeEach(async () => {
     originalState = history.state;
-    history.replaceState({ orderId, items: [item] }, '');
+    history.replaceState({ orderId, requestId, items: [item] }, '');
     showCallouts.set(false);
     markTried.calls.reset();
     await TestBed.configureTestingModule({
@@ -85,7 +86,8 @@ describe('ThankYouComponent receipt and telemetry', () => {
     expect(text).toContain('Restaurant A');
     expect(text).toContain('Soup');
     expect(text).toContain('$17.85');
-    expect(component.orderIdTail).toBe('9abc');
+    expect(component.requestIdTail).toBe('azbr');
+    expect(text).not.toContain(requestId);
     expect(markTried).toHaveBeenCalledWith('mission-3');
   });
 
@@ -99,7 +101,10 @@ describe('ThankYouComponent receipt and telemetry', () => {
     );
     expect(component.joinedItemsNrql).toContain(`orderId = '${orderId}'`);
     expect(component.joinedItemsNrql).toContain('http.statusCode');
-    expect(component.joinedItemsNrql).not.toContain('requestId');
+    expect(component.transactionNrql).toContain('SELECT orderId, requestId,');
+    expect(component.joinedItemsNrql).toContain('SELECT orderId, requestId,');
+    expect(component.transactionNrql).not.toContain(requestId);
+    expect(component.joinedItemsNrql).not.toContain(requestId);
     expect(component.metricsNrql).not.toContain(orderId);
     expect(component.metricsNrql).toContain(
       "metricTimesliceName = 'Custom/total'",
@@ -114,6 +119,11 @@ describe('ThankYouComponent receipt and telemetry', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('JOIN the order');
     expect(fixture.nativeElement.textContent).toContain('Custom/total');
+    expect(fixture.nativeElement.textContent).toContain(
+      'last 4 characters of the checkout requestId',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain(requestId);
+    expect(fixture.nativeElement.textContent).not.toContain('azbr');
     showCallouts.set(false);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('JOIN the order');
@@ -128,5 +138,13 @@ describe('ThankYouComponent receipt and telemetry', () => {
       'successfully placed',
     );
     expect(markTried).not.toHaveBeenCalled();
+  });
+
+  it('omits the evidence question if a previous receipt has no checkout requestId', () => {
+    history.replaceState({ orderId, items: [item] }, '');
+    showCallouts.set(true);
+    render();
+    expect(fixture.nativeElement.textContent).toContain(orderId);
+    expect(fixture.nativeElement.textContent).not.toContain('Paste the last 4');
   });
 });

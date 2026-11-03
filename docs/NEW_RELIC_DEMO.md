@@ -37,6 +37,12 @@ database-generated ID; JSON demo mode generates a UUID. The receipt shows that I
 and the cart's line items. `requestId` remains an HTTP/log correlation identifier,
 not the receipt or item-event join key.
 
+Every HTTP request receives a new server-generated `requestId`, including later
+lookups of the same order. The Thank-you Transaction and JOIN queries filter by
+the receipt's `orderId` and select the checkout `requestId`. Mission 3 asks for
+its last four characters from those results. Checkout passes the request ID in
+router state for private answer checking, but the receipt does not display it.
+
 - **Custom attributes:** the existing checkout Transaction holds `orderId`,
   `customer`, `restaurant`, `itemCount`, `orderTotal`, and `demoCode` alongside
   duration and HTTP status. Failed checkouts retain their business context but
@@ -64,13 +70,13 @@ An item-to-order JOIN (replace the example ID with the receipt's ID):
 FROM ItemsOrdered
 JOIN (
   FROM Transaction
-  SELECT orderId, customer, restaurant, orderTotal, duration, http.statusCode
+  SELECT orderId, requestId, customer, restaurant, orderTotal, duration, http.statusCode
   WHERE appName = 'OrderUp'
     AND name = 'WebTransaction/Expressjs/POST//api/order'
     AND orderId = 'example-order-id'
   LIMIT MAX
 ) ON orderId
-SELECT orderId, customer, restaurant, itemName, itemCount, unitPrice,
+SELECT orderId, requestId, customer, restaurant, itemName, itemCount, unitPrice,
        itemTotal, orderTotal, duration, http.statusCode
 WHERE orderId = 'example-order-id'
 SINCE 1 day ago LIMIT MAX

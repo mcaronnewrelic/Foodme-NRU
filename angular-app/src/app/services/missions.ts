@@ -31,7 +31,7 @@ export const MISSIONS: Mission[] = [
     number: 3,
     title: 'Place the order, keep the receipt',
     link: '/checkout',
-    questionId: 'order-id-tail',
+    questionId: 'request-id-tail',
   },
   {
     id: 'mission-4',

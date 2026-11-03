@@ -87,21 +87,29 @@
             missionId="mission-3"
             tryText="Find the order ID on your receipt in the Transaction data."
           >
-            Custom attributes add <b>customer</b>, <b>restaurant</b>,
-            <b>orderTotal</b>, and the total <b>itemCount</b> to the existing
-            <b>POST /api/order</b> Transaction. They sit alongside duration and
-            HTTP status without creating another event for the same order
-            summary. The server returns <code>orderId</code> after accepting the
-            order; in database mode, this is the database-generated ID. It is
-            not an ID supplied by the browser.
-            <app-nr-check
-              missionId="mission-3"
-              questionId="order-id-tail"
-              kind="text"
-              question="Paste the last 4 characters of this order's orderId."
-              [answer]="orderIdTail"
-              proves="The server-returned orderId connects the order Transaction to its item-detail events."
-            ></app-nr-check>
+            Custom attributes (<b>customer</b>, <b>restaurant</b>,
+            <b>orderTotal</b>, and the total <b>itemCount</b>) are added to the
+            existing <b>POST /api/order</b> Transaction. Each New Relic
+            Transaction already includes performance metrics such as duration
+            and HTTP status for each order. The server returns
+            <code>orderId</code> after the database inserts an order. Every HTTP
+            request also gets its own server-generated
+            <code>requestId</code> for tracing and log correlation. The
+            <code>orderId</code> identifies the order;
+            <code>requestId</code> identifies the request that placed it.
+            Looking up the same order later creates a different request ID.
+            Query by the order ID on your receipt, then find the checkout's
+            request ID in the results.
+            @if (hasRequestId) {
+              <app-nr-check
+                missionId="mission-3"
+                questionId="request-id-tail"
+                kind="text"
+                question="Paste the last 4 characters of the checkout requestId from your query results."
+                [answer]="requestIdTail"
+                proves="You found the checkout request in the data using the order ID from your receipt."
+              ></app-nr-check>
+            }
           </app-nr-callout>
           <app-nr-callout
             title="Item details as custom events"
@@ -109,8 +117,8 @@
             buttonLabel="See your ItemsOrdered events"
             missionId="mission-3"
           >
-            The server records one <b>ItemsOrdered</b> event per cart line after
-            acceptance. Each event carries <b>orderId</b>, <b>itemName</b>,
+            The server records one <b>ItemsOrdered</b> event per item in the
+            cart. Each custom event carries <b>orderId</b>, <b>itemName</b>,
             <b>itemCount</b> (that line's quantity), <b>unitPrice</b>, and
             <b>itemTotal</b>. An order with three different items produces three
             detail events, not three orders. More event detail means more event
