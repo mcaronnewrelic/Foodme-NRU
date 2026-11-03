@@ -1,4 +1,11 @@
-import { Component, Input, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Input,
+  inject,
+  signal,
+  effect,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NrConfigService } from '../../nr-config';
 import { DemoIdentityService } from '../../services/demo-identity.service';
@@ -23,7 +30,7 @@ export type CheckKind = 'choice' | 'multi' | 'number' | 'text';
   imports: [FormsModule],
   templateUrl: './nr-check.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './nr-check.css'
+  styleUrl: './nr-check.css',
 })
 export class NrCheckComponent {
   protected config = inject(NrConfigService);
@@ -49,6 +56,16 @@ export class NrCheckComponent {
   protected entry = signal('');
   protected feedback = signal<'idle' | 'wrong' | 'correct'>('idle');
 
+  constructor() {
+    effect(() => {
+      this.identity.code();
+      this.selected.set(null);
+      this.selectedMulti.set(new Set());
+      this.entry.set('');
+      this.feedback.set('idle');
+    });
+  }
+
   get solved(): boolean {
     return this.progress.isSolved(this.missionId, this.questionId);
   }
@@ -60,17 +77,24 @@ export class NrCheckComponent {
   protected get canSubmit(): boolean {
     if (this.solved) return false;
     switch (this.kind) {
-      case 'choice': return this.selected() !== null;
-      case 'multi': return this.selectedMulti().size > 0;
-      case 'number': return this.entry().trim() !== '' && !Number.isNaN(Number(this.entry()));
-      case 'text': return this.entry().trim() !== '';
+      case 'choice':
+        return this.selected() !== null;
+      case 'multi':
+        return this.selectedMulti().size > 0;
+      case 'number':
+        return (
+          this.entry().trim() !== '' && !Number.isNaN(Number(this.entry()))
+        );
+      case 'text':
+        return this.entry().trim() !== '';
     }
   }
 
   protected toggleMulti(option: string, checked: boolean): void {
-    this.selectedMulti.update(set => {
+    this.selectedMulti.update((set) => {
       const next = new Set(set);
-      if (checked) next.add(option); else next.delete(option);
+      if (checked) next.add(option);
+      else next.delete(option);
       return next;
     });
   }
@@ -79,7 +103,11 @@ export class NrCheckComponent {
     if (!this.canSubmit) return;
     const submitted = this.submittedAnswer();
     const correct = this.isCorrect(submitted);
-    const attempt = this.progress.recordAttempt(this.missionId, this.questionId, correct);
+    const attempt = this.progress.recordAttempt(
+      this.missionId,
+      this.questionId,
+      correct,
+    );
     this.feedback.set(correct ? 'correct' : 'wrong');
     this.newRelic.recordCustomEvent('OrderupQuizAnswer', {
       missionId: this.missionId,
@@ -95,9 +123,12 @@ export class NrCheckComponent {
 
   private submittedAnswer(): string {
     switch (this.kind) {
-      case 'choice': return this.selected() ?? '';
-      case 'multi': return [...this.selectedMulti()].sort().join(', ');
-      default: return this.entry().trim();
+      case 'choice':
+        return this.selected() ?? '';
+      case 'multi':
+        return [...this.selectedMulti()].sort().join(', ');
+      default:
+        return this.entry().trim();
     }
   }
 
@@ -106,12 +137,18 @@ export class NrCheckComponent {
       case 'choice':
         return submitted === this.answer;
       case 'multi': {
-        const expected = (this.answer as string[]).map(s => s.trim()).sort().join(', ');
+        const expected = (this.answer as string[])
+          .map((s) => s.trim())
+          .sort()
+          .join(', ');
         return submitted === expected;
       }
       case 'number': {
         const value = Number(submitted);
-        return !Number.isNaN(value) && Math.abs(value - Number(this.answer)) <= this.tolerance;
+        return (
+          !Number.isNaN(value) &&
+          Math.abs(value - Number(this.answer)) <= this.tolerance
+        );
       }
       case 'text':
         return normalize(submitted) === normalize(String(this.answer));

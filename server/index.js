@@ -24,6 +24,7 @@ var open = require("open").default; // open 11 is an ES module
 var RestaurantRecord = require("./model").Restaurant;
 var MemoryStorage = require("./storage").Memory;
 const DatabaseService = require("./database");
+const DashboardLinks = require("./dashboard-links");
 
 var API_URL = "/api/restaurant";
 var API_URL_ID = "/api/restaurant/:id";
@@ -103,6 +104,12 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   var app = express();
   storage = new MemoryStorage();
   dbService = new DatabaseService();
+  const dashboardLinks = new DashboardLinks({
+    apiKey: process.env.NEW_RELIC_API_KEY,
+    account: process.env.NEW_RELIC_ACCOUNT_ID || 1352811,
+    guid: process.env.NEW_RELIC_DASHBOARD_GUID || undefined,
+    region: process.env.NEW_RELIC_REGION || "us",
+  });
 
   // Determine data source based on environment
   const isProduction = process.env.NODE_ENV === "production";
@@ -400,6 +407,21 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         ? { ...investigation.armed, source: investigation.source }
         : null,
     });
+  });
+
+  app.get("/api/dashboard", async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    try {
+      res.redirect(await dashboardLinks.getLink(req.query.demoCode));
+    } catch (error) {
+      if (error.statusCode === 400)
+        return res.status(400).json({ error: error.message });
+      logger.warn(
+        { err: error },
+        "Dashboard deep link unavailable; opening dashboard without a preset code",
+      );
+      res.redirect(dashboardLinks.fallbackUrl);
+    }
   });
 
   // Demo failure scenarios: read the current state, arm one manually, or
@@ -752,11 +774,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       order.items.length === 0 ||
       order.items.some((item) => !item)
     ) {
-      return res
-        .status(400)
-        .json({
-          error: "A restaurant and at least one menu item are required",
-        });
+      return res.status(400).json({
+        error: "A restaurant and at least one menu item are required",
+      });
     }
 
     let restaurant;
@@ -783,11 +803,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         );
       });
       if (invalidItem) {
-        return res
-          .status(400)
-          .json({
-            error: "All order items must belong to the selected restaurant",
-          });
+        return res.status(400).json({
+          error: "All order items must belong to the selected restaurant",
+        });
       }
     } catch (error) {
       return next(error);
@@ -950,7 +968,7 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
           itemName: item.name,
           itemCount: item.qty,
           unitPrice: item.price,
-          itemTotal: Math.round(item.price * 100) * item.qty / 100,
+          itemTotal: (Math.round(item.price * 100) * item.qty) / 100,
         });
       }
       newrelic.recordMetric("total", orderTotal);
@@ -1125,11 +1143,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         if (restaurant) {
           return res.status(200).send(restaurant);
         }
-        return res
-          .status(404)
-          .send({
-            error: 'No restaurant with name "' + req.params.name + '"!',
-          });
+        return res.status(404).send({
+          error: 'No restaurant with name "' + req.params.name + '"!',
+        });
       } else {
         // For non-database mode, we need to search by name in storage
         const { nameToSlug } = require("./url-utils");
@@ -1140,11 +1156,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         if (restaurant) {
           return res.status(200).send(restaurant);
         }
-        return res
-          .status(404)
-          .send({
-            error: 'No restaurant with name "' + req.params.name + '"!',
-          });
+        return res.status(404).send({
+          error: 'No restaurant with name "' + req.params.name + '"!',
+        });
       }
     } catch (error) {
       logger.error(

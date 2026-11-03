@@ -26,7 +26,9 @@ function createCheckout(
   const app = {
     locals: {},
     use() {},
-    get() {},
+    get(url, ...handlers) {
+      routes.set(url, handlers.at(-1));
+    },
     put() {},
     delete() {},
     listen() {},
@@ -94,6 +96,7 @@ function createCheckout(
     "./model": {},
     "./storage": { Memory },
     "./database": Database,
+    "./dashboard-links": require("./dashboard-links"),
     "./demo-failures": Demo,
     "./demo-investigations": Demo,
     "./order-status-worker": class {},
@@ -122,7 +125,7 @@ function createCheckout(
   );
   context.exports.start(0, "", "", "");
 
-  return async (order) => {
+  const checkout = async (order) => {
     const response = {
       statusCode: 200,
       status(code) {
@@ -147,7 +150,51 @@ function createCheckout(
     );
     return { response, calls };
   };
+  checkout.dashboard = async (query) => {
+    const response = {
+      headers: {},
+      statusCode: 200,
+      setHeader(name, value) {
+        this.headers[name] = value;
+      },
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(body) {
+        this.body = body;
+        return this;
+      },
+      redirect(url) {
+        this.statusCode = 302;
+        this.url = url;
+      },
+    };
+    await routes.get("/api/dashboard")({ query }, response);
+    return response;
+  };
+  return checkout;
 }
+
+test("dashboard route opens the configured dashboard without exposing credentials", async () => {
+  const response = await createCheckout(false).dashboard({
+    demoCode: "OU-TEST",
+  });
+  assert.equal(response.statusCode, 302);
+  assert.match(
+    response.url,
+    /^https:\/\/one\.newrelic\.com\/dashboards\/detail\//,
+  );
+  assert.equal(response.headers["Cache-Control"], "no-store");
+});
+
+test("dashboard route rejects missing or invalid session codes", async () => {
+  for (const demoCode of [undefined, "wrong", ["OU-TEST", "OU-AAAA"]]) {
+    const response = await createCheckout(false).dashboard({ demoCode });
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.url, undefined);
+  }
+});
 
 for (const databaseMode of [false, true]) {
   const mode = databaseMode ? "database" : "memory";

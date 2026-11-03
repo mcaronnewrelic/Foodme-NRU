@@ -612,7 +612,7 @@
             "id": "viz.markdown"
           },
           "rawConfiguration": {
-            "text": "## Your journey\nThe widgets below answer to the **demoCode variable at the top of this dashboard** \u2014 pick your code (it appears in the list after your first check answer) and they show only your data."
+            "text": "## Your journey\nThe widgets below use the **demoCode variable at the top of this dashboard**. The Missions-page link presets your code when dashboard deep links are configured; you can also select it manually after your telemetry arrives. These four widgets show your data. The cohort charts elsewhere intentionally show everyone."
           }
         },
         {
@@ -957,7 +957,7 @@
       "defaultValues": [],
       "nrqlQuery": {
         "accountIds": [1352811],
-        "query": "SELECT uniques(demoCode) FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
+        "query": "SELECT uniques(demoCode) FROM OrderupQuizAnswer, Transaction, ItemsOrdered, PageView WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
       },
       "options": {
         "hiddenOnVariablesBar": false,

@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter, Router } from '@angular/router';
@@ -13,10 +14,14 @@ describe('CustomerComponent demo identity reset', () => {
   let fixture: ComponentFixture<CustomerComponent>;
   let originalCode: string | null;
   let originalCustomer: string | null;
+  let originalMissions: string | null;
+  let originalEventTypes: string | null;
   let originalUrl: string;
+  const showCallouts = signal(false);
   const telemetry = jasmine.createSpyObj('NewRelicService', [
     'setCustomAttribute',
     'setUserId',
+    'recordCustomEvent',
   ]);
   const initialCustomer = {
     name: 'OU-AAAA',
@@ -27,27 +32,27 @@ describe('CustomerComponent demo identity reset', () => {
   beforeEach(async () => {
     originalCode = localStorage.getItem('orderup-demo-code');
     originalCustomer = localStorage.getItem('orderup-customer');
+    originalMissions = localStorage.getItem('orderup-missions');
+    originalEventTypes = localStorage.getItem('orderup-event-types');
     originalUrl = location.href;
     history.replaceState(history.state, '', location.pathname);
     localStorage.setItem('orderup-demo-code', initialCustomer.name);
     localStorage.setItem('orderup-customer', JSON.stringify(initialCustomer));
+    localStorage.removeItem('orderup-missions');
+    localStorage.removeItem('orderup-event-types');
     telemetry.setCustomAttribute.calls.reset();
     telemetry.setUserId.calls.reset();
+    showCallouts.set(false);
     await TestBed.configureTestingModule({
       imports: [CustomerComponent],
       providers: [
         provideHttpClient(),
         provideRouter([]),
         { provide: NewRelicService, useValue: telemetry },
-        { provide: EventTypesService, useValue: { mark() {}, count: () => 2 } },
-        {
-          provide: MissionProgressService,
-          useValue: { markTried() {}, markFound() {} },
-        },
         {
           provide: NrConfigService,
           useValue: {
-            showCallouts: () => false,
+            showCallouts,
             armedScenario: () => null,
             armedInvestigation: () => null,
             claimAccountNote: () => false,
@@ -65,6 +70,11 @@ describe('CustomerComponent demo identity reset', () => {
     else localStorage.setItem('orderup-demo-code', originalCode);
     if (originalCustomer === null) localStorage.removeItem('orderup-customer');
     else localStorage.setItem('orderup-customer', originalCustomer);
+    if (originalMissions === null) localStorage.removeItem('orderup-missions');
+    else localStorage.setItem('orderup-missions', originalMissions);
+    if (originalEventTypes === null)
+      localStorage.removeItem('orderup-event-types');
+    else localStorage.setItem('orderup-event-types', originalEventTypes);
     history.replaceState(history.state, '', originalUrl);
   });
 
@@ -143,5 +153,85 @@ describe('CustomerComponent demo identity reset', () => {
       TestBed.inject(DemoIdentityService).code(),
     );
     expect(component.customerForm().name).not.toBe(initialCustomer.name);
+  });
+
+  it('clears mission attempts, completion, tried/found flags, and event-type evidence for the new customer', () => {
+    const component = render();
+    const progress = TestBed.inject(MissionProgressService);
+    const eventTypes = TestBed.inject(EventTypesService);
+    progress.markTried('mission-1');
+    progress.markFound('mission-1');
+    progress.recordAttempt('mission-1', 'event-type-count', true);
+    progress.recordAttempt('mission-2', 'filter-no-request', false);
+    eventTypes.mark('JavaScriptError');
+    eventTypes.mark('PageAction');
+    expect(progress.checkedCount()).toBe(1);
+    component.resetCustomer();
+    expect(progress.checkedCount()).toBe(0);
+    expect(progress.firstTryCount()).toBe(0);
+    expect(progress.solvedCount()).toBe(0);
+    expect(progress.missionState('mission-1')).toEqual({
+      tried: false,
+      found: false,
+    });
+    expect(progress.progress('mission-1', 'event-type-count')).toEqual({
+      attempts: 0,
+      solved: false,
+    });
+    expect(progress.progress('mission-2', 'filter-no-request')).toEqual({
+      attempts: 0,
+      solved: false,
+    });
+    expect(eventTypes.count()).toBe(0);
+    expect(JSON.parse(localStorage.getItem('orderup-missions')!)).toEqual({
+      questions: {},
+      missions: {},
+    });
+    expect(JSON.parse(localStorage.getItem('orderup-event-types')!)).toEqual(
+      [],
+    );
+    const reloadedProgress = new MissionProgressService();
+    expect(reloadedProgress.checkedCount()).toBe(0);
+    expect(new EventTypesService().count()).toBe(0);
+  });
+
+  it('resets the loaded mission state even after storage has already been deleted', () => {
+    const component = render();
+    const progress = TestBed.inject(MissionProgressService);
+    progress.recordAttempt('mission-1', 'event-type-count', true);
+    localStorage.removeItem('orderup-missions');
+    expect(progress.checkedCount()).toBe(1);
+    component.resetCustomer();
+    expect(progress.checkedCount()).toBe(0);
+    progress.markTried('mission-1');
+    expect(
+      JSON.parse(localStorage.getItem('orderup-missions')!).questions,
+    ).toEqual({});
+  });
+
+  it('clears the visible answer selection and feedback for the new customer', () => {
+    showCallouts.set(true);
+    const component = render();
+    const option: HTMLInputElement = fixture.nativeElement.querySelector(
+      'input[value="3 or more"]',
+    );
+    option.click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.nr-check-btn').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Not what the data says',
+    );
+    component.resetCustomer();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Not what the data says',
+    );
+    expect(
+      fixture.nativeElement.querySelector('input[type="radio"]:checked'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.nr-check-btn').disabled,
+    ).toBeTrue();
   });
 });

@@ -4,7 +4,12 @@ import { Injectable, inject, signal } from '@angular/core';
 const STORAGE_KEY = 'orderup-event-types';
 
 /** The browser event types Mission 1's Find query facets on (spec section 2). */
-export const TRACKED_EVENT_TYPES = ['PageView', 'AjaxRequest', 'PageAction', 'JavaScriptError'] as const;
+export const TRACKED_EVENT_TYPES = [
+  'PageView',
+  'AjaxRequest',
+  'PageAction',
+  'JavaScriptError',
+] as const;
 export type TrackedEventType = (typeof TRACKED_EVENT_TYPES)[number];
 
 /**
@@ -25,15 +30,17 @@ export class EventTypesService {
 
   mark(type: TrackedEventType): void {
     if (this.types().has(type)) return;
-    this.types.update(set => new Set(set).add(type));
+    this.types.update((set) => new Set(set).add(type));
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...this.types()]));
-    } catch { /* storage unavailable: the count lasts for this page load only */ }
+    } catch {
+      /* storage unavailable: the count lasts for this page load only */
+    }
   }
 
   /** How many of the tracked types have fired - the Mission 1 answer. */
   count(): number {
-    return TRACKED_EVENT_TYPES.filter(t => this.types().has(t)).length;
+    return TRACKED_EVENT_TYPES.filter((t) => this.types().has(t)).length;
   }
 
   private load(): string[] {
@@ -41,10 +48,19 @@ export class EventTypesService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed.filter(x => typeof x === 'string');
+        if (Array.isArray(parsed))
+          return parsed.filter((x) => typeof x === 'string');
       }
-    } catch { /* fall through to a fresh set */ }
+    } catch {
+      /* fall through to a fresh set */
+    }
     return [];
+  }
+  reset(): void {
+    this.types.set(new Set());
+    try {
+      localStorage.setItem(STORAGE_KEY, '[]');
+    } catch {}
   }
 }
 

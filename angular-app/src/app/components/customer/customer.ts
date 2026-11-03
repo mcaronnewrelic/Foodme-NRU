@@ -62,6 +62,8 @@ export class CustomerComponent {
   }
 
   resetCustomer() {
+    this.progress.reset();
+    this.eventTypes.reset();
     const customer = this.customerService.resetSampleCustomer();
     this.customerForm.set(customer);
     this.newRelicService.setUserId(customer.name || 'guest');

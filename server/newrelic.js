@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 /**
  * New Relic agent configuration.
  *
@@ -9,7 +9,7 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name: ['OrderUp'],
+  app_name: ["OrderUp"],
   /**
    * Your New Relic license key.
    */
@@ -20,7 +20,7 @@ exports.config = {
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level: 'info'
+    level: "info",
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
@@ -29,8 +29,8 @@ exports.config = {
    */
   allow_all_headers: true,
   rules: {
-    // Config lookup for the "Behind the scenes" callouts; it isn't part of the app being monitored
-    ignore: ['^/api/nr-config']
+    // Teaching-support routes aren't part of the app being monitored
+    ignore: ["^/api/nr-config", "^/api/dashboard/?(?:\\?|$)"],
   },
   attributes: {
     /**
@@ -42,16 +42,16 @@ exports.config = {
      * @name NEW_RELIC_ATTRIBUTES_EXCLUDE
      */
     exclude: [
-      'request.headers.cookie',
-      'request.headers.authorization',
-      'request.headers.proxyAuthorization',
-      'request.headers.setCookie*',
-      'request.headers.x*',
-      'response.headers.cookie',
-      'response.headers.authorization',
-      'response.headers.proxyAuthorization',
-      'response.headers.setCookie*',
-      'response.headers.x*'
-    ]
-  }
-}
+      "request.headers.cookie",
+      "request.headers.authorization",
+      "request.headers.proxyAuthorization",
+      "request.headers.setCookie*",
+      "request.headers.x*",
+      "response.headers.cookie",
+      "response.headers.authorization",
+      "response.headers.proxyAuthorization",
+      "response.headers.setCookie*",
+      "response.headers.x*",
+    ],
+  },
+};

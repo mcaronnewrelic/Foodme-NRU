@@ -21,6 +21,22 @@ session, and maintainers changing the code — because the parts that
 matter to them (the map, the answer keys, the plumbing) are deliberately
 invisible to students.
 
+## Starting as a new customer
+
+**New Demo Customer** on the Customer page generates a new session code and
+sample contact details. It also clears local mission attempts, checkmarks,
+first-try scores, tried/found flags, event-type evidence, and any visible
+answer selections or feedback. The reset updates both the running app and
+local storage, so it remains reset after a reload. Cart contents are unchanged.
+Previously recorded New Relic events are not deleted; they remain under the
+previous customer's code.
+
+Mission progress lives in an Angular signal while the page is open. Manually
+deleting `orderup-missions` or clearing local storage does not clear that
+in-memory state, and another action can write it back. To reset manually,
+clear the storage and immediately reload the page before interacting with it,
+or use **New Demo Customer**, which resets both copies together.
+
 ## The five missions
 
 | #   | Mission                           | Page                 | What it teaches                                                                                                                                           | Find data                                           | Check                                                                                                                         |
