@@ -104,7 +104,7 @@
               message, the error class, and a link to the trace. The query filters to your
               <code>demoCode</code>, and each failure carries a random <b>scenario</b> attribute.
               <app-nr-check missionId="mission-5" questionId="incident-code" kind="text"
-                question="Your error message ends with an incident code (INC-XXXX). What is it?"
+                question="Your error message names an incident code: INC- followed by four characters. What is the code? (The scenario name is a different thing.)"
                 [answer]="incidentTicket()!"
                 proves="The server agent captured the real exception message, which the browser never saw."></app-nr-check>
             </app-nr-callout>

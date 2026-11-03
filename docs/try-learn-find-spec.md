@@ -186,8 +186,8 @@ Two halves; the second activates only when a failure is armed (§7).
   generates a fresh `INC-XXXX` ticket in the browser, sends it to the server,
   and the server writes it into the error message. The ticket is never shown
   on the page, and is kept out of the PageAction and the response body.
-- **Check (evidence):** “Your error message ends with an incident code
-  (INC-XXXX). What is it?” — text entry matched against the ticket from the
+- **Check (evidence):** “Your error message names an incident code:
+  INC- followed by four characters. What is the code?” — text entry matched against the ticket from the
   student's own click. The check appears after the first click.
 - **Try (armed only):** if a `DEMO_FAILING_*` switch is on, the mission
   becomes “Hunt the planted failure”: the scenario banner (§7) names the
