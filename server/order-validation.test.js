@@ -234,7 +234,11 @@ function createCheckout(
       require(name) {
         if (name.startsWith(".")) {
           const resolved = path.resolve(path.dirname(filePath), name);
-          if (resolved.startsWith(path.join(__dirname, "routes") + path.sep)) {
+          if (
+            ["routes", "middleware"].some((dir) =>
+              resolved.startsWith(path.join(__dirname, dir) + path.sep),
+            )
+          ) {
             return loadModule(resolved + ".js");
           }
           name = "./" + path.relative(__dirname, resolved);
