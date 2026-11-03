@@ -45,7 +45,7 @@ or use **New Demo Customer**, which resets both copies together.
 | 2   | Find a menu in the data           | Restaurants → Menu   | Every menu load is an APM transaction; filtering the list is client-side and creates **no** request — the absence is the lesson                           | Cohort — labelled "Shows everyone's data"           | Reasoning (choice): why no new request appeared                                                                               |
 | 3   | Place the order, keep the receipt | Checkout → Thank You | Order attributes on a Transaction, one `ItemsOrdered` event per line joined by `orderId`, and global/restaurant metric rollups without per-order identity | Personal events scoped by `orderId`; cohort metrics | Evidence (text): the last 4 characters of the checkout `requestId` found in the query results                                 |
 | 4   | Find it again later               | Orders               | Lookup works with no email; `requestId` and `demoCode` are the join keys — and the transaction's `userID` is the code in disguise                         | Personal — filtered by `userID`                     | Reasoning (multi-select): which two values identify your order                                                                |
-| 5   | Break it on purpose               | How It Works         | One click, three traces (JavaScriptError, PageAction, round-trip time); then hunting a planted failure to its exact error message                         | Personal + cohort errors                            | Evidence (text): the simulated error's `errorType` — or the armed failure's exact message (either half completes the mission) |
+| 5   | Break it on purpose               | How It Works         | One click, a random server failure: the browser agent sees a generic JavaScriptError, the server agent a TransactionError with the real message                         | Personal + cohort errors                            | Evidence (text): the `INC-XXXX` incident code in your TransactionError message. The planted-failure hunt is an optional bonus |
 
 ## Answer keys, and where they come from
 
@@ -78,9 +78,11 @@ not where you'd first look.
   The client mirrors that derivation from the demoCode to fill the
   callout's `<userId>` token. **If the server derivation changes, the
   query breaks silently** — change them together.
-- **Mission 5, simulated half:** the sim writes `errorType: 'sync'`
-  (`how-it-works.ts`, `simulateError()`).
-- **Mission 5, armed half:** the key is built client-side from
+- **Mission 5, incident code:** each click makes an `INC-XXXX` ticket in
+  the browser (`how-it-works.ts`, `simulateError()`), sends it to
+  `GET /simulate/error/incident`, and the server writes it into the real
+  error message. The answer is held in memory only.
+- **Bonus, planted failure (no mission credit):** the key is built client-side from
   `/api/nr-config`'s `armedScenario` using the server's own message
   templates (`server/index.js`) — note the asymmetry: the menu failure
   embeds the route **slug** it was called with
@@ -91,8 +93,9 @@ not where you'd first look.
   The weekly rotation changes the target — and therefore the key —
   every week; because the key is built at render time from the armed
   scenario, it follows automatically. The registry
-  (`services/missions.ts`) gives Mission 5 an `altQuestionId`, so
-  solving either half checks the mission.
+  (`services/missions.ts`) closes Mission 5 with the incident-code check
+  only. The planted-failure hunt is an optional bonus: it still records
+  its quiz answer, but doesn't check the mission.
 
 All checks are judged client-side (the key ships with the question, as
 on browser.nru.to). They are teaching checks, not exams.
@@ -140,7 +143,7 @@ Exclusion recipes for queries:
      missions: { "<missionId>": { tried, found } } }`
   (`MissionProgressService`). *Tried* = the Try action was observed;
   *found* = a Find link on the mission's callout was clicked;
-  *checked* = its check (or alternative) is solved. State is per
+  *checked* = its check is solved. State is per
   browser — there is no cross-device progress.
 - Every answer, right or wrong, fires a browser custom event
   **`OrderupQuizAnswer`** with `missionId`, `questionId`, `question`,

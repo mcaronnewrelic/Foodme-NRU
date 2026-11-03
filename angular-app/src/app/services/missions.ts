@@ -6,8 +6,6 @@ export interface Mission {
   link: string;
   /** The mission's check question id - a mission counts as checked when that question is solved. */
   questionId: string;
-  /** An alternative check that also completes the mission (Mission 5's two halves). */
-  altQuestionId?: string;
 }
 
 /** The five missions of spec section 2, in journey order. */
@@ -46,7 +44,6 @@ export const MISSIONS: Mission[] = [
     title: 'Break it on purpose',
     link: '/how-it-works',
     questionId: 'incident-code',
-    altQuestionId: 'armed-error-message',
   },
 ];
 

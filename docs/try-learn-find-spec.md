@@ -186,11 +186,11 @@ Two halves; the second activates only when a failure is armed (§7).
   generates a fresh `INC-XXXX` ticket in the browser, sends it to the server,
   and the server writes it into the error message. The ticket is never shown
   on the page, and is kept out of the PageAction and the response body.
-- **Check (evidence):** “Your error message ends with an incident code
-  (INC-XXXX). What is it?” — text entry matched against the ticket from the
+- **Check (evidence):** “Your error message names an incident code:
+  INC- followed by four characters. What is the code?” — text entry matched against the ticket from the
   student's own click. The check appears after the first click.
-- **Try (armed only):** if a `DEMO_FAILING_*` switch is on, the mission
-  becomes “Hunt the planted failure”: the scenario banner (§7) names the
+- **Bonus (armed only, no mission credit):** if a `DEMO_FAILING_*` switch is
+  on, How It Works also offers “Bonus: hunt the planted failure”: the scenario banner (§7) names the
   symptom only (“Some orders are failing”). The student reproduces it, then
   uses the Menu status-code callout → `FROM TransactionError WHERE
   restaurantSlug IS NOT NULL` → the trace → Errors Inbox — the path already
@@ -199,7 +199,7 @@ Two halves; the second activates only when a failure is armed (§7).
   transaction?” — text entry, normalised (trim, case-insensitive) match
   against the armed failure's message (`Menu data … is corrupted`,
   `Kitchen at "…" is not accepting orders`, `Inventory check failed for "…"`).
-- **Case closed:** completing Mission 5 (either half, plus 1–4) completes the
+- **Case closed:** completing Mission 5 (the incident-code check, plus 1–4) completes the
   path: progress strip shows 5/5 and How It Works shows the completion block
   with the §8 dashboard link.
 
@@ -243,8 +243,8 @@ asymmetry worth remembering: the menu failure's message embeds the
 route **slug** (`target`), the order failures embed **display names**
 (`targetName`), and all three carry suffixes (": stock count is -2",
 ": ticket printer offline", ": menu_items.category is null for 3
-rows"). The registry's `altQuestionId` makes Mission 5 checked when
-either half is solved. The §6 hub ("Your journey": mission states,
+rows"). Mission 5 is checked by the incident-code check alone; the
+armed half is an optional bonus (the registry's `altQuestionId` was removed). The §6 hub ("Your journey": mission states,
 checked count, first-try score, case-closed block) links the OrderUp
 Overview dashboard for now; §8's knowledge-checks page retargets that
 link when built. All five missions are now built; §8 and §11 remain.
