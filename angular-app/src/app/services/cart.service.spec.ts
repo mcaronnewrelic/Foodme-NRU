@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import {
+  provideHttpClientTesting,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { CartService } from './cart.service';
 import { DemoIdentityService } from './demo-identity.service';
 import { CartItem } from '../models/restaurant.model';
@@ -8,15 +11,30 @@ import { CartItem } from '../models/restaurant.model';
 describe('CartService restaurant validation', () => {
   let service: CartService;
   const item = (restaurantId: string): CartItem => ({
-    restaurant: { id: restaurantId, name: restaurantId, cuisine: 'Test', price: 1, rating: 5 },
-    menuItem: { id: 'shared-id', name: 'Soup', description: '', price: 5, category: 'Main' },
-    quantity: 1
+    restaurant: {
+      id: restaurantId,
+      name: restaurantId,
+      cuisine: 'Test',
+      price: 1,
+      rating: 5,
+    },
+    menuItem: {
+      id: 'shared-id',
+      name: 'Soup',
+      description: '',
+      price: 5,
+      category: 'Main',
+    },
+    quantity: 1,
   });
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
-        { provide: DemoIdentityService, useValue: { code: () => 'OU-TEST' } }]
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: DemoIdentityService, useValue: { code: () => 'OU-TEST' } },
+      ],
     });
     service = TestBed.inject(CartService);
   });

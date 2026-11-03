@@ -5,7 +5,7 @@ import { CartItem, Customer } from '../models/restaurant.model';
 import { DemoIdentityService } from './demo-identity.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CartService {
   private http = inject(HttpClient);
@@ -13,25 +13,32 @@ export class CartService {
   private cartItemsSignal = signal<CartItem[]>([]);
 
   cartItems = this.cartItemsSignal.asReadonly();
-  
-  totalItems = computed(() => 
-    this.cartItemsSignal().reduce((sum, item) => sum + item.quantity, 0)
+
+  totalItems = computed(() =>
+    this.cartItemsSignal().reduce((sum, item) => sum + item.quantity, 0),
   );
-  
+
   totalPrice = computed(() =>
-    this.cartItemsSignal().reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0)
+    this.cartItemsSignal().reduce(
+      (sum, item) => sum + item.menuItem.price * item.quantity,
+      0,
+    ),
   );
 
   addToCart(item: CartItem) {
-    if (this.cartItemsSignal().some(cartItem => cartItem.restaurant.id !== item.restaurant.id)) {
+    if (
+      this.cartItemsSignal().some(
+        (cartItem) => cartItem.restaurant.id !== item.restaurant.id,
+      )
+    ) {
       return false;
     }
 
-    this.cartItemsSignal.update(items => {
+    this.cartItemsSignal.update((items) => {
       const existingIndex = items.findIndex(
-        cartItem => cartItem.menuItem.id === item.menuItem.id
+        (cartItem) => cartItem.menuItem.id === item.menuItem.id,
       );
-      
+
       if (existingIndex >= 0) {
         const updatedItems = [...items];
         updatedItems[existingIndex].quantity += item.quantity;
@@ -44,8 +51,8 @@ export class CartService {
   }
 
   removeFromCart(menuItemId: string) {
-    this.cartItemsSignal.update(items => 
-      items.filter(item => item.menuItem.id !== menuItemId)
+    this.cartItemsSignal.update((items) =>
+      items.filter((item) => item.menuItem.id !== menuItemId),
     );
   }
 
@@ -54,13 +61,11 @@ export class CartService {
       this.removeFromCart(menuItemId);
       return;
     }
-    
-    this.cartItemsSignal.update(items =>
-      items.map(item =>
-        item.menuItem.id === menuItemId
-          ? { ...item, quantity }
-          : item
-      )
+
+    this.cartItemsSignal.update((items) =>
+      items.map((item) =>
+        item.menuItem.id === menuItemId ? { ...item, quantity } : item,
+      ),
     );
   }
 
@@ -70,24 +75,26 @@ export class CartService {
 
   private readonly API_URL_ORDER = '/api/order';
 
-  submitOrder(customer: Customer): Observable<{orderId: number; requestId: string}> {
+  submitOrder(
+    customer: Customer,
+  ): Observable<{ orderId: number; requestId: string }> {
     const cartItems = this.cartItemsSignal();
-    
+
     if (cartItems.length === 0) {
       throw new Error('Cannot submit empty cart');
     }
 
     const restaurant = cartItems[0].restaurant;
-    if (cartItems.some(item => item.restaurant.id !== restaurant.id)) {
+    if (cartItems.some((item) => item.restaurant.id !== restaurant.id)) {
       throw new Error('Orders must contain items from a single restaurant');
     }
 
     // Transform cart items to the format expected by the API
-    const orderItems = cartItems.map(cartItem => ({
+    const orderItems = cartItems.map((cartItem) => ({
       id: cartItem.menuItem.id,
       name: cartItem.menuItem.name,
       price: cartItem.menuItem.price,
-      qty: cartItem.quantity
+      qty: cartItem.quantity,
     }));
 
     // Create the order object in the format expected by the server
@@ -95,21 +102,24 @@ export class CartService {
       deliverTo: {
         name: customer.name || '',
         phone: customer.phone || '',
-        address: customer.address || ''
+        address: customer.address || '',
       },
       restaurant: {
         id: restaurant.id,
-        name: restaurant.name
+        name: restaurant.name,
       },
       items: orderItems,
       // The server stamps this on the order transaction and Order event,
       // so a student's order is findable by code as well as requestId.
       demoCode: this.demoIdentity.code(),
       total: this.totalPrice(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Post to the API endpoint
-    return this.http.post<{orderId: number; requestId: string}>(this.API_URL_ORDER, order);
+    return this.http.post<{ orderId: number; requestId: string }>(
+      this.API_URL_ORDER,
+      order,
+    );
   }
 }

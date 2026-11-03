@@ -1,4 +1,10 @@
-import { Component, OnInit, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,10 +18,16 @@ import { Restaurant, MenuItem } from '../../models/restaurant.model';
 
 @Component({
   selector: 'app-menu',
-  imports: [RouterModule, HeaderComponent, FormsModule, NrCalloutComponent, NrCheckComponent],
+  imports: [
+    RouterModule,
+    HeaderComponent,
+    FormsModule,
+    NrCalloutComponent,
+    NrCheckComponent,
+  ],
   templateUrl: './menu.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './menu.css'
+  styleUrl: './menu.css',
 })
 export class MenuComponent implements OnInit {
   readonly menuStatusNrql =
@@ -28,25 +40,33 @@ export class MenuComponent implements OnInit {
   error = signal<string | null>(null);
   cartRestaurantConflict = computed(() => {
     const restaurant = this.restaurant();
-    return !!restaurant && this.cartService.cartItems().some(item => item.restaurant.id !== restaurant.id);
+    return (
+      !!restaurant &&
+      this.cartService
+        .cartItems()
+        .some((item) => item.restaurant.id !== restaurant.id)
+    );
   });
-  
+
   // Visual feedback for adding items to cart
   addingToCart = signal<string | null>(null);
   recentlyAdded = signal<Set<string>>(new Set());
-  
+
   // Group menu items by category
   menuCategories = computed(() => {
     const restaurant = this.restaurant();
     if (!restaurant?.menuItems) return {};
-    
-    return restaurant.menuItems.reduce((categories, item) => {
-      if (!categories[item.category]) {
-        categories[item.category] = [];
-      }
-      categories[item.category].push(item);
-      return categories;
-    }, {} as Record<string, MenuItem[]>);
+
+    return restaurant.menuItems.reduce(
+      (categories, item) => {
+        if (!categories[item.category]) {
+          categories[item.category] = [];
+        }
+        categories[item.category].push(item);
+        return categories;
+      },
+      {} as Record<string, MenuItem[]>,
+    );
   });
 
   constructor(
@@ -54,7 +74,7 @@ export class MenuComponent implements OnInit {
     private router: Router,
     private restaurantService: RestaurantService,
     public cartService: CartService,
-    private customerService: CustomerService
+    private customerService: CustomerService,
   ) {}
 
   ngOnInit() {
@@ -77,7 +97,7 @@ export class MenuComponent implements OnInit {
   loadRestaurant(nameSlug: string) {
     this.loading.set(true);
     this.error.set(null);
-    
+
     this.restaurantService.getRestaurantByName(nameSlug).subscribe({
       next: (restaurant) => {
         this.restaurant.set(restaurant);
@@ -87,7 +107,7 @@ export class MenuComponent implements OnInit {
         console.error('Error loading restaurant:', err);
         this.error.set('Failed to load restaurant menu');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -97,21 +117,21 @@ export class MenuComponent implements OnInit {
       const added = this.cartService.addToCart({
         menuItem: item,
         quantity: 1,
-        restaurant: restaurant
+        restaurant: restaurant,
       });
       if (!added) return;
       this.addingToCart.set(item.id);
-      
+
       // Add to recently added set for visual feedback
       const currentSet = this.recentlyAdded();
       currentSet.add(item.id);
       this.recentlyAdded.set(new Set(currentSet));
-      
+
       // Clear adding state after animation
       setTimeout(() => {
         this.addingToCart.set(null);
       }, 500);
-      
+
       // Clear recently added state after feedback period
       setTimeout(() => {
         const currentSet = this.recentlyAdded();
@@ -145,10 +165,10 @@ export class MenuComponent implements OnInit {
     const elementId = this.getCategoryId(category);
     const element = document.getElementById(elementId);
     if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth', 
+      element.scrollIntoView({
+        behavior: 'smooth',
         block: 'start',
-        inline: 'nearest'
+        inline: 'nearest',
       });
     }
   }
