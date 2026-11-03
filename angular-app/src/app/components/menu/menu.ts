@@ -26,6 +26,10 @@ export class MenuComponent implements OnInit {
   restaurant = signal<Restaurant | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  cartRestaurantConflict = computed(() => {
+    const restaurant = this.restaurant();
+    return !!restaurant && this.cartService.cartItems().some(item => item.restaurant.id !== restaurant.id);
+  });
   
   // Visual feedback for adding items to cart
   addingToCart = signal<string | null>(null);
@@ -90,15 +94,13 @@ export class MenuComponent implements OnInit {
   addToCart(item: MenuItem) {
     const restaurant = this.restaurant();
     if (restaurant) {
-      // Set visual feedback
-      this.addingToCart.set(item.id);
-      
-      // Add to cart
-      this.cartService.addToCart({
+      const added = this.cartService.addToCart({
         menuItem: item,
         quantity: 1,
         restaurant: restaurant
       });
+      if (!added) return;
+      this.addingToCart.set(item.id);
       
       // Add to recently added set for visual feedback
       const currentSet = this.recentlyAdded();

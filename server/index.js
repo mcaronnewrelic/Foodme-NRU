@@ -643,6 +643,34 @@ exports.start = function(PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
   app.post(API_URL_ORDER, jsonParser, async function(req, res, next) {  
     const startTime = Date.now();
     const order = req.body;
+
+    const restaurantId = order?.restaurant_id || order?.restaurant?.id;
+    if (!restaurantId || !Array.isArray(order?.items) || order.items.length === 0 || order.items.some(item => !item)) {
+      return res.status(400).json({ error: 'A restaurant and at least one menu item are required' });
+    }
+
+    try {
+      const restaurant = useDatabase
+        ? await dbService.getRestaurantById(restaurantId)
+        : storage.getById(restaurantId);
+      if (!restaurant) {
+        return res.status(400).json({ error: 'Restaurant not found' });
+      }
+      const invalidItem = order.items.some(item => {
+        const itemRestaurantId = item.restaurant_id || item.restaurant?.id;
+        const menuItemId = item.menu_item_id || item.id;
+        return (itemRestaurantId != null && String(itemRestaurantId) !== String(restaurantId)) ||
+          !restaurant.menuItems.some(menuItem => menuItemId != null
+            ? String(menuItem.id) === String(menuItemId)
+            : typeof (item.item_name || item.name) === 'string' &&
+              menuItem.name.toLowerCase() === (item.item_name || item.name).toLowerCase());
+      });
+      if (invalidItem) {
+        return res.status(400).json({ error: 'All order items must belong to the selected restaurant' });
+      }
+    } catch (error) {
+      return next(error);
+    }
     
     logger.info({
       requestId: req.requestId,

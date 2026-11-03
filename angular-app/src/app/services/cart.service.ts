@@ -23,6 +23,10 @@ export class CartService {
   );
 
   addToCart(item: CartItem) {
+    if (this.cartItemsSignal().some(cartItem => cartItem.restaurant.id !== item.restaurant.id)) {
+      return false;
+    }
+
     this.cartItemsSignal.update(items => {
       const existingIndex = items.findIndex(
         cartItem => cartItem.menuItem.id === item.menuItem.id
@@ -36,6 +40,7 @@ export class CartService {
         return [...items, item];
       }
     });
+    return true;
   }
 
   removeFromCart(menuItemId: string) {
@@ -72,8 +77,10 @@ export class CartService {
       throw new Error('Cannot submit empty cart');
     }
 
-    // Get the restaurant from the first item (assuming all items are from the same restaurant)
     const restaurant = cartItems[0].restaurant;
+    if (cartItems.some(item => item.restaurant.id !== restaurant.id)) {
+      throw new Error('Orders must contain items from a single restaurant');
+    }
 
     // Transform cart items to the format expected by the API
     const orderItems = cartItems.map(cartItem => ({

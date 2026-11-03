@@ -185,7 +185,7 @@ class DatabaseService {
             
             // Get menu items
             const menuItemsQuery = `
-                SELECT name, price, category, description
+                SELECT id, name, price, category, description
                 FROM menu_items
                 WHERE restaurant_id = $1 AND is_available = true
                 ORDER BY category, name
@@ -202,6 +202,7 @@ class DatabaseService {
                 rating: parseFloat(restaurant.rating) || 0,
                 price: this.calculatePriceLevel(menuItemsResult.rows),
                 menuItems: menuItemsResult.rows.map(item => ({
+                    id: item.id,
                     name: item.name,
                     price: parseFloat(item.price),
                     category: item.category,
@@ -278,7 +279,7 @@ class DatabaseService {
             
             // Get menu items
             const menuItemsQuery = `
-                SELECT name, price, category, description
+                SELECT id, name, price, category, description
                 FROM menu_items
                 WHERE restaurant_id = $1 AND is_available = true
                 ORDER BY category, name
@@ -295,6 +296,7 @@ class DatabaseService {
                 rating: parseFloat(restaurant.rating) || 0,
                 price: this.calculatePriceLevel(menuItemsResult.rows),
                 menuItems: menuItemsResult.rows.map(item => ({
+                    id: item.id,
                     name: item.name,
                     price: parseFloat(item.price),
                     category: item.category,
@@ -570,9 +572,9 @@ class DatabaseService {
                 const itemQuantity = item.quantity || item.qty || 1;
                 const itemInstructions = item.special_instructions || '';
 
-                if (item.menu_item_id) {
+                if (item.menu_item_id || item.id) {
                     // New format: use provided menu_item_id
-                    menuItemId = item.menu_item_id;
+                    menuItemId = item.menu_item_id || item.id;
                 } else {
                     // Old format: look up by name or create new menu item
                     const menuItemQuery = `

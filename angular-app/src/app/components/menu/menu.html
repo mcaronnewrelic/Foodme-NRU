@@ -95,6 +95,12 @@
             </div>
           </div>
         }
+        @if (cartRestaurantConflict()) {
+          <div class="alert alert-warning" role="alert">
+            Your cart contains items from {{ cartService.cartItems()[0].restaurant.name }}.
+            Complete your order or empty your cart before adding items from another restaurant.
+          </div>
+        }
         <!-- Menu Categories -->
         @if (getCategoryKeys().length > 0) {
           <div class="row">
@@ -127,6 +133,7 @@
                           [class.recently-added]="isRecentlyAdded(item.id)"
                           (click)="addToCart(item)"
                           role="button"
+                          [attr.aria-disabled]="cartRestaurantConflict()"
                           [attr.aria-label]="'Add ' + item.name + ' to cart for $' + (item.price || 0).toFixed(2)"
                           tabindex="0"
                           (keydown.enter)="addToCart(item)"
@@ -141,7 +148,7 @@
                                 [class.btn-success]="isRecentlyAdded(item.id)"
                                 [class.adding]="isAddingToCart(item.id)"
                                 (click)="addToCart(item); $event.stopPropagation()"
-                                [disabled]="!restaurant() || isAddingToCart(item.id)"
+                                [disabled]="!restaurant() || cartRestaurantConflict() || isAddingToCart(item.id)"
                                 [attr.aria-label]="'Add ' + item.name + ' to cart'">
                                 <i class="bi bi-cart-plus"
                                   [class.bi-cart-plus]="!isRecentlyAdded(item.id)"
