@@ -14,10 +14,16 @@ import { MissionProgressService } from '../../services/mission-progress.service'
 
 @Component({
   selector: 'app-customer',
-  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent],
+  imports: [
+    RouterModule,
+    FormsModule,
+    HeaderComponent,
+    NrCalloutComponent,
+    NrCheckComponent,
+  ],
   templateUrl: './customer.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './customer.css'
+  styleUrl: './customer.css',
 })
 export class CustomerComponent {
   readonly userNrql =
@@ -26,7 +32,7 @@ export class CustomerComponent {
   customerForm = signal<Customer>({
     name: '',
     phone: '',
-    address: ''
+    address: '',
   });
 
   constructor(
@@ -35,7 +41,7 @@ export class CustomerComponent {
     private http: HttpClient,
     private newRelicService: NewRelicService,
     private progress: MissionProgressService,
-    private eventTypes: EventTypesService
+    private eventTypes: EventTypesService,
   ) {
     // Initialize with existing customer data if available
     const existingCustomer = this.customerService.customer();
@@ -43,15 +49,15 @@ export class CustomerComponent {
       this.customerForm.set({
         name: existingCustomer.name || '',
         phone: existingCustomer.phone || '',
-        address: existingCustomer.address || ''
+        address: existingCustomer.address || '',
       });
     }
   }
 
   updateForm(field: keyof Customer, value: string) {
-    this.customerForm.update(current => ({
+    this.customerForm.update((current) => ({
       ...current,
-      [field]: value
+      [field]: value,
     }));
   }
 

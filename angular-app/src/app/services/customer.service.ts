@@ -3,12 +3,18 @@ import { Customer } from '../models/restaurant.model';
 import { DemoIdentityService } from './demo-identity.service';
 
 const SAMPLE_STREETS = [
-  'SE Morrison St', 'NW Flanders St', 'SW Alder St', 'NE Alberta St',
-  'SE Division St', 'NW Thurman St', 'SW Salmon St', 'NE Fremont St'
+  'SE Morrison St',
+  'NW Flanders St',
+  'SW Alder St',
+  'NE Alberta St',
+  'SE Division St',
+  'NW Thurman St',
+  'SW Salmon St',
+  'NE Fremont St',
 ];
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CustomerService {
   private demoIdentity = inject(DemoIdentityService);
@@ -48,11 +54,14 @@ export class CustomerService {
    * any other customer data.
    */
   private generateSampleCustomer(previous?: Customer): Customer {
-    const street = SAMPLE_STREETS[Math.floor(Math.random() * SAMPLE_STREETS.length)];
+    const street =
+      SAMPLE_STREETS[Math.floor(Math.random() * SAMPLE_STREETS.length)];
     let number = 100 + Math.floor(Math.random() * 3800);
     const zip = `972${String(Math.floor(Math.random() * 100)).padStart(2, '0')}`;
     let phoneNumber = Math.floor(Math.random() * 100);
-    if (previous?.phone === `(503) 555-01${String(phoneNumber).padStart(2, '0')}`) {
+    if (
+      previous?.phone === `(503) 555-01${String(phoneNumber).padStart(2, '0')}`
+    ) {
       phoneNumber = (phoneNumber + 1) % 100;
     }
     if (previous?.address === `${number} ${street}, Portland, OR ${zip}`) {
@@ -62,7 +71,7 @@ export class CustomerService {
     return {
       name: this.demoIdentity.code(),
       phone: `(503) 555-01${phoneSuffix}`,
-      address: `${number} ${street}, Portland, OR ${zip}`
+      address: `${number} ${street}, Portland, OR ${zip}`,
     };
   }
 
@@ -77,7 +86,7 @@ export class CustomerService {
   }
 
   updateCustomer(customer: Partial<Customer>) {
-    this.customerSignal.update(current => {
+    this.customerSignal.update((current) => {
       const updated = { ...current, ...customer };
       this.saveToStorage(updated);
       return updated;
@@ -93,7 +102,7 @@ export class CustomerService {
   }
 
   setAddress(address: string) {
-    this.customerSignal.update(current => {
+    this.customerSignal.update((current) => {
       const updated = { ...current, address };
       this.saveToStorage(updated);
       return updated;

@@ -14,10 +14,14 @@ describe('CustomerComponent demo identity reset', () => {
   let originalCode: string | null;
   let originalCustomer: string | null;
   let originalUrl: string;
-  const telemetry = jasmine.createSpyObj('NewRelicService', ['setCustomAttribute', 'setUserId']);
+  const telemetry = jasmine.createSpyObj('NewRelicService', [
+    'setCustomAttribute',
+    'setUserId',
+  ]);
   const initialCustomer = {
-    name: 'OU-AAAA', phone: '(503) 555-0100',
-    address: '100 SE Morrison St, Portland, OR 97200'
+    name: 'OU-AAAA',
+    phone: '(503) 555-0100',
+    address: '100 SE Morrison St, Portland, OR 97200',
   };
 
   beforeEach(async () => {
@@ -32,15 +36,26 @@ describe('CustomerComponent demo identity reset', () => {
     await TestBed.configureTestingModule({
       imports: [CustomerComponent],
       providers: [
-        provideHttpClient(), provideRouter([]),
+        provideHttpClient(),
+        provideRouter([]),
         { provide: NewRelicService, useValue: telemetry },
         { provide: EventTypesService, useValue: { mark() {}, count: () => 2 } },
-        { provide: MissionProgressService, useValue: { markTried() {}, markFound() {} } },
-        { provide: NrConfigService, useValue: {
-          showCallouts: () => false, armedScenario: () => null, armedInvestigation: () => null,
-          claimAccountNote: () => false, nrqlUrl: () => null, browserErrorsUrl: () => null
-        } }
-      ]
+        {
+          provide: MissionProgressService,
+          useValue: { markTried() {}, markFound() {} },
+        },
+        {
+          provide: NrConfigService,
+          useValue: {
+            showCallouts: () => false,
+            armedScenario: () => null,
+            armedInvestigation: () => null,
+            claimAccountNote: () => false,
+            nrqlUrl: () => null,
+            browserErrorsUrl: () => null,
+          },
+        },
+      ],
     }).compileComponents();
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
   });
@@ -61,7 +76,9 @@ describe('CustomerComponent demo identity reset', () => {
 
   it('resets all fields, persists them, and immediately tags the new identity without submitting', () => {
     render();
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button.btn-outline-secondary');
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button.btn-outline-secondary',
+    );
     button.click();
     fixture.detectChanges();
     const customer = fixture.componentInstance.customerForm();
@@ -72,11 +89,18 @@ describe('CustomerComponent demo identity reset', () => {
     expect(customer.address).not.toBe(initialCustomer.address);
     expect(customer.phone).toMatch(/^\(503\) 555-01\d{2}$/);
     expect(localStorage.getItem('orderup-demo-code')).toBe(customer.name!);
-    expect(JSON.parse(localStorage.getItem('orderup-customer')!)).toEqual(customer);
-    expect(telemetry.setCustomAttribute).toHaveBeenCalledWith('demoCode', customer.name);
+    expect(JSON.parse(localStorage.getItem('orderup-customer')!)).toEqual(
+      customer,
+    );
+    expect(telemetry.setCustomAttribute).toHaveBeenCalledWith(
+      'demoCode',
+      customer.name,
+    );
     expect(telemetry.setUserId).toHaveBeenCalledWith(customer.name);
     expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('#name').value).toBe(customer.name);
+    expect(fixture.nativeElement.querySelector('#name').value).toBe(
+      customer.name,
+    );
     const reloaded = TestBed.runInInjectionContext(() => new CustomerService());
     expect(reloaded.customer()).toEqual(customer);
   });
@@ -86,13 +110,18 @@ describe('CustomerComponent demo identity reset', () => {
     spyOn(Math, 'random').and.returnValue(0);
     component.resetCustomer();
     expect(component.customerForm()).toEqual({
-      name: 'OU-AAAB', phone: '(503) 555-0101',
-      address: '101 SE Morrison St, Portland, OR 97200'
+      name: 'OU-AAAB',
+      phone: '(503) 555-0101',
+      address: '101 SE Morrison St, Portland, OR 97200',
     });
   });
 
   it('preserves a simulated visitor prefix and replaces a URL-pinned code', () => {
-    history.replaceState(history.state, '', `${location.pathname}?demoCode=SIM-AAAA&callouts=on`);
+    history.replaceState(
+      history.state,
+      '',
+      `${location.pathname}?demoCode=SIM-AAAA&callouts=on`,
+    );
     const component = render();
     component.resetCustomer();
     const code = TestBed.inject(DemoIdentityService).code();
@@ -100,7 +129,9 @@ describe('CustomerComponent demo identity reset', () => {
     expect(code).not.toBe('SIM-AAAA');
     expect(component.customerForm().name).toBe(code);
     expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith([], {
-      queryParams: { demoCode: code }, queryParamsHandling: 'merge', replaceUrl: true
+      queryParams: { demoCode: code },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   });
 
@@ -108,7 +139,9 @@ describe('CustomerComponent demo identity reset', () => {
     const component = render();
     spyOn(Storage.prototype, 'setItem').and.throwError('Storage unavailable');
     expect(() => component.resetCustomer()).not.toThrow();
-    expect(component.customerForm().name).toBe(TestBed.inject(DemoIdentityService).code());
+    expect(component.customerForm().name).toBe(
+      TestBed.inject(DemoIdentityService).code(),
+    );
     expect(component.customerForm().name).not.toBe(initialCustomer.name);
   });
 });

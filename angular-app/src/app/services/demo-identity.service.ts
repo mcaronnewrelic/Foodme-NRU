@@ -25,7 +25,7 @@ const CODE_PATTERN = /^(OU|SIM)-[A-Z0-9]{4}$/;
  * URL parameter - the same trick ?callouts= plays for the callouts.
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DemoIdentityService {
   private newRelicService = inject(NewRelicService);
@@ -40,7 +40,7 @@ export class DemoIdentityService {
     // SPA route changes create new page views; re-stamp so every view and
     // everything under it carries the code.
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
         this.stamp();
         this.eventTypes.mark('PageView');
@@ -56,7 +56,8 @@ export class DemoIdentityService {
     let code = prefix + this.generateCode().slice(3);
     if (code === this.code()) {
       const lastCharacter = code.slice(-1);
-      const nextIndex = (CODE_ALPHABET.indexOf(lastCharacter) + 1) % CODE_ALPHABET.length;
+      const nextIndex =
+        (CODE_ALPHABET.indexOf(lastCharacter) + 1) % CODE_ALPHABET.length;
       code = code.slice(0, -1) + CODE_ALPHABET[nextIndex];
     }
     this.code.set(code);
@@ -65,7 +66,9 @@ export class DemoIdentityService {
     } catch {}
     if (new URLSearchParams(location.search).has('demoCode')) {
       void this.router.navigate([], {
-        queryParams: { demoCode: code }, queryParamsHandling: 'merge', replaceUrl: true
+        queryParams: { demoCode: code },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
       });
     }
     this.stamp();
