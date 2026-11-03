@@ -8,11 +8,12 @@ import { Restaurant } from '../../models/restaurant.model';
 import { CustomerCardComponent } from '../customer-card/customer-card';
 import { HeaderComponent } from '../header/header';
 import { NrCalloutComponent } from '../nr-callout/nr-callout';
+import { NrCheckComponent } from '../nr-check/nr-check';
 import { MissionProgressService } from '../../services/mission-progress.service';
 
 @Component({
   selector: 'app-restaurants',
-  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent, NrCalloutComponent],
+  imports: [CommonModule, RouterModule, FormsModule, CustomerCardComponent, HeaderComponent, NrCalloutComponent, NrCheckComponent],
   templateUrl: './restaurants.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './restaurants.css'
@@ -20,6 +21,10 @@ import { MissionProgressService } from '../../services/mission-progress.service'
 export class RestaurantsComponent implements OnInit {
   readonly listNrql =
     "SELECT count(*), average(duration), percentile(duration, 95) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' SINCE 1 day ago";
+  readonly menuStatusNrql =
+    "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri, http.statusCode SINCE 1 day ago";
+  readonly menuNrql =
+    "SELECT count(*), average(duration) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET request.uri SINCE 1 day ago";
 
   allRestaurants = signal<Restaurant[]>([]);
   
