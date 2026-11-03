@@ -174,14 +174,21 @@ the Find button, then the Check.
 
 Two halves; the second activates only when a failure is armed (§7).
 
-- **Try (always available):** trigger the simulated error on How It Works.
-- **Learn:** one click, three traces: a JavaScriptError, a PageAction
-  (`error_simulation_triggered`), and the round-trip time — the existing three
-  callouts, reordered into that story.
-- **Find:** the existing three queries.
-- **Check (evidence):** “In the PageAction data, what `errorType` did your
-  simulated error record?” — text entry matched against the value the
-  simulation writes.
+- **Try (always available):** press Simulate an Error on How It Works. The
+  server picks one of three failures at random (`menu-cache`, `pricing-sync`,
+  `payment-gateway`; `GET /simulate/error/incident`), so the student doesn't
+  know which one fired.
+- **Learn:** two agents, two views of one failure. The browser agent records a
+  JavaScriptError with only the generic HTTP failure; the server agent records
+  a TransactionError with the real exception message. A PageAction
+  (`error_simulation_triggered`) and its timing remain as supporting callouts.
+- **Find:** `FROM TransactionError WHERE demoCode = '<their code>'`. Each click
+  generates a fresh `INC-XXXX` ticket in the browser, sends it to the server,
+  and the server writes it into the error message. The ticket is never shown
+  on the page, and is kept out of the PageAction and the response body.
+- **Check (evidence):** “Your error message ends with an incident code
+  (INC-XXXX). What is it?” — text entry matched against the ticket from the
+  student's own click. The check appears after the first click.
 - **Try (armed only):** if a `DEMO_FAILING_*` switch is on, the mission
   becomes “Hunt the planted failure”: the scenario banner (§7) names the
   symptom only (“Some orders are failing”). The student reproduces it, then

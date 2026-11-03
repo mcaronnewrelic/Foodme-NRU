@@ -102,7 +102,7 @@ exports.createApp = function (dependencies = {}) {
   // Serve the original static files as fallback (if needed)
   app.use("/legacy", express.static(staticDir));
 
-  app.use("/simulate", createSimulationRouter({ logger }));
+  app.use("/simulate", createSimulationRouter({ logger, newrelic }));
 
   app.use(
     "/api",
