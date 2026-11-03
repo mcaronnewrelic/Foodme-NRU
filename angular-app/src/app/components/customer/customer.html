@@ -15,6 +15,12 @@
             made-up details for your visit. Edit them if you like — but please
             don't replace them with your real information.
           </p>
+          <div class="d-flex justify-content-end mb-3">
+            <button type="button" class="btn btn-outline-secondary" (click)="resetCustomer()">
+              <i class="fas fa-user-plus me-2" aria-hidden="true"></i>
+              New Demo Customer
+            </button>
+          </div>
           
           <form (ngSubmit)="onSubmit()">
             <div class="form-group mb-3">

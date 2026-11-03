@@ -55,6 +55,12 @@ export class CustomerComponent {
     }));
   }
 
+  resetCustomer() {
+    const customer = this.customerService.resetSampleCustomer();
+    this.customerForm.set(customer);
+    this.newRelicService.setUserId(customer.name || 'guest');
+  }
+
   onSubmit() {
     const form = this.customerForm();
     if (form.address?.trim()) {

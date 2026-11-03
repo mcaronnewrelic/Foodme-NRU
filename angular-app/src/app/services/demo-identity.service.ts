@@ -51,6 +51,27 @@ export class DemoIdentityService {
     this.newRelicService.setCustomAttribute('demoCode', this.code());
   }
 
+  resetCode(): string {
+    const prefix = this.code().startsWith('SIM-') ? 'SIM-' : 'OU-';
+    let code = prefix + this.generateCode().slice(3);
+    if (code === this.code()) {
+      const lastCharacter = code.slice(-1);
+      const nextIndex = (CODE_ALPHABET.indexOf(lastCharacter) + 1) % CODE_ALPHABET.length;
+      code = code.slice(0, -1) + CODE_ALPHABET[nextIndex];
+    }
+    this.code.set(code);
+    try {
+      localStorage.setItem(DEMO_CODE_STORAGE_KEY, code);
+    } catch {}
+    if (new URLSearchParams(location.search).has('demoCode')) {
+      void this.router.navigate([], {
+        queryParams: { demoCode: code }, queryParamsHandling: 'merge', replaceUrl: true
+      });
+    }
+    this.stamp();
+    return code;
+  }
+
   private loadOrCreateCode(): string {
     try {
       // A code handed over in the URL wins over the stored one: it is how

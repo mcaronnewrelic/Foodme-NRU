@@ -47,11 +47,18 @@ export class CustomerService {
    * generated. Visitors can edit the details, and the sample persists like
    * any other customer data.
    */
-  private generateSampleCustomer(): Customer {
+  private generateSampleCustomer(previous?: Customer): Customer {
     const street = SAMPLE_STREETS[Math.floor(Math.random() * SAMPLE_STREETS.length)];
-    const number = 100 + Math.floor(Math.random() * 3800);
+    let number = 100 + Math.floor(Math.random() * 3800);
     const zip = `972${String(Math.floor(Math.random() * 100)).padStart(2, '0')}`;
-    const phoneSuffix = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+    let phoneNumber = Math.floor(Math.random() * 100);
+    if (previous?.phone === `(503) 555-01${String(phoneNumber).padStart(2, '0')}`) {
+      phoneNumber = (phoneNumber + 1) % 100;
+    }
+    if (previous?.address === `${number} ${street}, Portland, OR ${zip}`) {
+      number = number === 3899 ? 100 : number + 1;
+    }
+    const phoneSuffix = String(phoneNumber).padStart(2, '0');
     return {
       name: this.demoIdentity.code(),
       phone: `(503) 555-01${phoneSuffix}`,
@@ -75,6 +82,14 @@ export class CustomerService {
       this.saveToStorage(updated);
       return updated;
     });
+  }
+
+  resetSampleCustomer(): Customer {
+    this.demoIdentity.resetCode();
+    const customer = this.generateSampleCustomer(this.customerSignal());
+    this.customerSignal.set(customer);
+    this.saveToStorage(customer);
+    return customer;
   }
 
   setAddress(address: string) {
