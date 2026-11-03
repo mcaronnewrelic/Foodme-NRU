@@ -5,14 +5,24 @@ const { test } = require("node:test");
 const vm = require("node:vm");
 const { nameToSlug } = require("./url-utils");
 
-function createCheckout(databaseMode, { failOrder = false, failing = {} } = {}) {
+function createCheckout(
+  databaseMode,
+  { failOrder = false, failing = {} } = {},
+) {
   const routes = new Map();
   const restaurant = {
     id: "restaurant-a",
     name: "Restaurant A",
     menuItems: [{ id: "item-a", name: "Soup" }],
   };
-  const calls = { metrics: 0, orders: 0, events: [], metricValues: [], attributes: {}, sequence: [] };
+  const calls = {
+    metrics: 0,
+    orders: 0,
+    events: [],
+    metricValues: [],
+    attributes: {},
+    sequence: [],
+  };
   const app = {
     locals: {},
     use() {},
@@ -55,7 +65,9 @@ function createCheckout(databaseMode, { failOrder = false, failing = {} } = {}) 
   }
   const dependencies = {
     newrelic: {
-      addCustomAttributes(attributes) { Object.assign(calls.attributes, attributes); },
+      addCustomAttributes(attributes) {
+        Object.assign(calls.attributes, attributes);
+      },
       setUserID() {},
       recordMetric(name, value) {
         calls.metrics++;
@@ -129,7 +141,9 @@ function createCheckout(databaseMode, { failOrder = false, failing = {} } = {}) 
     await routes.get("/api/order")(
       { body: order, requestId: "test" },
       response,
-      (error) => { response.error = error; },
+      (error) => {
+        response.error = error;
+      },
     );
     return { response, calls };
   };
@@ -198,7 +212,8 @@ for (const databaseMode of [false, true]) {
   test(`${mode}: records item details and bounded metrics using the accepted order ID`, async () => {
     const { response, calls } = await createCheckout(databaseMode)({
       ...order([ownItem, { ...ownItem, qty: 3, price: 5.95 }]),
-      deliverTo: { name: "OU-TEST" }, demoCode: "OU-TEST"
+      deliverTo: { name: "OU-TEST" },
+      demoCode: "OU-TEST",
     });
     assert.equal(response.statusCode, 201);
     assert.equal(calls.attributes.orderId, response.body.orderId);
@@ -218,7 +233,7 @@ for (const databaseMode of [false, true]) {
     }
     assert.deepEqual(calls.metricValues, [
       { name: "total", value: 22.85 },
-      { name: "restaurant_a/total", value: 22.85 }
+      { name: "restaurant_a/total", value: 22.85 },
     ]);
     if (databaseMode) assert.equal(calls.sequence[0], "createOrder");
   });
@@ -226,7 +241,8 @@ for (const databaseMode of [false, true]) {
 
 test("database: a failed write emits no accepted-order events or metrics", async () => {
   const { response, calls } = await createCheckout(true, { failOrder: true })({
-    restaurant: { id: "restaurant-a" }, items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }]
+    restaurant: { id: "restaurant-a" },
+    items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }],
   });
   assert.equal(response.error?.message, "Database write failed");
   assert.equal(response.body, undefined);
@@ -236,8 +252,11 @@ test("database: a failed write emits no accepted-order events or metrics", async
 });
 
 test("planned failures keep business attributes but emit no sales telemetry", async () => {
-  const { response, calls } = await createCheckout(true, { failing: { orderItem: "soup" } })({
-    restaurant: { id: "restaurant-a" }, items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }]
+  const { response, calls } = await createCheckout(true, {
+    failing: { orderItem: "soup" },
+  })({
+    restaurant: { id: "restaurant-a" },
+    items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }],
   });
   assert.match(response.error?.message, /Inventory check failed/);
   assert.equal(calls.attributes.restaurant, "Restaurant A");
@@ -248,8 +267,11 @@ test("planned failures keep business attributes but emit no sales telemetry", as
 
 test("memory: accepted orders receive distinct server-generated IDs", async () => {
   const checkout = createCheckout(false);
-  const order = { orderId: "client-id", restaurant: { id: "restaurant-a" },
-    items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }] };
+  const order = {
+    orderId: "client-id",
+    restaurant: { id: "restaurant-a" },
+    items: [{ id: "item-a", name: "Soup", price: 5, qty: 1 }],
+  };
   const first = await checkout(order);
   const second = await checkout(order);
   assert.match(first.response.body.orderId, /^[0-9a-f-]{36}$/);

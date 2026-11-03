@@ -15,9 +15,21 @@ describe('ThankYouComponent receipt and telemetry', () => {
   const markTried = jasmine.createSpy('markTried');
   const orderId = 'abc12345-1234-1234-1234-123456789abc';
   const item: CartItem = {
-    restaurant: { id: 'a', name: 'Restaurant A', cuisine: 'Test', price: 1, rating: 5 },
-    menuItem: { id: 'soup', name: 'Soup', description: '', price: 5.95, category: 'Main' },
-    quantity: 3
+    restaurant: {
+      id: 'a',
+      name: 'Restaurant A',
+      cuisine: 'Test',
+      price: 1,
+      rating: 5,
+    },
+    menuItem: {
+      id: 'soup',
+      name: 'Soup',
+      description: '',
+      price: 5.95,
+      category: 'Main',
+    },
+    quantity: 3,
   };
 
   beforeEach(async () => {
@@ -29,17 +41,32 @@ describe('ThankYouComponent receipt and telemetry', () => {
       imports: [ThankYouComponent],
       providers: [
         provideRouter([]),
-        { provide: CartService, useValue: { totalItems: () => 0, totalPrice: () => 0 } },
+        {
+          provide: CartService,
+          useValue: { totalItems: () => 0, totalPrice: () => 0 },
+        },
         { provide: DemoIdentityService, useValue: { code: () => 'OU-TEST' } },
-        { provide: MissionProgressService, useValue: {
-          markTried, markFound() {}, isSolved: () => false,
-          progress: () => ({ attempts: 0, solved: false })
-        } },
-        { provide: NrConfigService, useValue: {
-          showCallouts, armedScenario: () => null, armedInvestigation: () => null,
-          claimAccountNote: () => false, nrqlUrl: () => null, browserErrorsUrl: () => null
-        } }
-      ]
+        {
+          provide: MissionProgressService,
+          useValue: {
+            markTried,
+            markFound() {},
+            isSolved: () => false,
+            progress: () => ({ attempts: 0, solved: false }),
+          },
+        },
+        {
+          provide: NrConfigService,
+          useValue: {
+            showCallouts,
+            armedScenario: () => null,
+            armedInvestigation: () => null,
+            claimAccountNote: () => false,
+            nrqlUrl: () => null,
+            browserErrorsUrl: () => null,
+          },
+        },
+      ],
     }).compileComponents();
   });
 
@@ -67,12 +94,16 @@ describe('ThankYouComponent receipt and telemetry', () => {
     expect(component.joinedItemsNrql).toContain('FROM ItemsOrdered');
     expect(component.joinedItemsNrql).toContain('JOIN (FROM Transaction');
     expect(component.joinedItemsNrql).toContain('ON orderId');
-    expect(component.joinedItemsNrql).toContain("name = 'WebTransaction/Expressjs/POST//api/order'");
+    expect(component.joinedItemsNrql).toContain(
+      "name = 'WebTransaction/Expressjs/POST//api/order'",
+    );
     expect(component.joinedItemsNrql).toContain(`orderId = '${orderId}'`);
     expect(component.joinedItemsNrql).toContain('http.statusCode');
     expect(component.joinedItemsNrql).not.toContain('requestId');
     expect(component.metricsNrql).not.toContain(orderId);
-    expect(component.metricsNrql).toContain("metricTimesliceName = 'Custom/total'");
+    expect(component.metricsNrql).toContain(
+      "metricTimesliceName = 'Custom/total'",
+    );
   });
 
   it('keeps the receipt visible while explanations follow Behind the scenes', () => {
@@ -93,7 +124,9 @@ describe('ThankYouComponent receipt and telemetry', () => {
     history.replaceState({}, '');
     render();
     expect(fixture.nativeElement.textContent).toContain('No Recent Order');
-    expect(fixture.nativeElement.textContent).not.toContain('successfully placed');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'successfully placed',
+    );
     expect(markTried).not.toHaveBeenCalled();
   });
 });

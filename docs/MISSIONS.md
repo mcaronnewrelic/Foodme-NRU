@@ -23,13 +23,13 @@ invisible to students.
 
 ## The five missions
 
-| # | Mission | Page | What it teaches | Find data | Check |
-|---|---------|------|-----------------|-----------|-------|
-| 1 | Say who you are | Customer | `setUserId()` makes the name the `enduser.id`; a second stamp, the `demoCode`, rides every browser event | Personal — faceted by `demoCode` | Evidence (choice): how many event types carry your code so far |
-| 2 | Find a menu in the data | Restaurants → Menu | Every menu load is an APM transaction; filtering the list is client-side and creates **no** request — the absence is the lesson | Cohort — labelled "Shows everyone's data" | Reasoning (choice): why no new request appeared |
-| 3 | Place the order, keep the receipt | Checkout → Thank You | Order attributes on a Transaction, one `ItemsOrdered` event per line joined by `orderId`, and global/restaurant metric rollups without per-order identity | Personal events scoped by `orderId`; cohort metrics | Evidence (text): the last 4 characters of the receipt's `orderId` |
-| 4 | Find it again later | Orders | Lookup works with no email; `requestId` and `demoCode` are the join keys — and the transaction's `userID` is the code in disguise | Personal — filtered by `userID` | Reasoning (multi-select): which two values identify your order |
-| 5 | Break it on purpose | How It Works | One click, three traces (JavaScriptError, PageAction, round-trip time); then hunting a planted failure to its exact error message | Personal + cohort errors | Evidence (text): the simulated error's `errorType` — or the armed failure's exact message (either half completes the mission) |
+| #   | Mission                           | Page                 | What it teaches                                                                                                                                           | Find data                                           | Check                                                                                                                         |
+| --- | --------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Say who you are                   | Customer             | `setUserId()` makes the name the `enduser.id`; a second stamp, the `demoCode`, rides every browser event                                                  | Personal — faceted by `demoCode`                    | Evidence (choice): how many event types carry your code so far                                                                |
+| 2   | Find a menu in the data           | Restaurants → Menu   | Every menu load is an APM transaction; filtering the list is client-side and creates **no** request — the absence is the lesson                           | Cohort — labelled "Shows everyone's data"           | Reasoning (choice): why no new request appeared                                                                               |
+| 3   | Place the order, keep the receipt | Checkout → Thank You | Order attributes on a Transaction, one `ItemsOrdered` event per line joined by `orderId`, and global/restaurant metric rollups without per-order identity | Personal events scoped by `orderId`; cohort metrics | Evidence (text): the last 4 characters of the receipt's `orderId`                                                             |
+| 4   | Find it again later               | Orders               | Lookup works with no email; `requestId` and `demoCode` are the join keys — and the transaction's `userID` is the code in disguise                         | Personal — filtered by `userID`                     | Reasoning (multi-select): which two values identify your order                                                                |
+| 5   | Break it on purpose               | How It Works         | One click, three traces (JavaScriptError, PageAction, round-trip time); then hunting a planted failure to its exact error message                         | Personal + cohort errors                            | Evidence (text): the simulated error's `errorType` — or the armed failure's exact message (either half completes the mission) |
 
 ## Answer keys, and where they come from
 
@@ -149,17 +149,17 @@ Exclusion recipes for queries:
 
 ## Where the code lives
 
-| Piece | Location |
-|-------|----------|
-| Mission registry (ids, titles, routes, check ids) | `angular-app/src/app/services/missions.ts` |
-| Progress state (tried / found / attempts / solved) | `angular-app/src/app/services/mission-progress.service.ts` |
-| Mission 1's event-type tracker | `angular-app/src/app/services/event-types.service.ts` |
-| demoCode identity | `angular-app/src/app/services/demo-identity.service.ts` |
-| Progress strip | `angular-app/src/app/components/mission-strip/` |
-| Callout (Try line, Find-click → found, token resolution) | `angular-app/src/app/components/nr-callout/` |
-| Check component (`choice` / `multi` / `number` / `text`) | `angular-app/src/app/components/nr-check/` |
-| Per-mission wiring | the `customer`, `restaurants`, `menu`, `thank-you`, `orders`, `how-it-works` components |
-| Failure scenarios & message templates | `server/demo-failures.js`, `server/index.js` |
+| Piece                                                    | Location                                                                                |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Mission registry (ids, titles, routes, check ids)        | `angular-app/src/app/services/missions.ts`                                              |
+| Progress state (tried / found / attempts / solved)       | `angular-app/src/app/services/mission-progress.service.ts`                              |
+| Mission 1's event-type tracker                           | `angular-app/src/app/services/event-types.service.ts`                                   |
+| demoCode identity                                        | `angular-app/src/app/services/demo-identity.service.ts`                                 |
+| Progress strip                                           | `angular-app/src/app/components/mission-strip/`                                         |
+| Callout (Try line, Find-click → found, token resolution) | `angular-app/src/app/components/nr-callout/`                                            |
+| Check component (`choice` / `multi` / `number` / `text`) | `angular-app/src/app/components/nr-check/`                                              |
+| Per-mission wiring                                       | the `customer`, `restaurants`, `menu`, `thank-you`, `orders`, `how-it-works` components |
+| Failure scenarios & message templates                    | `server/demo-failures.js`, `server/index.js`                                            |
 
 The full design record — rationale, the link-pattern investigation,
 and the unbuilt §8 dashboards and §11 Investigations — is

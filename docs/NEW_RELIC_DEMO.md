@@ -6,15 +6,15 @@ FoodMe is also a teaching app for New Relic. This page covers the parts built fo
 
 Green dashed boxes on the pages show the New Relic data that page creates, with the NRQL and a button that opens it in New Relic.
 
-| Page | What the callout shows |
-|---|---|
-| Customer | `enduser.id`, set by `setUserId()` |
-| Restaurants | The `GET /api/restaurant` transaction |
-| Menu | Each menu request, and the same requests by status code |
-| Checkout | Recent `POST /api/order` transactions |
-| Thank you | The order Transaction, `ItemsOrdered` detail events, an `orderId` JOIN, and global/per-restaurant total metrics |
-| Orders | Order lookups, without any email address |
-| How It Works | The simulated error, its page action, and its round-trip time |
+| Page         | What the callout shows                                                                                          |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| Customer     | `enduser.id`, set by `setUserId()`                                                                              |
+| Restaurants  | The `GET /api/restaurant` transaction                                                                           |
+| Menu         | Each menu request, and the same requests by status code                                                         |
+| Checkout     | Recent `POST /api/order` transactions                                                                           |
+| Thank you    | The order Transaction, `ItemsOrdered` detail events, an `orderId` JOIN, and global/per-restaurant total metrics |
+| Orders       | Order lookups, without any email address                                                                        |
+| How It Works | The simulated error, its page action, and its round-trip time                                                   |
 
 **Show or hide them** with "Behind the scenes" in the header. The choice is saved in the browser. They start hidden; change `CALLOUTS_SHOWN_BY_DEFAULT` in `angular-app/src/app/nr-config.ts` to start shown.
 
@@ -92,14 +92,14 @@ local source edit.
 
 All in `.env` (see `.env.example`).
 
-| Variable | Needed for |
-|---|---|
-| `NEW_RELIC_ACCOUNT_ID` | Callout buttons. Without it, the buttons are hidden. |
+| Variable                        | Needed for                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| `NEW_RELIC_ACCOUNT_ID`          | Callout buttons. Without it, the buttons are hidden.                               |
 | `NEW_RELIC_BROWSER_ENTITY_GUID` | The "Open Errors Inbox" button. Find it as `entityGuid` on any `PageAction` event. |
-| `NEW_RELIC_BROWSER_APP_ID` | Uploading source maps. Find it as `appId` on any `PageAction` event. |
-| `DEMO_FAILING_RESTAURANT` | Planned failure: this restaurant's menu fails. |
-| `DEMO_FAILING_ORDER_RESTAURANT` | Planned failure: orders from this restaurant fail. |
-| `DEMO_FAILING_ORDER_ITEM` | Planned failure: orders containing this menu item fail. |
+| `NEW_RELIC_BROWSER_APP_ID`      | Uploading source maps. Find it as `appId` on any `PageAction` event.               |
+| `DEMO_FAILING_RESTAURANT`       | Planned failure: this restaurant's menu fails.                                     |
+| `DEMO_FAILING_ORDER_RESTAURANT` | Planned failure: orders from this restaurant fail.                                 |
+| `DEMO_FAILING_ORDER_ITEM`       | Planned failure: orders containing this menu item fail.                            |
 
 Restaurant and item values are slugs: lowercase, punctuation dropped, underscores for spaces (`Esther's German Saloon` becomes `esthers_german_saloon`). Leave a failure variable empty to turn it off. The container reads `.env` only when it is created, so after changing a value run:
 
@@ -109,11 +109,11 @@ docker-compose -f docker/docker-compose.dev-simple.yml up -d --build --force-rec
 
 ## Planned failures
 
-| Switch | What visitors see | What students can find |
-|---|---|---|
-| `DEMO_FAILING_RESTAURANT` | "Failed to load restaurant menu" | A 500 on `GET /api/restaurant/by-name/:name` for one `restaurantSlug`, with the message `Menu data ... is corrupted` |
-| `DEMO_FAILING_ORDER_RESTAURANT` | "Purchase failed" for every order from that restaurant | `Kitchen at "..." is not accepting orders` on `POST /api/order`, with the restaurant on the transaction |
-| `DEMO_FAILING_ORDER_ITEM` | "Purchase failed" when the cart has that item | `Inventory check failed for "..."` and a `failedItem` attribute. Harder to spot: only some orders fail. |
+| Switch                          | What visitors see                                      | What students can find                                                                                               |
+| ------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `DEMO_FAILING_RESTAURANT`       | "Failed to load restaurant menu"                       | A 500 on `GET /api/restaurant/by-name/:name` for one `restaurantSlug`, with the message `Menu data ... is corrupted` |
+| `DEMO_FAILING_ORDER_RESTAURANT` | "Purchase failed" for every order from that restaurant | `Kitchen at "..." is not accepting orders` on `POST /api/order`, with the restaurant on the transaction              |
+| `DEMO_FAILING_ORDER_ITEM`       | "Purchase failed" when the cart has that item          | `Inventory check failed for "..."` and a `failedItem` attribute. Harder to spot: only some orders fail.              |
 
 A failed order emits no `ItemsOrdered` events or sales metrics. A database write
 failure is returned as an error rather than a successful fallback receipt.

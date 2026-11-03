@@ -21,9 +21,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Orders', sum(orderTotal) AS 'Revenue' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' SINCE 1 week ago"
               }
             ]
@@ -43,9 +41,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Orders' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -65,9 +61,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Orders' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
@@ -87,9 +81,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT sum(orderTotal) AS 'Revenue' FROM Transaction WHERE name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET restaurant SINCE 1 week ago"
               }
             ]
@@ -109,9 +101,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -131,9 +121,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(newrelic.timeslice.value) AS 'Orders', sum(newrelic.timeslice.value) AS 'Revenue' FROM Metric WHERE appName = 'OrderUp' AND (metricTimesliceName = 'Custom/total' OR metricTimesliceName LIKE 'Custom/%/total') FACET metricTimesliceName TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -153,9 +141,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = 'WebTransaction/Expressjs/POST//api/order' FACET error.message SINCE 1 week ago"
               }
             ]
@@ -181,9 +167,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET http.statusCode TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -203,9 +187,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, http.statusCode SINCE 1 week ago LIMIT 50"
               }
             ]
@@ -225,9 +207,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*), latest(timestamp) AS 'Last seen' FROM TransactionError WHERE appName = 'OrderUp' AND transactionName = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug, error.message SINCE 1 week ago"
               }
             ]
@@ -247,9 +227,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT average(duration) FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant/by-name/:name' FACET restaurantSlug SINCE 1 week ago LIMIT 20"
               }
             ]
@@ -269,9 +247,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT average(duration) AS 'Average', percentile(duration, 95) AS '95th percentile' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/GET//api/restaurant' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -291,9 +267,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM TransactionError WHERE appName = 'OrderUp' AND transactionName NOT LIKE '%/simulate/%' FACET transactionName, error.message SINCE 1 week ago"
               }
             ]
@@ -319,9 +293,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(session) AS 'Sessions', count(*) AS 'Page views' FROM PageView WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' SINCE 1 week ago"
               }
             ]
@@ -341,9 +313,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM PageView WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET pageUrl SINCE 1 week ago LIMIT 20"
               }
             ]
@@ -363,9 +333,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM JavaScriptError WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET errorMessage, page SINCE 1 week ago"
               }
             ]
@@ -385,9 +353,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM AjaxRequest WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' AND httpResponseCode >= 500 FACET requestUrl SINCE 1 week ago"
               }
             ]
@@ -407,9 +373,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM PageAction WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' FACET actionName SINCE 1 week ago"
               }
             ]
@@ -429,9 +393,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT average(durationMs), max(durationMs) FROM PageAction WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' AND actionName = 'error_simulation_triggered' TIMESERIES AUTO SINCE 1 week ago"
               }
             ]
@@ -451,9 +413,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM PageView, AjaxRequest, PageAction, JavaScriptError WHERE demoCode NOT LIKE 'SIM-%' AND appName = 'OrderUp' AND enduser.id IS NOT NULL FACET enduser.id, eventType() SINCE 1 week ago"
               }
             ]
@@ -479,9 +439,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Answers', uniqueCount(demoCode) AS 'Visitor codes' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
@@ -501,9 +459,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT percentage(count(*), WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct') AS 'Right on the first try' FROM OrderupQuizAnswer WHERE attempt = 1 SINCE 1 week ago"
               }
             ]
@@ -538,9 +494,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM OrderupQuizAnswer FACET outcome TIMESERIES AUTO WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
@@ -560,9 +514,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT percentage(count(*), WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct') AS 'Right first try (%)' FROM OrderupQuizAnswer WHERE attempt = 1 FACET missionId SINCE 1 week ago"
               }
             ]
@@ -582,9 +534,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT percentage(count(*), WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'incorrect') AS 'Wrong first try (%)', count(*) AS 'First tries' FROM OrderupQuizAnswer WHERE attempt = 1 FACET missionId, questionId LIMIT 20 SINCE 1 week ago"
               }
             ]
@@ -604,9 +554,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Times picked' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'incorrect' FACET missionId, questionId, answer LIMIT 20 SINCE 1 week ago"
               }
             ]
@@ -626,9 +574,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT average(attempt) AS 'Average tries', max(attempt) AS 'Most tries' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct' FACET missionId, questionId LIMIT 20 SINCE 1 week ago"
               }
             ]
@@ -648,9 +594,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Solved' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct' FACET attempt SINCE 1 week ago"
               }
             ]
@@ -685,9 +629,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Your answers' FROM OrderupQuizAnswer WHERE demoCode = {{demoCode}} SINCE 1 week ago"
               }
             ]
@@ -707,9 +649,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT percentage(count(*), WHERE outcome = 'correct') AS 'Right on the first try' FROM OrderupQuizAnswer WHERE attempt = 1 AND demoCode = {{demoCode}} SINCE 1 week ago"
               }
             ]
@@ -729,9 +669,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Your orders' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' AND demoCode = {{demoCode}} SINCE 1 week ago"
               }
             ]
@@ -751,9 +689,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT timestamp, missionId, question, answer, outcome, attempt FROM OrderupQuizAnswer WHERE demoCode = {{demoCode}} LIMIT 50 SINCE 1 week ago"
               }
             ]
@@ -779,9 +715,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(demoCode) AS 'Started (answered a check)' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
@@ -801,9 +735,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(demoCode) AS 'Placed an order' FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' AND orderId IS NOT NULL AND demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
@@ -823,9 +755,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(demoCode) AS 'Checked a mission' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct' SINCE 1 week ago"
               }
             ]
@@ -845,9 +775,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(demoCode) AS 'Completed Mission 5' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct' AND missionId = 'mission-5' SINCE 1 week ago"
               }
             ]
@@ -867,9 +795,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT uniqueCount(demoCode) AS 'Visitors' FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct' FACET missionId SINCE 1 week ago"
               }
             ]
@@ -889,9 +815,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) FROM OrderupQuizAnswer FACET missionId, outcome WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
               }
             ]
@@ -911,9 +835,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Answers', percentage(count(*), WHERE demoCode NOT LIKE 'SIM-%' AND outcome = 'correct') AS 'Correct (%)', average(attempt) AS 'Avg attempts' FROM OrderupQuizAnswer FACET missionId SINCE 1 week ago"
               }
             ]
@@ -939,9 +861,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT latest(unfinished) AS 'Unfinished orders' FROM OrderPipelineSample"
               }
             ]
@@ -961,9 +881,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT latest(oldestUnfinishedAgeSeconds) AS 'Oldest waiting (s)' FROM OrderPipelineSample"
               }
             ]
@@ -983,9 +901,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT count(*) AS 'Failed polls' FROM Transaction WHERE name = 'OrderStatusWorker/poll' AND error IS true SINCE 1 hour ago"
               }
             ]
@@ -1005,9 +921,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT latest(pending) AS 'Pending', latest(preparing) AS 'Preparing', latest(outForDelivery) AS 'Out for delivery' FROM OrderPipelineSample TIMESERIES"
               }
             ]
@@ -1027,9 +941,7 @@
           "rawConfiguration": {
             "nrqlQueries": [
               {
-                "accountIds": [
-                  1352811
-                ],
+                "accountIds": [1352811],
                 "query": "SELECT sum(advanced) AS 'Advanced' FROM OrderPipelineSample TIMESERIES"
               }
             ]
@@ -1044,9 +956,7 @@
       "items": null,
       "defaultValues": [],
       "nrqlQuery": {
-        "accountIds": [
-          1352811
-        ],
+        "accountIds": [1352811],
         "query": "SELECT uniques(demoCode) FROM OrderupQuizAnswer WHERE demoCode NOT LIKE 'SIM-%' SINCE 1 week ago"
       },
       "options": {

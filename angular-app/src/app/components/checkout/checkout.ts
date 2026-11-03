@@ -1,4 +1,9 @@
-import { Component, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,17 +25,23 @@ interface PaymentInfo {
 
 @Component({
   selector: 'app-checkout',
-  imports: [RouterModule, FormsModule, HeaderComponent, NrCalloutComponent, NrCheckComponent],
+  imports: [
+    RouterModule,
+    FormsModule,
+    HeaderComponent,
+    NrCalloutComponent,
+    NrCheckComponent,
+  ],
   templateUrl: './checkout.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './checkout.css'
+  styleUrl: './checkout.css',
 })
 export class CheckoutComponent implements OnInit {
   readonly checkoutNrql =
     "SELECT timestamp, restaurant, itemCount, orderTotal, orderId, duration FROM Transaction WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order'";
 
   submitting = signal(false);
-  
+
   // Use customer data from the customer service
   get customer() {
     return this.customerService.customer();
@@ -41,20 +52,20 @@ export class CheckoutComponent implements OnInit {
     number: '4111111111111111',
     expire: '12/2025',
     cvc: '123',
-    name: 'John Doe'
+    name: 'John Doe',
   };
 
   cardTypes = [
     { value: 'visa', label: 'Visa' },
     { value: 'mc', label: 'MasterCard' },
     { value: 'amex', label: 'American Express' },
-    { value: 'discover', label: 'Discover' }
+    { value: 'discover', label: 'Discover' },
   ];
 
   constructor(
     public cartService: CartService,
     private customerService: CustomerService,
-    private router: Router
+    private router: Router,
   ) {
     // Update payment name when customer data changes
     const customerData = this.customerService.customer();
@@ -64,11 +75,12 @@ export class CheckoutComponent implements OnInit {
   }
 
   ngOnInit() {
-     // Check if customer has completed their information
+    // Check if customer has completed their information
     if (!this.customerService.address) {
       this.router.navigate(['/customer']);
       return;
-    }  }
+    }
+  }
 
   updateQuantity(menuItemId: string, quantity: number) {
     this.cartService.updateQuantity(menuItemId, quantity);
@@ -84,7 +96,7 @@ export class CheckoutComponent implements OnInit {
 
   updateCustomerField(field: keyof Customer, value: string) {
     this.customerService.updateCustomer({ [field]: value });
-    
+
     // Update payment name when customer name changes
     if (field === 'name') {
       this.payment.name = value;
@@ -134,21 +146,23 @@ export class CheckoutComponent implements OnInit {
     try {
       // Submit the order to the API
       const customerData = this.customer;
-      const orderResponse = await firstValueFrom(this.cartService.submitOrder(customerData));
-      
+      const orderResponse = await firstValueFrom(
+        this.cartService.submitOrder(customerData),
+      );
+
       console.log('Order submitted successfully:', orderResponse);
-      const items = this.cartService.cartItems().map(item => ({
+      const items = this.cartService.cartItems().map((item) => ({
         ...item,
         menuItem: { ...item.menuItem },
-        restaurant: { ...item.restaurant }
+        restaurant: { ...item.restaurant },
       }));
-      
+
       // Clear the cart after successful purchase
       this.cartService.clearCart();
-      
+
       // Navigate to thank you page
       this.router.navigate(['/thank-you'], {
-        state: { orderId: orderResponse.orderId, items }
+        state: { orderId: orderResponse.orderId, items },
       });
     } catch (error) {
       console.error('Purchase failed:', error);
@@ -160,7 +174,7 @@ export class CheckoutComponent implements OnInit {
 
   isFormValid(): boolean {
     const customerData = this.customer || {};
-    
+
     // Log the validation state for debugging
     console.log('Form validation check:', {
       paymentType: this.payment.type.length > 0,
@@ -173,17 +187,19 @@ export class CheckoutComponent implements OnInit {
       customerAddress: (customerData.address?.length || 0) > 0,
       cartItems: this.cartService.totalItems() > 0,
       customerData: customerData,
-      payment: this.payment
+      payment: this.payment,
     });
-    
-    return this.payment.type.length > 0 &&
-           this.payment.number.length >= 15 && // Allow 15-16 digits for different card types
-           this.payment.expire.match(/\d{2}\/\d{4}/) !== null &&
-           this.payment.cvc.length >= 3 &&
-           this.payment.name.length > 0 &&
-           (customerData.name?.length || 0) > 0 &&
-           (customerData.phone?.length || 0) > 0 &&
-           (customerData.address?.length || 0) > 0 &&
-           this.cartService.totalItems() > 0;
+
+    return (
+      this.payment.type.length > 0 &&
+      this.payment.number.length >= 15 && // Allow 15-16 digits for different card types
+      this.payment.expire.match(/\d{2}\/\d{4}/) !== null &&
+      this.payment.cvc.length >= 3 &&
+      this.payment.name.length > 0 &&
+      (customerData.name?.length || 0) > 0 &&
+      (customerData.phone?.length || 0) > 0 &&
+      (customerData.address?.length || 0) > 0 &&
+      this.cartService.totalItems() > 0
+    );
   }
 }

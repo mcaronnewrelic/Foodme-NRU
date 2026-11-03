@@ -752,11 +752,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
       order.items.length === 0 ||
       order.items.some((item) => !item)
     ) {
-      return res
-        .status(400)
-        .json({
-          error: "A restaurant and at least one menu item are required",
-        });
+      return res.status(400).json({
+        error: "A restaurant and at least one menu item are required",
+      });
     }
 
     let restaurant;
@@ -783,11 +781,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         );
       });
       if (invalidItem) {
-        return res
-          .status(400)
-          .json({
-            error: "All order items must belong to the selected restaurant",
-          });
+        return res.status(400).json({
+          error: "All order items must belong to the selected restaurant",
+        });
       }
     } catch (error) {
       return next(error);
@@ -950,7 +946,7 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
           itemName: item.name,
           itemCount: item.qty,
           unitPrice: item.price,
-          itemTotal: Math.round(item.price * 100) * item.qty / 100,
+          itemTotal: (Math.round(item.price * 100) * item.qty) / 100,
         });
       }
       newrelic.recordMetric("total", orderTotal);
@@ -1125,11 +1121,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         if (restaurant) {
           return res.status(200).send(restaurant);
         }
-        return res
-          .status(404)
-          .send({
-            error: 'No restaurant with name "' + req.params.name + '"!',
-          });
+        return res.status(404).send({
+          error: 'No restaurant with name "' + req.params.name + '"!',
+        });
       } else {
         // For non-database mode, we need to search by name in storage
         const { nameToSlug } = require("./url-utils");
@@ -1140,11 +1134,9 @@ exports.start = function (PORT, STATIC_DIR, DATA_FILE, TEST_DIR) {
         if (restaurant) {
           return res.status(200).send(restaurant);
         }
-        return res
-          .status(404)
-          .send({
-            error: 'No restaurant with name "' + req.params.name + '"!',
-          });
+        return res.status(404).send({
+          error: 'No restaurant with name "' + req.params.name + '"!',
+        });
       }
     } catch (error) {
       logger.error(
