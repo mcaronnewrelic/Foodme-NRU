@@ -118,12 +118,12 @@
             The page action also carries <b>durationMs</b>, the time from click to the failed response.
           </app-nr-callout>
 
-          <!-- Mission 5, second half: hunt the planted failure (only when one is armed) -->
+          <!-- Bonus, not part of Mission 5's check: hunt the planted failure (only when one is armed) -->
           @if (nrConfig.showCallouts() && nrConfig.armedScenario()) {
-            <app-nr-callout title="Hunt the planted failure" [nrql]="huntNrql" buttonLabel="See the failures"
+            <app-nr-callout title="Bonus: hunt the planted failure" [nrql]="huntNrql" buttonLabel="See the failures"
               missionId="mission-5"
               tryText="Reproduce the failure below, then read its exact error message in the data.">
-              Something in the app is failing on purpose right now: <b>{{ armedDescription() }}</b>
+              Optional, and it doesn't count toward Mission 5. Something in the app is failing on purpose right now: <b>{{ armedDescription() }}</b>
               Reproduce it — open the page, or place the order — then run this query. It lists the
               failing transactions with their exact error messages; from any of them you can open
               the trace, or find the same error grouped in Errors Inbox.
