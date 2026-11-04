@@ -473,6 +473,31 @@ logs:
       service: nginx
       environment: production
       component: reverse-proxy
+
+  # PostgreSQL logs to the systemd journal (no file collector enabled)
+  - name: postgresql-journal
+    systemd: postgresql
+    attributes:
+      logtype: postgresql
+      service: postgresql
+      environment: production
+      component: database
+
+  - name: pm2-daemon
+    systemd: pm2-ec2-user
+    attributes:
+      logtype: pm2-daemon
+      service: orderup-backend
+      environment: production
+      component: process-manager
+
+  - name: cloud-init-output
+    file: /var/log/cloud-init-output.log
+    attributes:
+      logtype: cloud-init
+      service: instance-bootstrap
+      environment: production
+      component: cloud-init
 EOF
 
         systemctl enable newrelic-infra

@@ -11,6 +11,13 @@
 # I5's evidence lives in the nginx entries - the 502s in the access
 # log (JSON since the rename, so its fields arrive as attributes) and
 # the "upstream prematurely closed" lines in the error log.
+#
+# PostgreSQL arrives via the systemd journal, not a file: the install
+# script enables log_lock_waits / log_min_duration_statement etc. but
+# never enables the file logging collector, so on AL2023 the database
+# logs to stderr -> journald (unit: postgresql). Same mechanism for
+# the PM2 daemon's own events (unit: pm2-ec2-user); the per-app files
+# above don't include daemon restarts. Added 2026-11-03.
 logs:
   - name: orderup-backend-output
     file: /opt/orderup/logs/orderup-backend-out.log
@@ -45,3 +52,28 @@ logs:
       service: nginx
       environment: production
       component: reverse-proxy
+
+  # PostgreSQL logs to the systemd journal (no file collector enabled)
+  - name: postgresql-journal
+    systemd: postgresql
+    attributes:
+      logtype: postgresql
+      service: postgresql
+      environment: production
+      component: database
+
+  - name: pm2-daemon
+    systemd: pm2-ec2-user
+    attributes:
+      logtype: pm2-daemon
+      service: orderup-backend
+      environment: production
+      component: process-manager
+
+  - name: cloud-init-output
+    file: /var/log/cloud-init-output.log
+    attributes:
+      logtype: cloud-init
+      service: instance-bootstrap
+      environment: production
+      component: cloud-init
