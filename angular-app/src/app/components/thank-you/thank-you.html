@@ -20,6 +20,37 @@
             can find your order again from your phone number when the database
             is enabled.
           </p>
+          <section class="order-tracker text-start" aria-label="Live order status">
+            @if (orderStatus.status() === 'cancelled') {
+              <p class="tracker-cancelled">
+                <i class="fas fa-ban"></i> This order was cancelled.
+              </p>
+            } @else {
+              <ol class="tracker-steps">
+                @for (stage of stages; track stage.key; let i = $index) {
+                  <li
+                    class="tracker-step"
+                    [class.done]="stageIndex > i"
+                    [class.current]="stageIndex === i"
+                  >
+                    <span class="tracker-dot"><i [class]="stage.icon"></i></span>
+                    <span class="tracker-label">{{ stage.label }}</span>
+                  </li>
+                }
+              </ol>
+              <p class="tracker-note text-muted">
+                @if (orderStatus.status() === 'delivered') {
+                  Delivered — enjoy your meal!
+                } @else if (stageIndex === -1 && orderStatus.status()) {
+                  Status: {{ orderStatus.status() }}
+                } @else if (orderStatus.live()) {
+                  Updating live as the kitchen works — no need to refresh.
+                } @else {
+                  Checking for updates…
+                }
+              </p>
+            }
+          </section>
           @if (items.length > 0) {
             <section class="text-start mt-4" aria-label="Order receipt">
               <h2 class="h5">{{ restaurantName }}</h2>
