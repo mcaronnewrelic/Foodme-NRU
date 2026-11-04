@@ -136,7 +136,7 @@ jobs:
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           INSTANCE_TYPE: ${{ inputs.instance_type }}
-          KEY_NAME: ${{ secrets.EC2_KEY_NAME }}
+          KEY_NAME: ${{ vars.EC2_KEY_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
           # Optional: ACM certificate ARN for HTTPS (per-environment variable;
@@ -197,8 +197,8 @@ jobs:
           ENVIRONMENT: ${{ inputs.environment || 'staging' }}
           # Synced into the instance .env by deploy-code.sh when set (see its
           # SYNC_ENV_KEYS). Non-secret identifiers, so variables, not secrets.
-          NEW_RELIC_ACCOUNT_ID: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
-          NEW_RELIC_BROWSER_ENTITY_GUID: ${{ secrets.NEW_RELIC_BROWSER_ENTITY_GUID }}
+          NEW_RELIC_ACCOUNT_ID: ${{ vars.NEW_RELIC_ACCOUNT_ID }}
+          NEW_RELIC_BROWSER_ENTITY_GUID: ${{ vars.NEW_RELIC_BROWSER_ENTITY_GUID }}
           # Synced into the instance .env by deploy-code.sh, so rotating the
           # account ingest key only needs this secret updated + a code deploy.
           # (Same secret the stack deploy installs the key from.)
@@ -212,7 +212,7 @@ jobs:
       - name: Record the deployment in New Relic
         uses: newrelic/deployment-marker-action@v2.5.1
         with:
-          guid: ${{ secrets.NEW_RELIC_APP_ID }}
+          guid: ${{ vars.NEW_RELIC_APP_ID }}
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
           region: US
           user: ${{ github.actor }}
