@@ -504,14 +504,24 @@ HEALTH_URL=$(get_stack_output "HealthCheckURL")
 if [ -n "$HEALTH_URL" ]; then
     echo "   Application URL: $APP_URL"
     echo "   Health check:    $HEALTH_URL"
+    # The instance-local check in the restart step already proved the
+    # app answers on localhost; this loop only waits for the target
+    # group to agree. After a restart the target is marked unhealthy
+    # during the gap and needs several consecutive successful checks
+    # (tens of seconds each) to flip back - since the HTTPS listener
+    # was added, that routinely outlasted the old six attempts, and
+    # healthy deploys were reported as failures. Give it ~3 minutes.
     healthy=false
-    for attempt in 1 2 3 4 5 6; do
+    for attempt in $(seq 1 18); do
         if curl -sf --max-time 10 "$HEALTH_URL" > /dev/null; then healthy=true; break; fi
-        echo "   Waiting for the load balancer to see a healthy instance (attempt $attempt/6)..."
+        echo "   Waiting for the load balancer to see a healthy instance (attempt $attempt/18)..."
         sleep 10
     done
     if [ "$healthy" != true ]; then
         echo "❌ $HEALTH_URL did not answer after the deployment"
+        echo "   Note: the restart step verified the app answers /health on the instance itself,"
+        echo "   so if this persists the problem is between the load balancer and the instance"
+        echo "   (target group health, listener, security group) - not the deployed code."
         exit 1
     fi
     echo "   ✅ Health check passed"
