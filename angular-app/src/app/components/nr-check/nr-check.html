@@ -36,11 +36,11 @@
         }
         @case ('number') {
           <input type="number" class="form-control form-control-sm nr-check-entry"
-                 [ngModel]="entry()" (ngModelChange)="entry.set($event)" placeholder="Your answer">
+                 [ngModel]="entry()" (ngModelChange)="setEntry($event)" placeholder="Your answer">
         }
         @case ('text') {
           <input type="text" class="form-control form-control-sm nr-check-entry"
-                 [ngModel]="entry()" (ngModelChange)="entry.set($event)" placeholder="Your answer">
+                 [ngModel]="entry()" (ngModelChange)="setEntry($event)" placeholder="Your answer">
         }
       }
 

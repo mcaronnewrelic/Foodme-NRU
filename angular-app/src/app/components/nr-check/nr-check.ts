@@ -90,6 +90,11 @@ export class NrCheckComponent {
     }
   }
 
+  /** A type="number" input hands ngModel a number (or null when empty), so normalise to the string the rest of the check expects. */
+  protected setEntry(value: string | number | null): void {
+    this.entry.set(value === null || value === undefined ? '' : String(value));
+  }
+
   protected toggleMulti(option: string, checked: boolean): void {
     this.selectedMulti.update((set) => {
       const next = new Set(set);
