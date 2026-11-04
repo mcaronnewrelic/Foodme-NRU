@@ -55,9 +55,11 @@ function createCheckout(
       };
   const logger = {
     info(fields, message) {
-      calls.logs.push({ fields, message });
+      calls.logs.push({ fields, message, level: "info" });
     },
-    debug() {},
+    debug(fields, message) {
+      calls.logs.push({ fields, message, level: "debug" });
+    },
     warn() {},
     error() {},
     fatal() {},

@@ -9,8 +9,16 @@ module.exports = function createRequestTracing({ logger }) {
     // Set request ID header for tracing
     res.setHeader("X-Request-ID", requestId);
 
-    // Log incoming request
-    logger.info(
+    // Only API and simulation routes are traced. This middleware runs
+    // before static file serving, and tracing every chunk, stylesheet
+    // and image drowned the log stream (~90% of lines were this pair).
+    const isTracedRoute =
+      req.url.startsWith("/api/") || req.url.startsWith("/simulate");
+
+    // Log incoming request (debug: the completion line below already
+    // carries method, URL, status and duration at info level)
+    if (isTracedRoute) {
+      logger.debug(
       {
         requestId,
         method: req.method,
@@ -23,11 +31,13 @@ module.exports = function createRequestTracing({ logger }) {
           authorization: req.get("Authorization") ? "[REDACTED]" : undefined,
         },
       },
-      "Incoming request",
-    );
+        "Incoming request",
+      );
+    }
 
     // Override res.end to log response
-    const originalEnd = res.end;
+    if (isTracedRoute) {
+      const originalEnd = res.end;
     res.end = function (chunk, encoding) {
       const duration = Date.now() - startTime;
 
@@ -43,8 +53,9 @@ module.exports = function createRequestTracing({ logger }) {
         "Request completed",
       );
 
-      originalEnd.call(this, chunk, encoding);
-    };
+        originalEnd.call(this, chunk, encoding);
+      };
+    }
 
     next();
   };
