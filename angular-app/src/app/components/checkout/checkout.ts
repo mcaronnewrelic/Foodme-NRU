@@ -50,7 +50,7 @@ export class CheckoutComponent implements OnInit {
   payment: PaymentInfo = {
     type: 'visa',
     number: '4111111111111111',
-    expire: '12/2025',
+    expire: '12/2028',
     cvc: '123',
     name: 'John Doe',
   };
