@@ -113,6 +113,19 @@ log_connections = on
 log_disconnections = on
 log_lock_waits = on
 
+# Ship logs as single-line JSON. The default stderr format lets a
+# single record span lines (DETAIL/CONTEXT/STATEMENT blocks and
+# multi-line SQL), which line-based log forwarders shatter into
+# separate events - the slow statement text (I8 evidence) arrives
+# detached from its duration line. jsonlog writes one JSON object
+# per record into the same log directory the infra agent tails
+# (logtype: postgresql), and the forwarder lifts its keys to
+# attributes. logging_collector is pinned on explicitly: the file
+# pipeline depends on it (verified on on the current instance,
+# where it was only a package default).
+log_destination = 'jsonlog'
+logging_collector = on
+
 # Log file permissions for monitoring
 log_file_mode = 0644
 EOF
