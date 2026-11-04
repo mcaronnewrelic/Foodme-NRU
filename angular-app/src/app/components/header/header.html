@@ -150,3 +150,39 @@
     </span>
   </div>
 }
+
+<!-- Live order pill: follows the tracked order until it lands -->
+@if (orderStatus.pillVisible()) {
+  <div
+    class="order-pill"
+    [class.delivered]="orderStatus.status() === 'delivered'"
+    [class.cancelled]="orderStatus.status() === 'cancelled'"
+  >
+    <a class="order-pill-link" routerLink="/orders">
+      <i class="fas fa-pizza-slice me-2"></i>
+      <span class="order-pill-text">
+        @if (orderStatus.restaurantName(); as name) {
+          <strong>{{ name }}</strong> ·
+        }
+        {{ orderStatus.statusLabel() }}
+      </span>
+      <span class="order-pill-progress" aria-hidden="true">
+        @for (stage of ORDER_STAGES; track stage.key; let i = $index) {
+          <span
+            class="order-pill-segment"
+            [class.done]="orderStatus.stageIndex() > i"
+            [class.current]="orderStatus.stageIndex() === i"
+          ></span>
+        }
+      </span>
+    </a>
+    <button
+      type="button"
+      class="order-pill-close"
+      aria-label="Dismiss order tracker"
+      (click)="orderStatus.dismiss()"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+}

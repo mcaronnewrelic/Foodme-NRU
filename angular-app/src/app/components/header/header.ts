@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { NrConfigService } from '../../nr-config';
 import { DemoIdentityService } from '../../services/demo-identity.service';
+import { OrderStatusService, ORDER_STAGES } from '../../services/order-status.service';
 
 @Component({
   selector: 'app-header',
@@ -18,10 +19,13 @@ export class HeaderComponent {
   showHelpDropdown = false;
   showMobileMenu = false;
 
+  protected readonly ORDER_STAGES = ORDER_STAGES;
+
   constructor(
     public cartService: CartService,
     public nrConfig: NrConfigService,
-    public demoIdentity: DemoIdentityService
+    public demoIdentity: DemoIdentityService,
+    public orderStatus: OrderStatusService
   ) {}
 
   get cartItemCount() {
