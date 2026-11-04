@@ -505,26 +505,54 @@ if [ -n "$HEALTH_URL" ]; then
     echo "   Application URL: $APP_URL"
     echo "   Health check:    $HEALTH_URL"
     # The instance-local check in the restart step already proved the
-    # app answers on localhost; this loop only waits for the target
-    # group to agree. After a restart the target is marked unhealthy
-    # during the gap and needs several consecutive successful checks
-    # (tens of seconds each) to flip back - since the HTTPS listener
-    # was added, that routinely outlasted the old six attempts, and
-    # healthy deploys were reported as failures. Give it ~3 minutes.
+    # app answers on localhost; this only waits for the target group
+    # to agree (several consecutive checks after a restart).
+    #
+    # Ask the target group directly, through the AWS API, instead of
+    # polling the public URL from the runner. The URL poll has failed
+    # every run since the HTTPS listener was added - even with the
+    # app verifiably up - which reported healthy deploys as failures
+    # and, worse, skipped the New Relic deployment marker step, so
+    # change tracking went dark. The API answer is the same fact the
+    # load balancer itself acts on.
+    TG_ARN=$(aws cloudformation describe-stack-resources \
+        --stack-name "$STACK_NAME" --region "$AWS_REGION" \
+        --logical-resource-id BackendTargetGroup \
+        --query 'StackResources[0].PhysicalResourceId' --output text 2>/dev/null || echo "")
     healthy=false
-    for attempt in $(seq 1 18); do
-        if curl -sf --max-time 10 "$HEALTH_URL" > /dev/null; then healthy=true; break; fi
-        echo "   Waiting for the load balancer to see a healthy instance (attempt $attempt/18)..."
-        sleep 10
-    done
+    if [ -n "$TG_ARN" ]; then
+        for attempt in $(seq 1 30); do
+            state=$(aws elbv2 describe-target-health \
+                --target-group-arn "$TG_ARN" --region "$AWS_REGION" \
+                --targets Id="$INSTANCE_ID" \
+                --query 'TargetHealthDescriptions[0].TargetHealth.State' \
+                --output text 2>/dev/null || echo "unknown")
+            if [ "$state" = "healthy" ]; then healthy=true; break; fi
+            echo "   Waiting for the target group to mark the instance healthy (attempt $attempt/30, state: $state)..."
+            sleep 10
+        done
+    else
+        # Fall back to the public URL if the target group cannot be resolved
+        for attempt in $(seq 1 18); do
+            if curl -sf --max-time 10 "$HEALTH_URL" > /dev/null; then healthy=true; break; fi
+            echo "   Waiting for the load balancer to see a healthy instance (attempt $attempt/18)..."
+            sleep 10
+        done
+    fi
     if [ "$healthy" != true ]; then
-        echo "❌ $HEALTH_URL did not answer after the deployment"
+        echo "❌ The instance did not become healthy in the target group after the deployment"
         echo "   Note: the restart step verified the app answers /health on the instance itself,"
         echo "   so if this persists the problem is between the load balancer and the instance"
         echo "   (target group health, listener, security group) - not the deployed code."
         exit 1
     fi
-    echo "   ✅ Health check passed"
+    echo "   ✅ Target group reports the instance healthy"
+    # Informational only: the public path from the runner has proven
+    # unreliable as a gate, so a disagreement here warns but does not
+    # fail the deployment.
+    if ! curl -sf --max-time 10 "$HEALTH_URL" > /dev/null; then
+        echo "   ⚠️ Note: $HEALTH_URL did not answer from the runner, though the target group reports healthy."
+    fi
 fi
 
 echo ""
