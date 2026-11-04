@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header';
@@ -20,7 +20,7 @@ import { CartItem } from '../../models/restaurant.model';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './thank-you.css',
 })
-export class ThankYouComponent implements OnDestroy {
+export class ThankYouComponent {
   protected readonly Math = Math;
   private progress = inject(MissionProgressService);
   protected orderStatus = inject(OrderStatusService);
@@ -62,13 +62,11 @@ export class ThankYouComponent implements OnDestroy {
     if (this.orderId) {
       this.progress.markTried('mission-3');
       // Watch the order move: the worker pushes each advance over the
-      // order-status WebSocket (polling fallback in the service).
-      this.orderStatus.track(this.orderId);
+      // order-status WebSocket (polling fallback in the service). The
+      // service owns the channel from here - the header pill follows
+      // the same order across the rest of the site.
+      this.orderStatus.track(this.orderId, this.restaurantName);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.orderStatus.stop();
   }
 
   get requestIdTail(): string {

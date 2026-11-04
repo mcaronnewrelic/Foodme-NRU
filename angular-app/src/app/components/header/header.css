@@ -160,3 +160,71 @@
     font-size: 0.95rem;
   }
 }
+
+/* Live order pill (Domino's-style strip under the navbar). */
+.order-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: #1e40af;
+  color: #f9fafb;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+}
+.order-pill.delivered {
+  background: #198754;
+}
+.order-pill.cancelled {
+  background: #b02a37;
+}
+.order-pill-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+.order-pill-link:hover {
+  color: inherit;
+  text-decoration: underline;
+}
+.order-pill-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.order-pill-progress {
+  display: inline-flex;
+  gap: 4px;
+}
+.order-pill-segment {
+  width: 26px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.3);
+}
+.order-pill-segment.done {
+  background: #fff;
+}
+.order-pill-segment.current {
+  background: #fff;
+  animation: order-pill-pulse 1.2s ease-in-out infinite;
+}
+@keyframes order-pill-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.order-pill-close {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.75;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+.order-pill-close:hover {
+  opacity: 1;
+}

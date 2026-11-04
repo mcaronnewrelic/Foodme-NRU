@@ -844,6 +844,29 @@ POST route whitelists slugs in server/index.js separately from
 demo-investigations' KNOWN_SLUGS - a new slug must be added in
 both places.
 
+Live order tracking built (2026-11-03, on top of the I11
+worker): phase 1 (PR #49) - server/order-status-stream.js, a
+WebSocket endpoint at /api/orders/stream (ws package, noServer
+upgrade handling), fed by a new worker onAdvance callback fired
+after each committed batch; a subscribe first answers with a
+snapshot read through the app's own getOrderById, so the tracker
+answers truthfully even while the worker is sick. The /api/ path
+is deliberate: the nginx /api/ location already forwards the
+Upgrade headers, so no infrastructure change was needed. Client:
+OrderStatusService (REST seed, socket pushes, backoff reconnect,
+then a 10s polling fallback) driving a Domino's-style stage
+tracker on the Thank You page. Phase 2 - the service persists the
+tracked order (localStorage orderup-active-order, 2h resume cap)
+and owns the channel for the app's lifetime; a status pill in the
+header follows the order across pages (restaurant + stage label +
+progress segments, linking to My Orders, dismissible, lingering
+20s on a terminal status before forgetting the order). Verified:
+stream unit tests, local end-to-end lifecycle over the socket,
+and on staging the tracker updated live over wss (the ALB and
+nginx pass the upgrade untouched). With I11 armed the pill and
+tracker freeze at the first stage while the site stays fine -
+the poison pill, visible in the product.
+
 
 ### 11.4 Acceptance tests (extends §10)
 

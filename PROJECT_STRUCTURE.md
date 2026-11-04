@@ -83,6 +83,8 @@ Middleware factories live in `server/middleware/`:
 
 `server/start.js` is the entry point and owns the lifecycle: `start(PORT, STATIC_DIR, DATA_FILE)` checks the database, loads JSON data when needed, constructs the app, starts the listener and worker, and handles process signals. Tests can import `server/index.js` and call `createApp` without starting the application.
 
+Live order tracking hangs off that lifecycle: `server/order-status-stream.js` is a WebSocket endpoint (`/api/orders/stream`, under `/api/` because the nginx `/api/` location already forwards the Upgrade headers). `start.js` attaches it to the HTTP server and wires the worker's `onAdvance` callback to it, so each committed batch pushes the changed orders' new statuses to subscribed browsers; a subscribe first answers with a snapshot read through the app's `getOrderById`. On the client, `OrderStatusService` owns the channel (REST seed, socket pushes, polling fallback) and persists the tracked order so the header's status pill follows it across pages.
+
 ## 🎨 Design Principles
 
 1. **Root Directory**: Only essential files for getting started
