@@ -76,6 +76,11 @@ class OrderStatusWorker {
     this.logger = logger;
     this.client = null;
     this.timer = null;
+    // Optional: fn(changed) called after each committed batch with
+    // [{ id, orderNumber, status }] - start.js wires it to the live
+    // order-status stream. The worker itself knows nothing about
+    // sockets.
+    this.onAdvance = null;
     const pollEnv = Number(process.env.ORDER_STATUS_POLL_MS);
     this.pollMs = Number.isFinite(pollEnv) && pollEnv > 0 ? pollEnv : 20000;
     this.stageSeconds = {
@@ -151,6 +156,7 @@ class OrderStatusWorker {
     });
 
     let advanced = 0;
+    const changed = [];
     if (due.length) {
       await client.query('BEGIN');
       try {
@@ -161,11 +167,17 @@ class OrderStatusWorker {
           }
           await client.query('UPDATE orders SET status = $1, updated_at = now() WHERE id = $2', [next, order.id]);
           advanced += 1;
+          changed.push({ id: order.id, orderNumber: order.order_number, status: next });
         }
         await client.query('COMMIT');
       } catch (err) {
         await client.query('ROLLBACK').catch(() => {});
         throw err;
+      }
+      // Notify live watchers (the order-status stream) only after the
+      // commit lands, and never let a broken notifier fail the poll.
+      if (changed.length && this.onAdvance) {
+        try { this.onAdvance(changed); } catch { /* notifier is best-effort */ }
       }
     }
 

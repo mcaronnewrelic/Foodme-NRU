@@ -14,6 +14,7 @@ const DatabaseService = require("./database");
 const DemoFailures = require("./demo-failures");
 const DemoInvestigations = require("./demo-investigations");
 const OrderStatusWorker = require("./order-status-worker");
+const OrderStatusStream = require("./order-status-stream");
 
 function start(PORT, STATIC_DIR, DATA_FILE) {
   const logger = defaultLogger;
@@ -26,6 +27,19 @@ function start(PORT, STATIC_DIR, DATA_FILE) {
     process.env.NODE_ENV === "production" ||
     process.env.DOCKER_COMPOSE === "true" ||
     process.env.DB_HOST === "db";
+  // Live order tracking: browsers subscribe over WebSocket and the
+  // worker pushes each advance. Snapshots read through the app's own
+  // order lookup, so they answer even while the worker is sick.
+  const orderStatusStream = new OrderStatusStream(logger, async (orderId) => {
+    if (!useDatabase) return null;
+    const order = await dbService.getOrderById(orderId);
+    return order ? order.status : null;
+  });
+  orderStatusWorker.onAdvance = (changed) => {
+    for (const order of changed) {
+      orderStatusStream.publish(String(order.id), order.status);
+    }
+  };
   void demoInvestigations.syncSideEffects();
 
   process.on("unhandledRejection", (reason, promise) => {
@@ -94,7 +108,7 @@ function start(PORT, STATIC_DIR, DATA_FILE) {
       useDatabase,
       staticDir: STATIC_DIR,
     });
-    app.listen(PORT, function () {
+    const server = app.listen(PORT, function () {
       // Orders advance through their lifecycle only in database mode.
       if (useDatabase) orderStatusWorker.start();
       logger.info(
@@ -113,6 +127,7 @@ function start(PORT, STATIC_DIR, DATA_FILE) {
 
       logger.info("Node Server started on http://localhost:" + PORT + "/");
     });
+    orderStatusStream.attach(server);
   }
 
   // Handle graceful shutdown

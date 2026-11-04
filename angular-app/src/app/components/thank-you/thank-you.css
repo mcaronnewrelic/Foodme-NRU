@@ -1,3 +1,80 @@
 .order-reference {
   overflow-wrap: anywhere;
 }
+
+/* Live order tracker (WebSocket-driven; see OrderStatusService). */
+.order-tracker {
+  margin: 2rem auto 0;
+  max-width: 560px;
+}
+.tracker-steps {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.tracker-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  color: #adb5bd;
+}
+.tracker-step::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: -50%;
+  width: 100%;
+  height: 3px;
+  background: #dee2e6;
+}
+.tracker-step:first-child::before {
+  display: none;
+}
+.tracker-step.done::before,
+.tracker-step.current::before {
+  background: #198754;
+}
+.tracker-dot {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e9ecef;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+.tracker-step.done .tracker-dot {
+  background: #198754;
+  color: #fff;
+}
+.tracker-step.current .tracker-dot {
+  background: #0d6efd;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+.tracker-label {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+}
+.tracker-step.done .tracker-label {
+  color: #198754;
+}
+.tracker-step.current .tracker-label {
+  color: #212529;
+  font-weight: 600;
+}
+.tracker-note {
+  text-align: center;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+.tracker-cancelled {
+  text-align: center;
+  color: #dc3545;
+  font-weight: 600;
+}
