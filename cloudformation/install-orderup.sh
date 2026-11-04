@@ -474,17 +474,23 @@ logs:
       environment: production
       component: reverse-proxy
 
-  # PostgreSQL logs to the systemd journal (no file collector enabled)
-  - name: postgresql-journal
-    systemd: postgresql
+  # PostgreSQL logs to files: logging_collector is on in the
+  # instance postgresql.conf (verified via SHOW 2026-11-04), so the
+  # server log lives in the data directory's log folder. The journal
+  # only carries the postmaster's pre-collector lines, which is why
+  # a systemd source sees nothing but start/stop.
+  - name: postgresql-log
+    file: /var/lib/pgsql/data/log/postgresql-*
     attributes:
       logtype: postgresql
       service: postgresql
       environment: production
       component: database
 
-  - name: pm2-daemon
-    systemd: pm2-ec2-user
+  # PM2's daemon log is a file under the ec2-user home (restarts,
+  # crash loops); the per-app files above don't include it.
+  - name: pm2-daemon-log
+    file: /home/ec2-user/.pm2/pm2.log
     attributes:
       logtype: pm2-daemon
       service: orderup-backend
