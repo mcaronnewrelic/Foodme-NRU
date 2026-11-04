@@ -192,6 +192,29 @@
             and time resolution for lower data volume; actual cost depends on
             your pricing. It does not require rounding away cents.
           </app-nr-callout>
+          <app-nr-callout
+            title="The live tracker connection (WebSocket)"
+            [nrql]="socketNrql"
+            buttonLabel="See your WebSocket events"
+            tryText="After an order is delivered, run the query and match messageCount to the updates the tracker received: one snapshot when it subscribed, plus one push per stage."
+          >
+            The tracker above is fed by a <b>WebSocket</b> to
+            <code>/api/orders/stream</code>, not by refreshing the page. The
+            browser agent records one <b>WebSocket</b> event per connection,
+            and only when the connection <i>closes</i> — after delivery, or
+            when you navigate away (close code <b>1001</b>).
+            <b>messageCount</b> counts what the server pushed to you: a
+            snapshot of the current status on subscribe, then one message
+            per stage the order advanced. <b>sendCount</b> is 1 — the
+            subscribe message itself. Those pushes originate server-side in
+            the order-status worker, the
+            <b>OtherTransaction/Nodejs/OrderStatusWorker/poll</b> transaction
+            in APM. Do not confuse the socket with the
+            <b>AjaxRequest</b> for <code>/api/orders/&lt;id&gt;</code>: that
+            REST call only seeds the tracker (and takes over as a polling
+            fallback if the socket drops). If the tracker ever updates
+            without a WebSocket event, it was polling.
+          </app-nr-callout>
         }
       </div>
     </div>
