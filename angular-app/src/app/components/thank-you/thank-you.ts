@@ -79,4 +79,6 @@ export class ThankYouComponent {
   readonly joinedItemsNrql = `FROM ItemsOrdered\nJOIN (FROM Transaction SELECT orderId, requestId, customer, restaurant, orderTotal, duration, http.statusCode WHERE appName = 'OrderUp' AND name = 'WebTransaction/Expressjs/POST//api/order' AND orderId = ${this.orderIdLiteral} LIMIT MAX) ON orderId\nSELECT orderId, requestId, customer, restaurant, itemName, itemCount, unitPrice, itemTotal, orderTotal, duration, http.statusCode\nWHERE orderId = ${this.orderIdLiteral} SINCE 1 day ago LIMIT MAX`;
   readonly metricsNrql =
     "FROM Metric SELECT count(newrelic.timeslice.value) AS 'Orders', sum(newrelic.timeslice.value) AS 'Revenue', average(newrelic.timeslice.value) AS 'Average order total' WHERE appName = 'OrderUp' AND (metricTimesliceName = 'Custom/total' OR metricTimesliceName LIKE 'Custom/%/total') FACET metricTimesliceName TIMESERIES SINCE 1 day ago";
+  readonly socketNrql =
+    "FROM WebSocket SELECT requestedUrl, messageCount, sendCount, connectedDuration, closeCode, closeReason WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' SINCE 1 day ago";
 }
