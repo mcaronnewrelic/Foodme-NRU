@@ -18,8 +18,18 @@
  * already forwards the Upgrade headers and the ALB passes WebSocket
  * upgrades through, so no infrastructure change was needed. A 30s
  * ping keeps connections ahead of the ALB's idle timeout.
+ *
+ * APM visibility is manual, on purpose: the upgrade bypasses Express,
+ * so the agent never sees this endpoint as a web transaction. Each
+ * connection is therefore wrapped in a background transaction
+ * (OrderStatusStream/connection, open for the connection's lifetime)
+ * and summarised at close by an OrderStreamSample custom event - the
+ * server-side mirror of the browser agent's WebSocket event, which is
+ * likewise emitted once per connection, at close. Telemetry is
+ * best-effort throughout: it must never break the stream.
  */
 const { WebSocketServer, WebSocket } = require('ws');
+const defaultNewrelic = require('newrelic');
 
 const STREAM_PATH = '/api/orders/stream';
 const PING_INTERVAL_MS = 30000;
@@ -30,20 +40,82 @@ class OrderStatusStream {
    * @param getStatus async (orderId) => status string, or null when
    *                  the order is unknown / no database is in use.
    */
-  constructor(logger, getStatus) {
+  constructor(logger, getStatus, newrelic = defaultNewrelic) {
     this.logger = logger;
     this.getStatus = getStatus;
+    this.newrelic = newrelic;
     this.subscribers = new Map(); // orderId -> Set<WebSocket>
     this.wss = new WebSocketServer({ noServer: true });
     this.pingTimer = null;
 
     this.wss.on('connection', (socket) => {
       socket.isAlive = true;
+      socket.telemetry = this.beginTelemetry(socket);
       socket.on('pong', () => { socket.isAlive = true; });
-      socket.on('message', (data) => { void this.handleMessage(socket, data); });
-      socket.on('close', () => this.unsubscribeAll(socket));
+      socket.on('message', (data) => {
+        if (socket.telemetry) socket.telemetry.messagesReceived += 1;
+        void this.handleMessage(socket, data);
+      });
+      socket.on('close', (code) => {
+        this.endTelemetry(socket, code);
+        this.unsubscribeAll(socket);
+      });
       socket.on('error', () => this.unsubscribeAll(socket));
     });
+  }
+
+  /**
+   * Open the connection's APM background transaction. It stays open
+   * until endTelemetry releases it, so its duration is the
+   * connection's lifetime; the counts land as transaction attributes
+   * at the end, when they are final.
+   */
+  beginTelemetry(socket) {
+    const telemetry = {
+      orderId: null,
+      messagesReceived: 0,
+      messagesSent: 0,
+      pushesSent: 0,
+      connectedAt: Date.now(),
+      release: null,
+    };
+    const released = new Promise((resolve) => { telemetry.release = resolve; });
+    try {
+      this.newrelic.startBackgroundTransaction('OrderStatusStream/connection', async () => {
+        const txn = this.newrelic.getTransaction();
+        await released;
+        try {
+          const attributes = {
+            messagesReceived: telemetry.messagesReceived,
+            messagesSent: telemetry.messagesSent,
+            pushesSent: telemetry.pushesSent,
+          };
+          if (telemetry.orderId) attributes.orderId = telemetry.orderId;
+          this.newrelic.addCustomAttributes(attributes);
+        } catch { /* attributes are best-effort */ }
+        txn?.end();
+      });
+    } catch { /* telemetry must never break the stream */ }
+    return telemetry;
+  }
+
+  /** Close the background transaction and emit the OrderStreamSample. */
+  endTelemetry(socket, closeCode) {
+    const telemetry = socket.telemetry;
+    if (!telemetry) return;
+    socket.telemetry = null;
+    telemetry.release?.();
+    try {
+      const attributes = {
+        messagesReceived: telemetry.messagesReceived,
+        messagesSent: telemetry.messagesSent,
+        pushesSent: telemetry.pushesSent,
+        connectedDurationMs: Date.now() - telemetry.connectedAt,
+        closeCode: closeCode ?? 0,
+      };
+      if (telemetry.orderId) attributes.orderId = telemetry.orderId;
+      this.newrelic.recordCustomEvent('OrderStreamSample', attributes);
+    } catch { /* telemetry must never break the stream */ }
   }
 
   /** Hook the HTTP server's upgrade event; only the stream path is claimed. */
@@ -83,6 +155,7 @@ class OrderStatusStream {
     }
     if (message?.type !== 'subscribe' || message.orderId == null) return;
     const orderId = String(message.orderId);
+    if (socket.telemetry) socket.telemetry.orderId = orderId;
     let set = this.subscribers.get(orderId);
     if (!set) {
       set = new Set();
@@ -104,12 +177,18 @@ class OrderStatusStream {
   publish(orderId, status) {
     const set = this.subscribers.get(String(orderId));
     if (!set) return;
-    for (const socket of set) this.send(socket, String(orderId), status);
+    for (const socket of set) {
+      if (socket.readyState === WebSocket.OPEN && socket.telemetry) {
+        socket.telemetry.pushesSent += 1;
+      }
+      this.send(socket, String(orderId), status);
+    }
   }
 
   send(socket, orderId, status) {
     if (socket.readyState !== WebSocket.OPEN) return;
     socket.send(JSON.stringify({ type: 'status', orderId, status }));
+    if (socket.telemetry) socket.telemetry.messagesSent += 1;
   }
 
   unsubscribeAll(socket) {
