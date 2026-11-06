@@ -5,7 +5,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![Security](https://img.shields.io/badge/Security-Validated-brightgreen.svg)](#-security-features)
 [![New Relic APM](https://img.shields.io/badge/New%20Relic%20APM-14.10.0-purple.svg)](https://newrelic.com/)
-[![New Relic Infrastructure](https://img.shields.io/badge/New%20Relic%20Infrastructure-1.81.0-purple.svg)](https://newrelic.com/)
+[![New Relic Infrastructure](https://img.shields.io/badge/New%20Relic%20Infrastructure-2.0.1-purple.svg)](https://newrelic.com/)
 
 A modern, full-stack restaurant ordering application built with Angular 22 frontend and Node.js backend, featuring comprehensive monitoring, security, and deployment automation.
 

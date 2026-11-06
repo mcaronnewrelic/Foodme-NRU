@@ -48,7 +48,7 @@ dnf -q makecache -y --disablerepo='*' --enablerepo='newrelic-infra'
 # Pinned to the version the README badge advertises - bump both together.
 # (Older versions stay in the New Relic yum repo; if the pin ever goes
 # missing, fall back to latest rather than failing the install.)
-dnf install -y 'newrelic-infra-1.81.0-1.amazonlinux-2023' || dnf install -y newrelic-infra
+dnf install -y 'newrelic-infra-2.0.1-1.amazonlinux-2023' || dnf install -y newrelic-infra
 
 # Initialize PostgreSQL
 log "Initializing PostgreSQL..."
