@@ -867,6 +867,27 @@ nginx pass the upgrade untouched). With I11 armed the pill and
 tracker freeze at the first stage while the site stays fine -
 the poison pill, visible in the product.
 
+Showing the socket in New Relic (2026-11-05): the browser agent,
+once set to record WebSocket data, emits one WebSocket event per
+connection at close (requestedUrl, messageCount, sendCount,
+connectedDuration, closeCode) - the Thank You callout (PR #61)
+queries it, with messageCount = snapshot + one push per stage as
+the checkable expectation. APM has no native record: the upgrade
+bypasses Express, so no web transaction exists for
+/api/orders/stream. The stream therefore instruments itself:
+each connection runs inside a hand-built background transaction
+(OrderStatusStream/connection, open for the connection's
+lifetime, counts attached as attributes at the end) and emits an
+OrderStreamSample custom event at close (orderId, messages
+received/sent, pushes, duration, close code) - the server-side
+mirror of the browser's event. The OrderUp Overview dashboard
+gains a "Live order tracking" page pairing the two records
+(counts, timeseries, messages per connection, recent-connection
+tables, close-code facets); it is deliberately not filtered by
+demoCode, because socket events carry none. Neither default UI
+surfaces these events well, which is the teaching point of the
+page.
+
 
 ### 11.4 Acceptance tests (extends §10)
 

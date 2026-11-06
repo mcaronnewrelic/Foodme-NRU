@@ -948,6 +948,267 @@
           }
         }
       ]
+    },
+    {
+      "name": "Live order tracking",
+      "description": "The Thank You page's live tracker, one WebSocket connection seen three ways: the browser agent's WebSocket event, a hand-built APM background transaction, and the server's OrderStreamSample custom event. The default APM and Browser UIs barely surface any of them; this page is the teaching view.",
+      "widgets": [
+        {
+          "title": null,
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 8,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "## Live order tracking\nOne tracker connection, three records. **Browser:** the browser agent emits one `WebSocket` event per connection, when it closes. **APM:** the socket upgrade bypasses Express, so no web transaction exists - the server wraps each connection in a background transaction (`OrderStatusStream/connection`) by hand. **Custom event:** at close the server also emits `OrderStreamSample` with the final counts. Compare `messagesSent` (server) with `messageCount` (browser): both should be 1 snapshot + 1 push per stage watched. This page is not filtered by demoCode - socket events don't carry one - so it counts every connection, simulated ones included."
+          }
+        },
+        {
+          "title": "Browser connections (WebSocket events)",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Browser connections' FROM WebSocket WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Stream background transactions (APM)",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Stream transactions' FROM Transaction WHERE name LIKE '%OrderStatusStream/connection%' SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Stream samples (custom events)",
+          "layout": {
+            "column": 5,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Stream samples' FROM OrderStreamSample SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Orders advanced by the worker",
+          "layout": {
+            "column": 9,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT sum(advanced) AS 'Orders advanced' FROM OrderPipelineSample SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Connections over time - browser record",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Browser connections' FROM WebSocket WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' SINCE 1 day ago TIMESERIES"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Connections over time - server record",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Stream samples' FROM OrderStreamSample SINCE 1 day ago TIMESERIES"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Avg messages per connection - browser counted",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT average(messageCount) AS 'Avg messages (browser)' FROM WebSocket WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Avg messages per connection - server counted",
+          "layout": {
+            "column": 7,
+            "row": 10,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT average(messagesSent) AS 'Avg messages (server)' FROM OrderStreamSample SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Recent connections - the browser's record",
+          "layout": {
+            "column": 1,
+            "row": 13,
+            "width": 6,
+            "height": 4
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT requestedUrl, messageCount, sendCount, connectedDuration, closeCode, closeReason FROM WebSocket WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' SINCE 1 day ago LIMIT 20"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Recent connections - the server's record",
+          "layout": {
+            "column": 7,
+            "row": 13,
+            "width": 6,
+            "height": 4
+          },
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT orderId, messagesReceived, messagesSent, pushesSent, connectedDurationMs, closeCode FROM OrderStreamSample SINCE 1 day ago LIMIT 20"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How connections end - browser (1001 = navigated away)",
+          "layout": {
+            "column": 1,
+            "row": 17,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Connections' FROM WebSocket WHERE appName = 'OrderUp' AND requestedUrl LIKE '%/api/orders/stream%' FACET closeCode SINCE 1 day ago"
+              }
+            ]
+          }
+        },
+        {
+          "title": "How connections end - server",
+          "layout": {
+            "column": 7,
+            "row": 17,
+            "width": 6,
+            "height": 3
+          },
+          "visualization": {
+            "id": "viz.bar"
+          },
+          "rawConfiguration": {
+            "nrqlQueries": [
+              {
+                "accountIds": [1352811],
+                "query": "SELECT count(*) AS 'Connections' FROM OrderStreamSample FACET closeCode SINCE 1 day ago"
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "variables": [
