@@ -271,11 +271,13 @@ The on-disk `.env` contains a real-looking `NEW_RELIC_LICENSE_KEY`, `NRIA_LICENS
 
 ---
 
-### 12. SSH open to the internet in the CloudFormation template (Medium)
+### 12. SSH open to the internet in the CloudFormation template (Medium, fixed)
 
-Added 2026-10-31. `EC2SecurityGroup` in `cloudformation/foodme-production-stack.yaml` allows port 22 from `0.0.0.0/0`. The instance can be reached without SSH (Systems Manager Session Manager and Run Command both work, and the deployment workflow uses them), so the rule is not needed for deployments and exposes the host to password-guessing and scanning.
+Added 2026-10-31. `EC2SecurityGroup` in `cloudformation/orderup-production-stack.yaml` allowed port 22 from `0.0.0.0/0`. The instance can be reached without SSH (Systems Manager Session Manager and Run Command both work, and the deployment workflow uses them), so the rule is not needed for deployments and exposed the host to password-guessing and scanning.
 
-**Suggested fix:** remove the SSH rule and use Session Manager (`aws ssm start-session`), or limit it to your own address with a template parameter such as `AllowedSshCidr`. Changing the rule updates the security group in place.
+**Fix:** the rule now uses the `AllowedSshCidr` template parameter (default `104.28.173.225/32`) instead of `0.0.0.0/0`. Pass `AllowedSshCidr=<your-ip>/32` at deploy time to use a different address; the deploy scripts do not pass it yet, so they use the default. Changing the rule updates the security group in place.
+
+**Remaining:** the rule is still tied to one address, so SSH stops working if that address changes. Removing the rule and using Session Manager (`aws ssm start-session`) would avoid that and close port 22 entirely.
 
 ## What looked good
 
